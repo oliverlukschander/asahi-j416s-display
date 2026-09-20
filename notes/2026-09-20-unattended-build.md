@@ -4,6 +4,8 @@ Built patched `appledrm.ko` (vermagic `7.1.12-2.5-1-ARCH`) at
 `src/appledrm/appledrm.ko`. USB4 DPTX path borrows crossbar **dpin0**
 without a DTB change.
 
+Patch 0003 delays DPTX connect 2.5s so AUX hits the live DP tunnel.
+
 **Did not load it.** This session has no passwordless sudo (`sudo -n`
 fails). Reloading `appledrm` would drop eDP; installer therefore
 copies the `.ko` to `/lib/modules/.../updates` and **reboots**.

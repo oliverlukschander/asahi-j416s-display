@@ -1,0 +1,61 @@
+From ae9e970821ed8d3daf19598bc4e62a9f3a569441 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Sun, 20 Sep 2026 22:44:01 +0200
+Subject: [PATCH 3/3] drm/apple: delay USB4 DPTX connect until the DP tunnel
+ exists
+
+Calling dcp_dptx_connect from the Type-C mux set path waits 2s under
+the fabric lock and races ACIO. Arm reconnect for 2.5s with 10 retries
+so AUX/DPRX run while tunnel 0:5 <-> 1:19 is up.
+---
+ drivers/gpu/drm/apple/dcp.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 087a2ed..04d042d 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -50,6 +50,7 @@
+ #define APPLE_DCP_COPROC_CPU_CONTROL_RUN BIT(4)
+ 
+ #define DCP_BOOT_TIMEOUT msecs_to_jiffies(1000)
++#define DPTX_USB4_CONNECT_DELAY msecs_to_jiffies(2500)
+ 
+ static bool show_notch;
+ 
+@@ -422,9 +423,22 @@ static int dcp_typec_route_set(struct typec_mux_dev *mux,
+ 		if (port->owner && port->owner->usb4_selected) {
+ 			struct apple_dcp *dcp = port->owner->dcp;
+ 
++			/*
++			 * Do not connect DPTX here: ACIO's DP tunnel is not
++			 * up yet, and dcp_dptx_connect waits 2s under this
++			 * lock. Arm reconnect so AUX/DPRX run in the tunnel
++			 * window (~1s up, ~12s teardown).
++			 */
+ 			WRITE_ONCE(dcp->typec_cable_connected, true);
+ 			port->hpd = true;
+-			dcp_dptx_connect_oob(to_platform_device(dcp->dev), 0);
++			dcp->typec_reconnect_tries = 0;
++			cancel_delayed_work(&dcp->typec_reconnect_wq);
++			mod_delayed_work(system_freezable_wq,
++					 &dcp->typec_reconnect_wq,
++					 DPTX_USB4_CONNECT_DELAY);
++			dev_info(dcp->dev,
++				 "USB4 DP IN armed; DPTX connect in %u ms\n",
++				 jiffies_to_msecs(DPTX_USB4_CONNECT_DELAY));
+ 		}
+ 		return 0;
+ 	}
+@@ -1085,7 +1099,7 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ 
+ #define DPTX_CONNECT_TIMEOUT msecs_to_jiffies(2000)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+-#define DPTX_RECONNECT_RETRIES 5
++#define DPTX_RECONNECT_RETRIES 10
+ 
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ {
+-- 
+2.55.0
+
