@@ -1,3 +1,8 @@
+# Local symlinks into linux-aurora-pr; the reviewable source is patches/.
+*.c
+*.h
+epic/
+
 *.o
 *.ko
 *.mod

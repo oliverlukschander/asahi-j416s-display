@@ -11,8 +11,9 @@ and [aurora-silicon/linux#6](https://github.com/aurora-silicon/linux/pull/6).
    live under `captures/` and `notes/`.
 2. **Explain the teardown.** Confirmed: `tb_dp_tunnel_active()` DPRX timeout
    on `0:5 <-> 1:19`, not a missing hub HDMI jack.
-3. **Patch 0001** (not on the running kernel yet): USB4 → dpin0 mux + DPTX
-   connect. Needs a kernel rebuild/`update-m1n1` of the j416 DTB.
+3. **Patches 0001+0002 + `src/appledrm/appledrm.ko` built.** Needs
+   `sudo ./scripts/load-appledrm.sh` (copies into `updates/` and reboots).
+   This session had no passwordless sudo, so it is not loaded yet.
 
 ## Next
 
