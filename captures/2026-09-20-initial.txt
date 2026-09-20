@@ -1,0 +1,133 @@
+# asahi-j416s-display capture 2026-09-20T22:18:07+02:00
+
+## uname
+Linux omarchy-m2 7.1.12-2.5-1-ARCH #1 SMP PREEMPT_DYNAMIC Sun, 20 Sep 2026 02:52:44 +0000 aarch64 GNU/Linux
+
+## kernel cmdline
+BOOT_IMAGE=/vmlinuz-linux-aurora root=UUID=725346d2-f127-47bc-b464-9dd46155e8d6 rw rootflags=subvol=@ cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards loglevel=3 quiet splash
+
+## omarchy
+4.0.3rc4-1
+
+## hyprctl monitors
+Monitor eDP-1 (ID 0):
+	3456x2160@120.00000 at 0x0
+	description: 
+	make: 
+	model: 
+	physical size (mm): 346x216
+	serial: 
+	active workspace: 1 (1)
+	special workspace: 0 ()
+	reserved: 0 26 0 0
+	scale: 2
+	transform: 0
+	focused: yes
+	dpmsStatus: 1
+	vrr: false
+	solitary: 0
+	solitaryBlockedBy: windowed mode,missing candidate
+	activelyTearing: false
+	tearingBlockedBy: next frame is not torn,user settings,missing candidate
+	directScanoutTo: 0
+	directScanoutBlockedBy: user settings,missing candidate
+	disabled: false
+	currentFormat: XRGB8888
+	mirrorOf: none
+	availableModes: 3456x2160@120.00Hz 3456x2160@60.00Hz 3456x2160@59.94Hz 3456x2160@50.00Hz 3456x2160@48.00Hz 3456x2160@47.95Hz 
+	colorManagementPreset: srgb
+	sdrBrightness: 1
+	sdrSaturation: 1
+	sdrMinLuminance: 0.2
+	sdrMaxLuminance: 80
+	hardwareCursorsInUse: true
+
+
+
+## DRM connectors
+card2-eDP-1 status=connected enabled=enabled edid_bytes=0
+  modes: 3456x2160 3456x2160 3456x2160 3456x2160 3456x2160 3456x2160 
+card2-HDMI-A-1 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+card2-USB-1 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+card2-USB-2 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+card2-USB-3 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+
+## thunderbolt
+==== 0-0 ====
+  authorized=1
+  device=0xf
+  device_name=iOS
+  generation=4
+  unique_id=009751a0-f8da-0100-ffff-ffffffffffff
+  usb4_port1 link=usb4
+  vendor=0x1
+  vendor_name=Apple Inc.
+==== 0-0:1.1 ====
+  device=0x2200
+  vendor=0x5ac
+==== 0-1 ====
+  authorized=1
+  boot=0
+  device=0xde81
+  device_name=Thunderbolt 5 Hub
+  generation=4
+  nvm_authenticate=0x0
+  nvm_version=56.81
+  rx_lanes=2
+  rx_speed=20.0 Gb/s
+  tx_lanes=2
+  tx_speed=20.0 Gb/s
+  unique_id=e0d78780-00ce-1b08-ffff-ffffffffffff
+  usb4_port1 link=usb4
+  usb4_port3 link=none
+  usb4_port5 link=none
+  usb4_port7 link=none
+  vendor=0x5a
+  vendor_name=Other World Computing
+==== domain0 ====
+  deauthorization=1
+  iommu_dma_protection=1
+  security=user
+
+## typec
+-- port0 data_role=[device]/ power_role=[sink]/
+   port0.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port0.1 active=yes svid=8087 mode=7 vdo=0x00000000
+-- port1 data_role=[host] device/ power_role=source [sink]/
+   port1.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port1.1 active=yes svid=8087 mode=7 vdo=0x00000000
+   partner type=hub usb_mode=usb2 usb3 usb4
+-- port2 data_role=host [device]/ power_role=source [sink]/
+   port2.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port2.1 active=yes svid=8087 mode=7 vdo=0x00000000
+-- port3 data_role=host [device]/ power_role=source [sink]/
+   port3.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port3.1 active=yes svid=8087 mode=7 vdo=0x00000000
+port labels from DT:
+  38 USB-C Left Back
+  3b USB-C Right
+  3f USB-C Left Front
+
+## USB devices
+1-1          1d5c:5801 speed=480    Fresco Logic, Inc. USB2.0 Hub
+1-1.1        1e91:de81 speed=12     Other World Computing Thunderbolt 5 Hub
+1-1.2        06cb:7100 speed=480    Synaptics VMM7100
+1-1.3        3434:0140 speed=12     Keychron Keychron Q4
+2-1          8087:5787 speed=10000  Intel Corporation USB3 HUB
+usb1         1d6b:0002 speed=480    Linux 7.1.12-2.5-1-ARCH xhci-hcd xHCI Host Controller
+usb2         1d6b:0003 speed=10000  Linux 7.1.12-2.5-1-ARCH xhci-hcd xHCI Host Controller
+
+## dmesg DP/TB (no RTKit spam)
+[Sun Sep 20 22:01:21 2026] thunderbolt-apple-nhi 701f00000.nhi: device links to tunneled native ports are missing!
+[Sun Sep 20 22:01:21 2026] thunderbolt 0-1: new device found, vendor=0x5a device=0xde81
+[Sun Sep 20 22:01:21 2026] thunderbolt 0-1: Other World Computing Thunderbolt 5 Hub
+[Sun Sep 20 22:01:22 2026] thunderbolt 0-0:1.1: new retimer found, vendor=0x5ac device=0x2200
+[Sun Sep 20 22:01:22 2026] thunderbolt-apple-acio 701ac0000.cio: error -ENODEV: PCIe-C requires a successful m1n1 preinit handoff
+[Sun Sep 20 22:01:22 2026] thunderbolt-apple-acio 701ac0000.cio: deferred PCIe-C activation failed: -19
+[Sun Sep 20 22:01:22 2026] usb 1-1.2: New USB device found, idVendor=06cb, idProduct=7100, bcdDevice= 1.c4
+[Sun Sep 20 22:01:22 2026] usb 1-1.2: Product: VMM7100
+[Sun Sep 20 22:01:35 2026] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): not active, tearing down
