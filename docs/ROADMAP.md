@@ -15,18 +15,15 @@ and [aurora-silicon/linux#6](https://github.com/aurora-silicon/linux/pull/6).
 ## Next
 
 3. **Dump DP adapter state** at tunnel time (HPD on `1:19`, DP IN enable on
-   `0:5`, AUX). Needs thunderbolt dyndbg (`sudo`). Script:
-   `scripts/capture-display.sh` (add a `--debug` path once we have a password
-   prompt).
-4. **Route DPTX to USB4 DP IN** when a DP tunnel activates on this ACIO.
-   Hook next to existing `pci_tunnel_*` NHI ops in
-   `drivers/thunderbolt/apple.c`, plus `drm/apple` `dptxep.c` / display
-   crossbar mux.
-5. **HPD into DCP.** Hub DP OUT HPD must reach DPTX so AUX/DPRX can finish
-   and the DRM USB-C connector gets an EDID.
-6. **Hyprland.** Once `card2-USB-*` (or a new connector) shows `connected`
-   with modes, `hyprctl monitors` should pick it up with the existing
-   `preferred` / `auto` `monitors.lua`.
+   `0:5`, AUX). Needs thunderbolt dyndbg (`sudo`).
+4. **Route DPTX to USB4 DP IN** — see [`dptx-usb4-hook.md`](dptx-usb4-hook.md).
+   DT currently only binds crossbar cell 0 (`dpphy`). USB4 needs cell 1/2
+   (`dpin0`/`dpin1`) plus `dptxport_connect()` / `set_hpd()` from
+   `dcp_typec_route_set()` when `TYPEC_MODE_USB4`.
+5. **HPD into DCP** during the ~12 s DPRX window so the tunnel is not torn
+   down.
+6. **Hyprland.** Once a DRM USB-C connector shows `connected` with modes,
+   existing `monitors.lua` `preferred` / `auto` should pick it up.
 
 ## Later / out of scope here
 

@@ -78,6 +78,10 @@ Native DP alt-mode on the **hub** port would turn the Thunderbolt switch off
 again (that is why USB4-before-DP exists). Display through the hub must be
 **tunneled DP**, not alt-mode on the Mac port.
 
+Hook for the first kernel patch:
+[`docs/dptx-usb4-hook.md`](docs/dptx-usb4-hook.md). The display crossbar
+already has `dpin0`/`dpin1` outputs; the DT only wires `dpphy` (alt-mode).
+
 PCIe-C (`m1n1 handoff is not initialized`) is unrelated. Skip it.
 
 ## Repo layout
