@@ -147,3 +147,11 @@ continue until 21:50:59. The next boot is 21:52. No panic.
 So this write is the action that was in flight, and it left no
 completion line. Do not run it. Do not repeat `read_ext0`.
 `write_074` now refuses to load.
+
+## 2026-09-21 21:56 no hardware
+
+This boot, after the reset, `315c00000.dcp` still logs
+`setup_video_limits` with no timing, then `set_run_mode 2 -> 1 -> 0`,
+then `set_device_enabled 1 -> 0`. eDP-1 is on. No module was loaded
+and no register was written on this step. Disp-block reads and writes
+stay closed. `iomfb_poweron` stays closed.
