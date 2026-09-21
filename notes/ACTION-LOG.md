@@ -516,3 +516,21 @@ This verifies the saved hashes, restores only the two 0090 appledrm files and
 the 0090 initramfs, removes only the 0092 config, and runs depmod. No live
 driver reload, no direct hardware access, and no automatic reboot. Any
 subsequent recovery reboot must be recorded separately before execution.
+
+## 2026-09-21 — 0092 boot successful; disarm future boots
+
+Oliver is back. Boot ID f77dc546-cf01-4d44-bdb6-50ee9aa0b8d8; loaded usb4_protocol_probe=Y; eDP connected
+and enabled; no external Thunderbolt routers. Kernel journal shows panel
+3456x2160@120 modeset completed. No USB4 protocol probe has run yet.
+
+After committing/pushing this entry, execute these exact commands:
+```
+sudo -n rm -- /etc/modprobe.d/j416s-0092-protocol-probe.conf
+sudo -n mkinitcpio -p linux-aurora
+```
+Then extract the rebuilt initramfs with lsinitcpio -x into a fresh /tmp
+directory and verify the probe config is absent and the 0092 module hash
+matches. No live parameter write, module reload, reboot, MMIO or firmware
+request. Addresses directly accessed: none. Loaded probe stays enabled for
+this boot only; future boots default to disabled. Keep the hub unplugged.
+
