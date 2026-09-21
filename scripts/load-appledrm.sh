@@ -10,11 +10,13 @@ TBKO="$ROOT/src/thunderbolt/thunderbolt.ko"
 TBAPPLEKO="$ROOT/src/thunderbolt/thunderbolt_apple.ko"
 MUXKO="$ROOT/src/mux/mux-apple-display-crossbar.ko"
 PHYKO="$ROOT/src/phy/phy-apple-atc.ko"
+DPTXPHYKO="$ROOT/src/phy/phy-apple-dptx.ko"
 INTREE="/lib/modules/$VER/kernel/drivers/gpu/drm/apple/appledrm.ko"
 TBINTREE="/lib/modules/$VER/kernel/drivers/thunderbolt/thunderbolt.ko"
 TBAPPLEINTREE="/lib/modules/$VER/kernel/drivers/thunderbolt/thunderbolt_apple.ko"
 MUXINTREE="/lib/modules/$VER/kernel/drivers/mux/mux-apple-display-crossbar.ko"
 PHYINTREE="/lib/modules/$VER/kernel/drivers/phy/apple/phy-apple-atc.ko"
+DPTXPHYINTREE="/lib/modules/$VER/kernel/drivers/phy/apple/phy-apple-dptx.ko"
 DST="/lib/modules/$VER/updates"
 STATUS="$ROOT/notes/load-status"
 
@@ -61,6 +63,14 @@ if [[ -f $PHYKO ]]; then
   install -d "$(dirname "$PHYINTREE")"
   install -m 0644 "$PHYKO" "$PHYINTREE"
   install -m 0644 "$PHYKO" "$DST/phy-apple-atc.ko"
+fi
+if [[ -f $DPTXPHYKO ]]; then
+  if [[ -f $DPTXPHYINTREE && ! -f ${DPTXPHYINTREE}.stock ]]; then
+    cp -a "$DPTXPHYINTREE" "${DPTXPHYINTREE}.stock"
+  fi
+  install -d "$(dirname "$DPTXPHYINTREE")"
+  install -m 0644 "$DPTXPHYKO" "$DPTXPHYINTREE"
+  install -m 0644 "$DPTXPHYKO" "$DST/phy-apple-dptx.ko"
 fi
 depmod -a "$VER"
 

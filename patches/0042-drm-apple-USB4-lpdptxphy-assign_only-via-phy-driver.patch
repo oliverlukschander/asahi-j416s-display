@@ -1,0 +1,73 @@
+From e983ce41b334696711fe63f7ccf4f2a93539209c Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 13:31:58 +0200
+Subject: [PATCH] drm/apple: USB4 lpdptxphy assign_only via phy driver
+
+0040's second ioremap of phy@39c000000 hung the fabric. Call
+phy_set_mode(DP) on the driver's mapping. Out-of-tree phy-apple-dptx
+assign_only writes core+0x10 only (no analog activate). Skip
+phy_configure on USB4.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 10 ++++------
+ drivers/gpu/drm/apple/dptxep.c |  7 ++-----
+ 2 files changed, 6 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index d33fdde..92338dc 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1412,12 +1412,8 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 dcp->active_typec_route ? "borrowed" : "fixed",
+ 		 dcp->connector_type, dcp->dptxport[port].connected);
+ 
+-	if (dcp_is_usb4_output(dcp)) {
++	if (dcp_is_usb4_output(dcp))
+ 		dcp_usb4_enable_lpdptxphy(dcp);
+-		dev_info(dcp->dev,
+-			 "USB4: skip DPTX connect (no lpdptxphy MMIO poke)\n");
+-		return 0;
+-	}
+ 
+ 	mutex_lock(&dcp->hpd_mutex);
+ 	if (!dcp->dptxport[port].enabled) {
+@@ -1433,7 +1429,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].usb4_lane_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (!usb4)
++	if (usb4)
++		dcp->dptxport[port].atcphy = usb4_lpdptx_phy;
++	else
+ 		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index b304d80..9a6b535 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -357,8 +357,7 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	}
+ 
+ 	if (dptx->phy_ops.dp.set_lanes) {
+-		if (dptx->atcphy &&
+-		    !(dcp_is_usb4_output(dcp) && dptx->atcphy == dcp->phy)) {
++		if (dptx->atcphy && !dcp_is_usb4_output(dcp)) {
+ 			ret = phy_configure(dptx->atcphy, &dptx->phy_ops);
+ 			if (ret)
+ 				return ret;
+@@ -473,9 +472,7 @@ static int dptxport_call_set_link_rate(struct apple_epic_service *service,
+ 		dptx->phy_ops.dp.link_rate = phy_link_rate;
+ 		dptx->phy_ops.dp.set_rate = 1;
+ 
+-		if (dptx->atcphy &&
+-		    !(dcp_is_usb4_output(service->ep->dcp) &&
+-		      dptx->atcphy == service->ep->dcp->phy)) {
++		if (dptx->atcphy && !dcp_is_usb4_output(service->ep->dcp)) {
+ 			ret = phy_configure(dptx->atcphy, &dptx->phy_ops);
+ 			if (ret)
+ 				return ret;
+-- 
+2.55.0
+

@@ -1,7 +1,8 @@
 KDIR ?= /home/oliver/Development/omarchy/aurora-j416s/kbuild/usr/lib/modules/7.1.12-2.5-1-ARCH/build
 
-obj-m := phy-apple-atc.o
+obj-m := phy-apple-atc.o phy-apple-dptx.o
 phy-apple-atc-y := atc.o
+phy-apple-dptx-y := dptx.o
 
 ccflags-y += -I$(src)
 
