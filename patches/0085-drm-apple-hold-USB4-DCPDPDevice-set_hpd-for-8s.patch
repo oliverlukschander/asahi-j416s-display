@@ -1,0 +1,213 @@
+From a848d59fb761b474180ead6566371b83bd398df9 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 18:41:48 +0200
+Subject: [PATCH] drm/apple: hold USB4 DCPDPDevice set_hpd for 8s
+
+0084 started DCPDPDevice and aborted set_hpd at 1s. Firmware's
+start timer is 5s, then 0xe0115022 and 22/24. Drop ATC AUX.
+Wait 8s so the call stays open across that timer.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/afk.c    | 27 +++++++++++++++++++++++---
+ drivers/gpu/drm/apple/afk.h    |  8 ++++++++
+ drivers/gpu/drm/apple/dcp.c    | 35 +++++++++++++---------------------
+ drivers/gpu/drm/apple/dptxep.c | 13 ++++++++++---
+ drivers/gpu/drm/apple/dptxep.h |  2 ++
+ 5 files changed, 57 insertions(+), 28 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/afk.c b/drivers/gpu/drm/apple/afk.c
+index b7f1629..3a0585e 100644
+--- a/drivers/gpu/drm/apple/afk.c
++++ b/drivers/gpu/drm/apple/afk.c
+@@ -887,6 +887,16 @@ int afk_send_epic(struct apple_dcp_afkep *ep, u32 channel, u16 tag,
+ int afk_send_command(struct apple_epic_service *service, u8 type,
+ 		     const void *payload, size_t payload_len, void *output,
+ 		     size_t output_len, u32 *retcode)
++{
++	return afk_send_command_timeout(service, type, payload, payload_len,
++					output, output_len, retcode,
++					MSEC_PER_SEC);
++}
++
++int afk_send_command_timeout(struct apple_epic_service *service, u8 type,
++			     const void *payload, size_t payload_len,
++			     void *output, size_t output_len, u32 *retcode,
++			     unsigned int timeout_ms)
+ {
+ 	struct epic_cmd cmd;
+ 	void *rxbuf, *txbuf;
+@@ -949,7 +959,7 @@ int afk_send_command(struct apple_epic_service *service, u8 type,
+ 		goto err_free_cmd;
+ 
+ 	ret = wait_for_completion_timeout(&completion,
+-					  msecs_to_jiffies(MSEC_PER_SEC));
++					  msecs_to_jiffies(timeout_ms));
+ 
+ 	if (ret <= 0) {
+ 		spin_lock_irqsave(&service->lock, flags);
+@@ -987,6 +997,16 @@ int afk_send_command(struct apple_epic_service *service, u8 type,
+ int afk_service_call(struct apple_epic_service *service, u16 group, u32 command,
+ 		     const void *data, size_t data_len, size_t data_pad,
+ 		     void *output, size_t output_len, size_t output_pad)
++{
++	return afk_service_call_timeout(service, group, command, data, data_len,
++					data_pad, output, output_len,
++					output_pad, MSEC_PER_SEC);
++}
++
++int afk_service_call_timeout(struct apple_epic_service *service, u16 group,
++			     u32 command, const void *data, size_t data_len,
++			     size_t data_pad, void *output, size_t output_len,
++			     size_t output_pad, unsigned int timeout_ms)
+ {
+ 	struct epic_service_call *call;
+ 	void *bfr;
+@@ -1010,8 +1030,9 @@ int afk_service_call(struct apple_epic_service *service, u16 group, u32 command,
+ 
+ 	memcpy(bfr + sizeof(*call), data, data_len);
+ 
+-	ret = afk_send_command(service, EPIC_SUBTYPE_STD_SERVICE, bfr, bfr_len,
+-			       bfr, bfr_len, &retcode);
++	ret = afk_send_command_timeout(service, EPIC_SUBTYPE_STD_SERVICE, bfr,
++				       bfr_len, bfr, bfr_len, &retcode,
++				       timeout_ms);
+ 	if (ret)
+ 		goto out;
+ 	if (retcode) {
+diff --git a/drivers/gpu/drm/apple/afk.h b/drivers/gpu/drm/apple/afk.h
+index a339c00..d63d26b 100644
+--- a/drivers/gpu/drm/apple/afk.h
++++ b/drivers/gpu/drm/apple/afk.h
+@@ -198,7 +198,15 @@ int afk_send_epic(struct apple_dcp_afkep *ep, u32 channel, u16 tag,
+ int afk_send_command(struct apple_epic_service *service, u8 type,
+ 		     const void *payload, size_t payload_len, void *output,
+ 		     size_t output_len, u32 *retcode);
++int afk_send_command_timeout(struct apple_epic_service *service, u8 type,
++			     const void *payload, size_t payload_len,
++			     void *output, size_t output_len, u32 *retcode,
++			     unsigned int timeout_ms);
+ int afk_service_call(struct apple_epic_service *service, u16 group, u32 command,
+ 		     const void *data, size_t data_len, size_t data_pad,
+ 		     void *output, size_t output_len, size_t output_pad);
++int afk_service_call_timeout(struct apple_epic_service *service, u16 group,
++			     u32 command, const void *data, size_t data_len,
++			     size_t data_pad, void *output, size_t output_len,
++			     size_t output_pad, unsigned int timeout_ms);
+ #endif
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index c774078..516384c 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1493,7 +1493,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 					    dcp->active_typec_route->usb4_xbar) {
+ 						struct apple_dcp_typec_route *route =
+ 							dcp->active_typec_route;
+-						int m, aux, h2;
++						int m, h2;
+ 
+ 						mux_control_deselect(route->usb4_xbar);
+ 						m = mux_control_select(route->usb4_xbar,
+@@ -1502,29 +1502,20 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 							 "USB4: reselect dpin after nub: %d\n",
+ 							 m);
+ 						/*
+-						 * A second set_hpd, once the nub
+-						 * is powered, is what makes
+-						 * firmware init DCPDPDevice and
+-						 * attach it to DPTXController.
+-						 * 0074 did that with no AUX and
+-						 * the device start timed out
+-						 * (22/24). Enable USB-C ATC AUX
+-						 * (no lane switch) first so the
+-						 * device has a PHY to start.
++						 * Second set_hpd starts
++						 * DCPDPDevice. 0084 armed ATC
++						 * AUX and aborted this call
++						 * at 1s; firmware's start
++						 * timer is 5s and then 22/24.
++						 * No ATC AUX (that dropped
++						 * analog 0x1017 to 0x17).
++						 * Hold the call for 8s.
+ 						 */
+-						if (dcp->phy) {
+-							dcp->dptxport[bind].atcphy =
+-								dcp->phy;
+-							aux = phy_set_mode_ext(
+-								dcp->phy, PHY_MODE_DP,
+-								dcp->index);
+-							dev_info(dcp->dev,
+-								 "USB4: ATC AUX before DCPDPDevice: %d\n",
+-								 aux);
+-						}
+-						h2 = dptxport_set_hpd(svc, true);
++						h2 = dptxport_set_hpd_timeout(svc,
++									      true,
++									      8000);
+ 						dev_info(dcp->dev,
+-							 "USB4: set_hpd after nub (DCPDPDevice): %d\n",
++							 "USB4: set_hpd after nub 8s (DCPDPDevice): %d\n",
+ 							 h2);
+ 					}
+ 				}
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 4a77e7d..63ea58d 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -6,6 +6,7 @@
+ #include <linux/module.h>
+ #include <linux/phy/phy.h>
+ #include <linux/delay.h>
++#include <linux/jiffies.h>
+ 
+ /* Extra bits OR'd into DPTX remote-port target for USB4 (bit 12 = guess for DPIN). */
+ unsigned int usb4_target_or;
+@@ -169,7 +170,8 @@ int dptxport_release_display(struct apple_epic_service *service)
+ 	return afk_service_call(service, 0, 7, NULL, 0, 16, NULL, 0, 16);
+ }
+ 
+-int dptxport_set_hpd(struct apple_epic_service *service, bool hpd)
++int dptxport_set_hpd_timeout(struct apple_epic_service *service, bool hpd,
++			     unsigned int timeout_ms)
+ {
+ 	struct dcpdptx_hotplug_cmd cmd, resp;
+ 	int ret;
+@@ -179,8 +181,8 @@ int dptxport_set_hpd(struct apple_epic_service *service, bool hpd)
+ 	if (hpd)
+ 		cmd.unk = cpu_to_le32(1);
+ 
+-	ret = afk_service_call(service, 8, 8, &cmd, sizeof(cmd), 12, &resp,
+-			       sizeof(resp), 12);
++	ret = afk_service_call_timeout(service, 8, 8, &cmd, sizeof(cmd), 12,
++				       &resp, sizeof(resp), 12, timeout_ms);
+ 	if (ret)
+ 		return ret;
+ 	if (le32_to_cpu(resp.unk) != hpd)
+@@ -188,6 +190,11 @@ int dptxport_set_hpd(struct apple_epic_service *service, bool hpd)
+ 	return 0;
+ }
+ 
++int dptxport_set_hpd(struct apple_epic_service *service, bool hpd)
++{
++	return dptxport_set_hpd_timeout(service, hpd, MSEC_PER_SEC);
++}
++
+ static int
+ dptxport_call_get_max_drive_settings(struct apple_epic_service *service,
+ 				     void *reply_, size_t reply_size)
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index 895a7bc..8c3501f 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -71,6 +71,8 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ int dptxport_request_display(struct apple_epic_service *service);
+ int dptxport_release_display(struct apple_epic_service *service);
+ int dptxport_set_hpd(struct apple_epic_service *service, bool hpd);
++int dptxport_set_hpd_timeout(struct apple_epic_service *service, bool hpd,
++			     unsigned int timeout_ms);
+ 
+ extern unsigned int usb4_target_or;
+ extern int usb4_dpin_index;
+-- 
+2.55.0
+
