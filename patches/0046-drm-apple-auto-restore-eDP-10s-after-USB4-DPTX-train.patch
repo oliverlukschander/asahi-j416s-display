@@ -1,0 +1,63 @@
+From 62a5885a15ce5108d7141aed2a5ffab15a1b5764 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:01:54 +0200
+Subject: [PATCH] drm/apple: auto-restore eDP 10s after USB4 DPTX train
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Full analog train got HBR3/4 lanes then 4→1 and rate 0. DP IN
+DPRX stayed 0: lpdptxphy analog is not the USB4 dpin path. After
+a manual train, put core+0x10 back to 0 so eDP can return without
+unplugging.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 18810ed..9df4e0b 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1541,6 +1541,18 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	return ret;
+ }
+ 
++static void usb4_restore_edp_work(struct work_struct *work)
++{
++	usb4_force_dptx = false;
++	if (usb4_lpdptx_phy)
++		phy_set_mode_ext(usb4_lpdptx_phy, PHY_MODE_DP, 0);
++	if (usb4_armed_dcp)
++		dev_info(usb4_armed_dcp->dev,
++			 "USB4: auto-restore lpdptxphy DCP index 0 (eDP)\n");
++}
++
++static DECLARE_DELAYED_WORK(usb4_restore_edp_wq, usb4_restore_edp_work);
++
+ static int usb4_dptx_train_set(const char *val, const struct kernel_param *kp)
+ {
+ 	int v, ret;
+@@ -1549,6 +1561,7 @@ static int usb4_dptx_train_set(const char *val, const struct kernel_param *kp)
+ 	if (ret)
+ 		return ret;
+ 	if (v == 0) {
++		cancel_delayed_work_sync(&usb4_restore_edp_wq);
+ 		usb4_force_dptx = false;
+ 		if (usb4_lpdptx_phy)
+ 			phy_set_mode_ext(usb4_lpdptx_phy, PHY_MODE_DP, 0);
+@@ -1564,8 +1577,9 @@ static int usb4_dptx_train_set(const char *val, const struct kernel_param *kp)
+ 
+ 	usb4_force_dptx = true;
+ 	dev_info(usb4_armed_dcp->dev,
+-		 "USB4: user DPTX train (full analog; blanks eDP)\n");
++		 "USB4: user DPTX train (full analog; blanks eDP; auto-restore 10s)\n");
+ 	ret = dcp_dptx_connect(usb4_armed_dcp, 0);
++	schedule_delayed_work(&usb4_restore_edp_wq, 10 * HZ);
+ 	return ret ? ret : 0;
+ }
+ 
+-- 
+2.55.0
+
