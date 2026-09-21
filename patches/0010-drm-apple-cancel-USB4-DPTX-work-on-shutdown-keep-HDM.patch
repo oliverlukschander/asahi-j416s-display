@@ -1,0 +1,86 @@
+From 1f0a2424dd5f83291d95d6339549835d6ced0dc3 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 09:13:17 +0200
+Subject: [PATCH 10/10] drm/apple: cancel USB4 DPTX work on shutdown; keep HDMI
+ xbar on USB4
+
+udev-worker blocked 245s on reboot while DPTX reconnects ran. Cancel
+those works on shutdown/suspend, cap retries at 3, keep the HDMI DPTX
+analog mux so INACTIVE_SINK can flip to dpin1 instead of dropping the
+pipeline.
+---
+ drivers/gpu/drm/apple/dcp.c    | 17 +++++++++++++++--
+ drivers/gpu/drm/apple/dptxep.c |  8 ++++++++
+ 2 files changed, 23 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index c9819b3..8d07e07 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -213,7 +213,7 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	 */
+ 	dcp_dptx_disconnect(dcp, 0);
+ 
+-	if (dcp->fixed_route_selected) {
++	if (dcp->fixed_route_selected && !usb4) {
+ 		ret = mux_control_deselect(dcp->xbar);
+ 		if (ret)
+ 			return ret;
+@@ -1291,7 +1291,7 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ 
+ #define DPTX_CONNECT_TIMEOUT msecs_to_jiffies(2000)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+-#define DPTX_RECONNECT_RETRIES 10
++#define DPTX_RECONNECT_RETRIES 3
+ 
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ {
+@@ -2445,6 +2445,14 @@ static void dcp_platform_remove(struct platform_device *pdev)
+ 
+ static void dcp_platform_shutdown(struct platform_device *pdev)
+ {
++	struct apple_dcp *dcp = platform_get_drvdata(pdev);
++
++	if (dcp) {
++		WRITE_ONCE(dcp->typec_cable_connected, false);
++		cancel_delayed_work_sync(&dcp->typec_reconnect_wq);
++		cancel_delayed_work_sync(&dcp->typec_fabric_retrain_wq);
++	}
++	cancel_delayed_work_sync(&dcp_usb4_auto_arm_wq);
+ 	component_del(&pdev->dev, &dcp_comp_ops);
+ }
+ 
+@@ -2452,6 +2460,11 @@ static int dcp_platform_suspend(struct device *dev)
+ {
+ 	struct apple_dcp *dcp = dev_get_drvdata(dev);
+ 
++	WRITE_ONCE(dcp->typec_cable_connected, false);
++	cancel_delayed_work_sync(&dcp->typec_reconnect_wq);
++	cancel_delayed_work_sync(&dcp->typec_fabric_retrain_wq);
++	cancel_delayed_work_sync(&dcp_usb4_auto_arm_wq);
++
+ 	if (dcp->avep)
+ 		av_service_disconnect(dcp);
+ 
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 85a7f95..4811bc8 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -633,6 +633,14 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 		memcpy(reply, data, min(reply_size, data_size));
+ 		if (reply_size >= 4)
+ 			memset(reply, 0, 4);
++		if (dcp_is_usb4_output(service->ep->dcp)) {
++			struct apple_dcp *dcp = service->ep->dcp;
++
++			dcp->typec_reconnect_tries = 2;
++			mod_delayed_work(system_freezable_wq,
++					 &dcp->typec_reconnect_wq,
++					 msecs_to_jiffies(200));
++		}
+ 		return 0;
+ 	default:
+ 		/* just try to ACK and hope for the best... */
+-- 
+2.55.0
+
