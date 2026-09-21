@@ -55,3 +55,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0059-thunderbolt-Apple-start-ACIO-RTKit-eps-probe-VSE.patch` | Start RTKit ep 0x10–0x1f. Probe VSE +0x02–0x0b writability. |
 | `0060-thunderbolt-do-not-write-Apple-VSE-2-0b.patch` | Closed: VSE +0x0b write timed out NHI (`ffffffff` CS). Dump-only VSE. |
 | `0061-thunderbolt-Apple-VSE-0x02-only.patch` | Write VSE +0x02=1 only (cable_info neighbor). Skip +0x03–0x0b. |
+| `0062-thunderbolt-Apple-DP-IN-video-hop-credits-7.patch` | VSE +0x02 is scratch. Set hop 9 credits 0→7. |

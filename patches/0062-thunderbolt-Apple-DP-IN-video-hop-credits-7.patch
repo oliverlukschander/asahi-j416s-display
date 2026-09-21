@@ -1,0 +1,54 @@
+From 0143d15b95b8b685e683b2efea0f55c10e20b68b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:39:26 +0200
+Subject: [PATCH] thunderbolt: set Apple DP IN video hop credits from 0 to 7
+
+VSE +0x02=1 is safe scratch and does not set DPRX. Video hop 9 is
+enabled with initial_credits=0. Write 7 after the tunnel is up.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 952967d..1707198 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -705,6 +705,25 @@ static void apple_dp_dump_hop(struct tb_port *port, unsigned int hopid)
+ 		     hop.initial_credits);
+ }
+ 
++static void apple_dp_set_video_credits(struct tb_port *port)
++{
++	struct tb_regs_hop hop;
++	int ret;
++
++	ret = tb_port_read(port, &hop, TB_CFG_HOPS, 2 * 9, 2);
++	if (ret || !hop.enable)
++		return;
++	if (hop.initial_credits) {
++		tb_port_warn(port, "DP IN hop 9 credits already %u\n",
++			     hop.initial_credits);
++		return;
++	}
++	hop.initial_credits = 7;
++	ret = tb_port_write(port, &hop, TB_CFG_HOPS, 2 * 9, 2);
++	tb_port_warn(port, "DP IN hop 9 credits 0 -> 7 write %d\n", ret);
++	apple_dp_dump_hop(port, 9);
++}
++
+ static void apple_dp_dump_adapter(struct tb_port *port, const char *tag)
+ {
+ 	u32 w[17], cs4 = 0xffffffff;
+@@ -1074,6 +1093,7 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	if (tb_port_is_dpin(in)) {
+ 		apple_dp_dump_hop(in, 8);
+ 		apple_dp_dump_hop(in, 9);
++		apple_dp_set_video_credits(in);
+ 	}
+ 	if (out && tb_port_is_dpout(out))
+ 		apple_dp_dump_adapter(out, "hub DP OUT");
+-- 
+2.55.0
+
