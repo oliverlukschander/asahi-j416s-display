@@ -1,0 +1,164 @@
+From 9a1c17a9b406802efe2f8844a628b277b7048f3b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 11:29:04 +0200
+Subject: [PATCH 26/26] drm/apple: USB4 DP IN is ACIO AUX, stop PHY 3 DPTX
+
+HDMI PHY 3 trains the empty jack (Parade PS190). ATC 2 in USB4 has
+no firmware DPTX object. USB4 now selects the USB-C dpin mux only
+and leaves AUX/DPCD to ACIO. Do not phy_set_mode(DP) on the USB4
+ATC and do not call dcp_dptx_connect for this path.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 54 ++++++++++++----------------------
+ drivers/gpu/drm/apple/dptxep.c |  7 +----
+ 2 files changed, 19 insertions(+), 42 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index cd51ca0..53e8f88 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -196,15 +196,15 @@ static unsigned int dcp_typec_route_score(struct apple_dcp_typec_route *route)
+ }
+ 
+ /*
+- * USB4 DP IN: prefer the HDMI hybrid dcpext. Firmware has a DPTX object
+- * for PHY 3; ATC 2 in USB4 has none (device == NULL). Digital from
+- * dispext0 feeds both HDMI analog and USB-C dpin0.
++ * USB4 DP IN: prefer the USB-C dcpext. HDMI PHY 3 trains the empty jack;
++ * ATC 2 in USB4 has no firmware DPTX object. Analog/AUX into adapter 0:5
++ * is ACIO, so this DCP only selects the dpin mux.
+  */
+ static unsigned int dcp_typec_route_score_usb4(struct apple_dcp_typec_route *route)
+ {
+ 	unsigned int score = dcp_typec_route_score(route);
+ 
+-	if (!route->dcp->fixed_phy)
++	if (route->dcp->fixed_phy)
+ 		score += 100;
+ 	return score;
+ }
+@@ -254,17 +254,13 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 
+ 	dcp->phy = route->phy;
+ 	/*
+-	 * USB4: firmware DPTX object is HDMI PHY 3 on the hybrid dcpext.
+-	 * Crossbar dpin0 still takes this DCP's digital onto ACIO DP IN.
++	 * USB4: digital into the USB-C dpin mux. Do not bind HDMI PHY 3
++	 * (empty jack) or switch ATC lanes to DP. AUX is ACIO DP IN.
+ 	 */
+ 	if (usb4 && usb4_atc >= 0)
+ 		dcp->dptx_phy = usb4_atc;
+-	else if (usb4 && dcp->fixed_dptx_phy)
+-		dcp->dptx_phy = dcp->fixed_dptx_phy;
+ 	else
+ 		dcp->dptx_phy = route->dptx_phy;
+-	if (usb4 && dcp->fixed_phy)
+-		dcp->phy = dcp->fixed_phy;
+ 	dcp->connector_type = DRM_MODE_CONNECTOR_USB;
+ 	if (route->port->connector) {
+ 		route->port->connector->dcp = to_platform_device(dcp->dev);
+@@ -288,21 +284,8 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	dcp->active_typec_route = route;
+ 	route->selected = true;
+ 
+-	/*
+-	 * ATC 2 in USB4 has no firmware DPTX object. Only poke lpdptx when
+-	 * this DCP has no dedicated PHY 3 engine.
+-	 */
+-	if (usb4 && route->phy && !dcp->fixed_phy) {
+-		ret = phy_set_mode_ext(route->phy, PHY_MODE_DP, dcp->index);
+-		if (ret)
+-			dev_warn(dcp->dev,
+-				 "USB4: early DP AUX enable failed: %d\n", ret);
+-		else
+-			dev_info(dcp->dev, "USB4: DP AUX enabled before DPTX connect\n");
+-	}
+-
+ 	dev_info(dcp->dev, "allocated Type-C DPTX PHY %u (%s)\n",
+-		 dcp->dptx_phy, usb4 ? "USB4 DP IN" : "DP alt-mode");
++		 dcp->dptx_phy, usb4 ? "USB4 DP IN, ACIO AUX" : "DP alt-mode");
+ 	return 0;
+ }
+ 
+@@ -311,9 +294,6 @@ static int dcp_typec_route_deactivate(struct apple_dcp_typec_route *route)
+ 	struct apple_dcp *dcp = route->dcp;
+ 	int ret;
+ 
+-	if (route->usb4_selected && route->phy)
+-		phy_set_mode_ext(route->phy, PHY_MODE_INVALID, 0);
+-
+ 	ret = mux_control_deselect(dcp_typec_route_mux(route));
+ 	if (ret)
+ 		return ret;
+@@ -670,11 +650,9 @@ static int dcp_usb4_arm_typec(int typec_index)
+ 		target->hpd = true;
+ 		dcp->typec_reconnect_tries = 0;
+ 		cancel_delayed_work(&dcp->typec_reconnect_wq);
+-		mod_delayed_work(system_freezable_wq, &dcp->typec_reconnect_wq,
+-				 DPTX_USB4_CONNECT_DELAY);
+ 		dev_info(dcp->dev,
+-			 "USB4 DP IN armed typec%u; DPTX connect in %u ms\n",
+-			 typec_index, jiffies_to_msecs(DPTX_USB4_CONNECT_DELAY));
++			 "USB4 DP IN armed typec%u; ACIO AUX owns adapter 0:5 (no DPTX PHY)\n",
++			 typec_index);
+ 	}
+ 	mutex_unlock(&dcp_typec_fabric_lock);
+ 	return 0;
+@@ -706,7 +684,7 @@ static void dcp_usb4_auto_arm_work(struct work_struct *work)
+ 	}
+ 	if (*hpd && *idx >= 0) {
+ 		typec = *idx;
+-		pr_info("appledrm: DP IN HPD=1 typec%u, DPTX ATC from Type-C route (not HDMI phy 3)\n",
++		pr_info("appledrm: DP IN HPD=1 typec%u, dpin mux only (ACIO AUX, no DPTX PHY)\n",
+ 			typec);
+ 		__symbol_put("tb_apple_dp_in_hpd");
+ 		__symbol_put("tb_apple_dp_typec_index");
+@@ -1366,10 +1344,12 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	/*
+-	 * USB4: bind the Type-C DP PHY so ACTIVATE can enable lpdptx AUX
+-	 * without switching USB4 lanes (phy-apple-atc USB4 set_mode).
+-	 */
++	if (usb4) {
++		dev_info(dcp->dev,
++			 "USB4: skip DPTX connect; ACIO DP IN AUX must complete DPRX\n");
++		ret = 0;
++		goto out_unlock;
++	}
+ 	dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+@@ -1454,6 +1434,8 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 
+ 	if (!READ_ONCE(dcp->typec_cable_connected))
+ 		return;
++	if (dcp_is_usb4_output(dcp))
++		return;
+ 
+ 	ret = dcp_dptx_connect(dcp, 0);
+ 	if (!ret) {
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 53dfc03..3da7c11 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -88,13 +88,8 @@ static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
+ 		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 		     DCPDPTX_REMOTE_PORT_CONNECTED;
+ 
+-	if (dcp_is_usb4_output(dcp)) {
+-		/* Destination is USB-C dpin; engine is HDMI PHY 3 (atc). */
+-		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
+-
+-		target |= FIELD_PREP(DCPDPTX_REMOTE_PORT_DPIN, dpin);
++	if (dcp_is_usb4_output(dcp))
+ 		target |= usb4_target_or;
+-	}
+ 	return target;
+ }
+ 
+-- 
+2.55.0
+

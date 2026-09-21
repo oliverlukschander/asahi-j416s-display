@@ -17,4 +17,6 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0021-phy-apple-atc-enable-DP-AUX-on-USB4-without-lane-switch.patch` | USB4 ACTIVATE enables `lpdptx` AUX without switching SS lanes to DP. Out-of-tree: `src/phy`. |
 | `0022-drm-apple-bind-USB4-DPTX-PHY-for-lpdptx-AUX.patch` | Bind Type-C DP PHY on USB4 so ACTIVATE can enable AUX. Skip ATC DP lane `phy_configure`. |
 | `0023-drm-apple-USB4-AUX-before-connect-drop-DPIN-bits.patch` | Enable lpdptx at USB4 mux arm; remote-port ATC only (`0x8020`), no DPIN field. |
-| `0024-drm-apple-USB4-DPTX-engine-PHY3-destination-dpin0.patch` | USB4 uses HDMI PHY 3 as DPTX engine; USB-C dpin0 analog; DPIN bits in remote-port. |
+| `0024-drm-apple-USB4-DPTX-engine-PHY3-destination-dpin0.patch` | USB4 uses HDMI PHY 3 as DPTX engine; USB-C dpin0 analog; DPIN bits in remote-port. Closed: trains empty HDMI jack. |
+| `0025-thunderbolt-Apple-DP-IN-analog-AUX-after-tunnel-up.patch` | After DP VE/AE, dump host DP IN CS/hops/ACIO RC and poll CS on change. Out-of-tree also builds `thunderbolt_apple.ko`. |
+| `0026-drm-apple-USB4-DP-IN-is-ACIO-AUX-stop-PHY-3.patch` | USB4 selects USB-C dpin mux only. No DPTX PHY 3, no ATC `phy_set_mode(DP)`. |

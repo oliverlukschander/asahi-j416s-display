@@ -7,10 +7,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VER="$(uname -r)"
 KO="$ROOT/src/appledrm/appledrm.ko"
 TBKO="$ROOT/src/thunderbolt/thunderbolt.ko"
+TBAPPLEKO="$ROOT/src/thunderbolt/thunderbolt_apple.ko"
 MUXKO="$ROOT/src/mux/mux-apple-display-crossbar.ko"
 PHYKO="$ROOT/src/phy/phy-apple-atc.ko"
 INTREE="/lib/modules/$VER/kernel/drivers/gpu/drm/apple/appledrm.ko"
 TBINTREE="/lib/modules/$VER/kernel/drivers/thunderbolt/thunderbolt.ko"
+TBAPPLEINTREE="/lib/modules/$VER/kernel/drivers/thunderbolt/thunderbolt_apple.ko"
 MUXINTREE="/lib/modules/$VER/kernel/drivers/mux/mux-apple-display-crossbar.ko"
 PHYINTREE="/lib/modules/$VER/kernel/drivers/phy/apple/phy-apple-atc.ko"
 DST="/lib/modules/$VER/updates"
@@ -36,6 +38,13 @@ if [[ -f $TBKO ]]; then
   fi
   install -m 0644 "$TBKO" "$TBINTREE"
   install -m 0644 "$TBKO" "$DST/thunderbolt.ko"
+fi
+if [[ -f $TBAPPLEKO ]]; then
+  if [[ -f $TBAPPLEINTREE && ! -f ${TBAPPLEINTREE}.stock ]]; then
+    cp -a "$TBAPPLEINTREE" "${TBAPPLEINTREE}.stock"
+  fi
+  install -m 0644 "$TBAPPLEKO" "$TBAPPLEINTREE"
+  install -m 0644 "$TBAPPLEKO" "$DST/thunderbolt_apple.ko"
 fi
 if [[ -f $MUXKO ]]; then
   if [[ -f $MUXINTREE && ! -f ${MUXINTREE}.stock ]]; then
