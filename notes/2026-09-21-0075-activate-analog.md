@@ -7,5 +7,11 @@
 On ACTIVATE (nub powered, no lpdptxphy), pulse ACIO analog `+0x00`
 bit 0. Tunnel-up stays hands-off. Do not write `+0x18`.
 
-Look for `USB4: ACTIVATE pulse ACIO analog`, analog before/after
-`+0x00`/`+0x18`, then `SET_LINK_RATE` / 22/24 / DPRX.
+Boot: pulse ran. `+0x00` stayed `80000000`. `+0x18` `0x17`→`80000000`
+(consumed). `+0x20` stayed 0. No 22/24. DPRX=0.
+
+Closed: analog MMIO on ACTIVATE still bounces. Do not pulse `+0x00`
+on ACTIVATE; it only eats `+0x18`.
+
+0076: 0073 handshake with ATC=4 (target `0x9041`), no analog poke,
+no `core+0x10`.

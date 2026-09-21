@@ -69,3 +69,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0073-drm-apple-USB4-GET_SUPPORTS_HPD-on-analog-DPIN.patch` | 0072 nub+ACTIVATE then 22/24. Advertise HPD on USB4 analog. |
 | `0074-drm-apple-USB4-set_hpd-after-request_display.patch` | 0073 no 22/24, analog 0x1017. set_hpd after the nub is up. |
 | `0075-drm-apple-USB4-pulse-ACIO-analog-on-ACTIVATE.patch` | 0074 set_hpd -110. Restore 0073 order; pulse analog on ACTIVATE. |
+| `0076-drm-apple-USB4-DPIN-CORE-1-ATC-4-without-PHY-steal.patch` | 0075 analog pulse bounced. Bind 0x9041 (lpdptxphy object, no steal). |
