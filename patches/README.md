@@ -51,3 +51,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0055-thunderbolt-Apple-DP-IN-analog-FSM-at-0x18.patch` | Stop analog tunable reapply (`+0x18` 0x17→0x80000000). Drive analog+0x18 (`dpin_fsm` default 0x08). |
 | `0056-thunderbolt-Apple-DP-IN-analog-start-0x00-fill-0x20.patch` | `+0x18` is status (write ignored). Pulse `+0x00` bit 0; fill `+0x20` if 0. |
 | `0057-thunderbolt-Apple-DP-IN-analog-hands-off-until-timeout.patch` | Analog MMIO writes closed. Do not dump/write analog at tunnel-up; dump at DPRX timeout. |
+| `0058-thunderbolt-Apple-log-ACIO-RTKit-and-dump-VSE.patch` | Analog closed (`+0x18` still 0x1017). Log RTKit client msgs; dump Apple VSE. |
