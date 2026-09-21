@@ -1,0 +1,177 @@
+From e0692d6f0cfb4211ec4bd69f66ffb270a6f46cb8 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:43:16 +0200
+Subject: [PATCH] drm/apple: USB4 pulse ACIO analog on ACTIVATE
+
+0074 set_hpd after request_display timed out (-110) and 22/24
+returned. Restore 0073 order (set_hpd before the nub). On ACTIVATE
+with no atcphy, pulse ACIO analog +0x00 now that the nub is powered.
+Do not write +0x18. Do not phy_set_mode lpdptxphy.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 21 ++++++++++-----------
+ drivers/gpu/drm/apple/dptxep.c | 20 +++++++++++++++++++-
+ drivers/thunderbolt/apple.c    | 27 +++++++++++++++++++++------
+ 3 files changed, 50 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 656bf79..8ed9a91 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1439,9 +1439,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			 "USB4: skip DPTX connect (echo 1 > usb4_dptx_train after lid close)\n");
+ 		/*
+ 		 * Analog PHY is up. Bind DPIN CORE=1 (0x9001). 0073
+-		 * GET_SUPPORTS_HPD=1 stopped 22/24; analog latched
+-		 * +0x18=0x1017. set_hpd after request_display so the
+-		 * nub sees HPD. No lpdptxphy core+0x10.
++		 * GET_SUPPORTS_HPD=1 stopped 22/24. 0074 set_hpd after
++		 * request_display timed out (-110). set_hpd before the
++		 * nub; analog start is on ACTIVATE. No lpdptxphy steal.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+ 			u8 cores[2];
+@@ -1468,20 +1468,19 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN connect core=%u atc=0 HPD: %d\n",
+ 					 core, c);
+-				if (!c) {
++				if (!c)
++					h = dptxport_set_hpd(
++						dcp->dptxport[port].service,
++						true);
++				dev_info(dcp->dev,
++					 "USB4: analog DPIN set_hpd: %d\n", h);
++				if (!h) {
+ 					r = dptxport_request_display(
+ 						dcp->dptxport[port].service);
+ 					dev_info(dcp->dev,
+ 						 "USB4: analog DPIN request_display core=%u: %d\n",
+ 						 core, r);
+ 				}
+-				if (!r)
+-					h = dptxport_set_hpd(
+-						dcp->dptxport[port].service,
+-						true);
+-				dev_info(dcp->dev,
+-					 "USB4: analog DPIN set_hpd after request_display: %d\n",
+-					 h);
+ 				break;
+ 			}
+ 			mutex_unlock(&dcp->hpd_mutex);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index c7fd463..a0dd9d6 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -545,7 +545,7 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 		       void *reply, size_t reply_size)
+ {
+ 	struct dptx_port *dptx = service->cookie;
+-	const struct apple_dcp *dcp = service->ep->dcp;
++	struct apple_dcp *dcp = service->ep->dcp;
+ 
+ 	/*
+ 	 * Standalone PHYs need DCP input selection. USB4 keeps ATC lanes
+@@ -555,6 +555,24 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+ 
++	/*
++	 * Analog DPIN: ACTIVATE with no atcphy. 0073 left firmware waiting
++	 * after HPD=1 (no 22/24, analog 0x1017). Pulse ACIO analog now that
++	 * the nub is powered. Do not phy_set_mode lpdptxphy.
++	 */
++	if (dcp_is_usb4_output(dcp) && !dptx->atcphy) {
++		void (*analog)(void);
++
++		analog = __symbol_get("apple_usb4_dpin_on_activate");
++		if (analog) {
++			dev_info(dcp->dev, "USB4: ACTIVATE pulse ACIO analog\n");
++			analog();
++			__symbol_put("apple_usb4_dpin_on_activate");
++		} else {
++			dev_info(dcp->dev, "USB4: ACTIVATE no analog helper\n");
++		}
++	}
++
+ 	memcpy(reply, data, min(reply_size, data_size));
+ 	if (reply_size >= 4)
+ 		memset(reply, 0, 4);
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 7adf470..88839f5 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -680,6 +680,8 @@ static int apple_nhi_pci_tunnel_post_activate(struct tb_nhi *nhi)
+ static int apple_dpin_aux;
+ static struct apple_nhi *apple_dpin_anhi;
+ 
++void apple_usb4_dpin_on_activate(void);
++
+ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp);
+ static const struct kernel_param_ops apple_dpin_aux_ops = {
+ 	.set = apple_dpin_aux_set,
+@@ -866,7 +868,7 @@ static void apple_dp_set_dpme(struct tb_port *in)
+ 		     ret ? "write failed" : "set", cs8);
+ }
+ 
+-static void apple_dp_start_analog(struct apple_nhi *anhi)
++static void apple_dp_start_analog(struct apple_nhi *anhi, bool pulse)
+ {
+ 	struct apple_cio *acio;
+ 	u32 block, ctrl, hole, fsm;
+@@ -882,10 +884,10 @@ static void apple_dp_start_analog(struct apple_nhi *anhi)
+ 	hole = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_HOLE);
+ 	fsm = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
+ 	dev_info(acio->dev,
+-		 "DP IN analog +0x00=%08x +0x18=%08x +0x20=%08x aux=%d\n",
+-		 ctrl, fsm, hole, apple_dpin_aux);
++		 "DP IN analog +0x00=%08x +0x18=%08x +0x20=%08x pulse=%d\n",
++		 ctrl, fsm, hole, pulse);
+ 
+-	if (apple_dpin_aux < 1)
++	if (!pulse)
+ 		return;
+ 
+ 	/* +0x00 readback is empty status; still pulse start like PCIe-C. */
+@@ -908,6 +910,19 @@ static void apple_dp_start_analog(struct apple_nhi *anhi)
+ 			      "dpin analog after start", false);
+ }
+ 
++void apple_usb4_dpin_on_activate(void)
++{
++	struct apple_nhi *anhi = READ_ONCE(apple_dpin_anhi);
++
++	if (!anhi) {
++		pr_info("thunderbolt-apple: USB4 ACTIVATE analog: no NHI\n");
++		return;
++	}
++	dev_info(anhi->dev, "USB4 ACTIVATE: pulse ACIO analog +0x00\n");
++	apple_dp_start_analog(anhi, true);
++}
++EXPORT_SYMBOL_GPL(apple_usb4_dpin_on_activate);
++
+ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp)
+ {
+ 	struct apple_nhi *anhi;
+@@ -919,7 +934,7 @@ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp)
+ 	apple_dpin_aux = v;
+ 	anhi = READ_ONCE(apple_dpin_anhi);
+ 	if (v >= 1 && anhi)
+-		apple_dp_start_analog(anhi);
++		apple_dp_start_analog(anhi, true);
+ 	return 0;
+ }
+ 
+@@ -1036,7 +1051,7 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	if (apple_dpin_aux >= 1) {
+ 		if (tb_port_is_dpin(in))
+ 			apple_dp_set_dpme(in);
+-		apple_dp_start_analog(anhi);
++		apple_dp_start_analog(anhi, true);
+ 	} else {
+ 		dev_info(anhi->dev,
+ 			 "DP IN analog: leaving PHY alone until DPRX timeout\n");
+-- 
+2.55.0
+
