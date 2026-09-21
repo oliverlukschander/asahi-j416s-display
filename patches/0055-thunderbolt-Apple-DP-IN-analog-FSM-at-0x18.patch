@@ -1,0 +1,230 @@
+From cd5e86ab1e3503ac8963866687f61db9cb1063d3 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:01:54 +0200
+Subject: [PATCH] thunderbolt: Apple DP IN analog FSM is RC +0x18
+
+0054 dumped mapped analog PHYs at RC 0x4000/0x8000 then re-applied
+tunables. That turned the only live word on the active adapter,
++0x18=0x17, into 0x80000000. +0x00 is 0x80000000 on both adapters
+(empty status), so pulsing bit 0 there is wrong.
+
+Leave analog tunables as ACIO applied them. OR dpin_fsm (default
+0x08) into analog+0x18, restoring 0x17 first if the FSM reads empty.
+Poll +0x18 on CS change.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 122 +++++++++++++++++++-----------------
+ 1 file changed, 64 insertions(+), 58 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index eaa864b..a17e309 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -248,6 +248,7 @@ struct apple_nhi {
+ 	u8 dp_in_port;
+ 	u8 dp_out_port;
+ 	u32 analog_base;
++	u32 analog_fsm;
+ 	u32 dp_in_cs[14];
+ 	bool dp_aux_armed;
+ 	unsigned int dp_aux_polls;
+@@ -654,14 +655,20 @@ static int apple_nhi_pci_tunnel_post_activate(struct tb_nhi *nhi)
+ #define APPLE_CIO_DPIN0_ANALOG		0x4000
+ #define APPLE_CIO_DPIN1_ANALOG		0x8000
+ #define APPLE_CIO_DPIN_ANALOG_SIZE	0x100
+-#define APPLE_CIO_DPIN_ANALOG_START	BIT(0)
++#define APPLE_CIO_DPIN_ANALOG_FSM	0x18
++#define APPLE_CIO_DPIN_ANALOG_EMPTY	0x80000000
++#define APPLE_CIO_DPIN_ANALOG_LIVE	0x17
+ 
+ /*
+- * 0 = dump RC analog only
+- * 1 = dump, re-apply analog tunables, set DPME (default)
+- * 2 = also pulse analog ctrl bit 0 (PCIe-C Intr2AXI equivalent)
++ * 0 = dump RC analog only (no MMIO writes)
++ * 1 = dump, OR dpin_fsm into analog+0x18 (default)
++ * 2 = also pulse analog+0x00 bit 0 (0054: +0x00 is empty status, skip)
++ *
++ * Do not re-apply analog tunables after ACIO start: that turned live
++ * +0x18 0x17 into 0x80000000 on 0054.
+  */
+ static int apple_dpin_aux = 1;
++static unsigned int apple_dpin_fsm = 0x08;
+ static struct apple_nhi *apple_dpin_anhi;
+ 
+ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp);
+@@ -671,7 +678,10 @@ static const struct kernel_param_ops apple_dpin_aux_ops = {
+ };
+ module_param_cb(dpin_aux, &apple_dpin_aux_ops, &apple_dpin_aux, 0644);
+ MODULE_PARM_DESC(dpin_aux,
+-		 "Apple DP IN analog/AUX: 0=dump, 1=tunables+DPME, 2=pulse ctrl");
++		 "Apple DP IN analog: 0=dump, 1=FSM+0x18, 2=pulse +0x00");
++module_param_named(dpin_fsm, apple_dpin_fsm, uint, 0644);
++MODULE_PARM_DESC(dpin_fsm,
++		 "Bits OR'd into DP IN analog+0x18 when dpin_aux>=1 (default 0x8)");
+ 
+ static void apple_dp_dump_hop(struct tb_port *port, unsigned int hopid)
+ {
+@@ -790,31 +800,6 @@ static u32 apple_dp_in_analog_base(struct apple_nhi *anhi, struct tb_port *in)
+ 	return APPLE_CIO_DPIN0_ANALOG;
+ }
+ 
+-static void apple_dp_reapply_analog_tunables(struct apple_cio *acio, u32 block)
+-{
+-	size_t i;
+-	unsigned int n = 0;
+-
+-	if (!acio->rc_base || !acio->rc_tunable)
+-		return;
+-
+-	for (i = 0; i < acio->rc_tunable->sz; i++) {
+-		u32 off = acio->rc_tunable->values[i].offset;
+-		u32 mask = acio->rc_tunable->values[i].mask;
+-		u32 val = acio->rc_tunable->values[i].value;
+-		u32 cur, new;
+-
+-		if (off < block || off >= block + APPLE_CIO_DPIN_ANALOG_SIZE)
+-			continue;
+-		cur = readl(acio->rc_base + off);
+-		new = (cur & ~mask) | (val & mask);
+-		if (cur != new)
+-			writel(new, acio->rc_base + off);
+-		n++;
+-	}
+-	dev_info(acio->dev, "DP IN analog tunables @0x%x (%u regs)\n", block, n);
+-}
+-
+ static void apple_dp_set_dpme(struct tb_port *in)
+ {
+ 	u32 cs8 = 0;
+@@ -835,35 +820,52 @@ static void apple_dp_set_dpme(struct tb_port *in)
+ 		     ret ? "write failed" : "set", cs8);
+ }
+ 
+-static void apple_dp_start_analog(struct apple_nhi *anhi, bool pulse)
++static void apple_dp_start_analog(struct apple_nhi *anhi, bool pulse_ctrl)
+ {
+ 	struct apple_cio *acio;
+-	u32 block, ctrl;
++	u32 block, ctrl, fsm, want;
+ 
+ 	if (!anhi || !anhi->acio || !anhi->acio->rc_base)
+ 		return;
+ 	acio = anhi->acio;
+ 	block = anhi->analog_base ?: APPLE_CIO_DPIN0_ANALOG;
+-	if (block + 4 > resource_size(acio->rc_res))
++	if (block + APPLE_CIO_DPIN_ANALOG_FSM + 4 > resource_size(acio->rc_res))
+ 		return;
+ 
+-	apple_dp_reapply_analog_tunables(acio, block);
+-
+ 	ctrl = readl(acio->rc_base + block);
+-	dev_info(acio->dev, "DP IN analog ctrl @0x%x=%08x pulse=%d\n",
+-		 block, ctrl, pulse);
+-	if (pulse && ctrl != 0xffffffff) {
+-		writel(ctrl | APPLE_CIO_DPIN_ANALOG_START, acio->rc_base + block);
++	fsm = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
++	dev_info(acio->dev,
++		 "DP IN analog +0x00=%08x +0x18=%08x aux=%d fsm_or=0x%x\n",
++		 ctrl, fsm, apple_dpin_aux, apple_dpin_fsm);
++
++	if (apple_dpin_aux >= 1) {
++		want = fsm;
++		if (fsm == APPLE_CIO_DPIN_ANALOG_EMPTY)
++			want = APPLE_CIO_DPIN_ANALOG_LIVE;
++		want |= apple_dpin_fsm;
++		if (want != fsm) {
++			writel(want, acio->rc_base + block +
++				     APPLE_CIO_DPIN_ANALOG_FSM);
++			mb();
++			fsm = readl(acio->rc_base + block +
++				    APPLE_CIO_DPIN_ANALOG_FSM);
++			dev_info(acio->dev,
++				 "DP IN analog +0x18 wrote 0x%x readback 0x%x\n",
++				 want, fsm);
++		}
++	}
++
++	if (pulse_ctrl && ctrl != 0xffffffff &&
++	    ctrl != APPLE_CIO_DPIN_ANALOG_EMPTY) {
++		writel(ctrl | BIT(0), acio->rc_base + block);
+ 		mb();
+ 		ctrl = readl(acio->rc_base + block);
+-		dev_info(acio->dev, "DP IN analog ctrl after start @0x%x=%08x\n",
+-			 block, ctrl);
+-	} else if (!pulse) {
+-		dev_info(acio->dev,
+-			 "DP IN analog: echo 2 > /sys/module/thunderbolt_apple/parameters/dpin_aux to pulse start\n");
++		dev_info(acio->dev, "DP IN analog +0x00 after pulse %08x\n",
++			 ctrl);
+ 	}
++
+ 	apple_dp_dump_rc_range(acio, block, APPLE_CIO_DPIN_ANALOG_SIZE,
+-			      "dpin analog after start");
++			      "dpin analog after FSM");
+ }
+ 
+ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp)
+@@ -876,20 +878,8 @@ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp)
+ 		return ret;
+ 	apple_dpin_aux = v;
+ 	anhi = READ_ONCE(apple_dpin_anhi);
+-	if (v >= 1 && anhi) {
+-		if (anhi->tb)
+-			mutex_lock(&anhi->tb->lock);
+-		if (anhi->dp_aux_armed && anhi->tb && anhi->tb->root_switch) {
+-			struct tb_port *in =
+-				&anhi->tb->root_switch->ports[anhi->dp_in_port];
+-
+-			if (tb_port_is_dpin(in) && v >= 1)
+-				apple_dp_set_dpme(in);
+-		}
+-		if (anhi->tb)
+-			mutex_unlock(&anhi->tb->lock);
++	if (v >= 1 && anhi)
+ 		apple_dp_start_analog(anhi, v >= 2);
+-	}
+ 	return 0;
+ }
+ 
+@@ -948,6 +938,17 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 	if (dprx)
+ 		tb_port_warn(port, "DP IN DPRX_DONE=1 (ACIO AUX completed)\n");
+ 
++	if (anhi->acio && anhi->acio->rc_base && anhi->analog_base) {
++		u32 fsm = readl(anhi->acio->rc_base + anhi->analog_base +
++				APPLE_CIO_DPIN_ANALOG_FSM);
++
++		if (fsm != anhi->analog_fsm) {
++			tb_port_warn(port, "DP IN analog +0x18 %08x -> %08x\n",
++				     anhi->analog_fsm, fsm);
++			anhi->analog_fsm = fsm;
++		}
++	}
++
+ 	anhi->dp_aux_polls++;
+ 	if (!dprx && anhi->dp_aux_polls < APPLE_DP_AUX_POLL_MAX)
+ 		mod_delayed_work(system_wq, &anhi->dp_aux_work,
+@@ -988,6 +989,7 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	anhi->dp_in_port = in->port;
+ 	anhi->dp_out_port = out ? out->port : 0;
+ 	anhi->analog_base = apple_dp_in_analog_base(anhi, in);
++	anhi->analog_fsm = 0;
+ 	anhi->dp_aux_polls = 0;
+ 	anhi->dp_aux_armed = true;
+ 	WRITE_ONCE(apple_dpin_anhi, anhi);
+@@ -999,6 +1001,10 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 		if (tb_port_is_dpin(in))
+ 			apple_dp_set_dpme(in);
+ 		apple_dp_start_analog(anhi, apple_dpin_aux >= 2);
++		if (anhi->acio && anhi->acio->rc_base)
++			anhi->analog_fsm = readl(anhi->acio->rc_base +
++						 anhi->analog_base +
++						 APPLE_CIO_DPIN_ANALOG_FSM);
+ 	}
+ 	apple_dp_dump_host_adapters(anhi);
+ 	if (tb_port_is_dpin(in)) {
+-- 
+2.55.0
+
