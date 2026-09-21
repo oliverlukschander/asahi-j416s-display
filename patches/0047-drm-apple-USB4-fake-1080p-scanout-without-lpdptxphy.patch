@@ -1,0 +1,82 @@
+From e75d67fe963be6eaa943ee47040b1fb39cc87bbc Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:07:35 +0200
+Subject: [PATCH] drm/apple: USB4 fake 1080p scanout without lpdptxphy
+
+DPTX train on lpdptxphy never set DP IN DPRX. Advertise a 1920x1080
+mode on the USB4 connector so iomfb can try set_digital_out_mode
+through the dpin mux. Does not assign lpdptxphy.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 47 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 9df4e0b..5db7d50 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -37,6 +37,7 @@
+ #include <drm/drm_fb_dma_helper.h>
+ #include <drm/drm_fourcc.h>
+ #include <drm/drm_framebuffer.h>
++#include <drm/drm_modes.h>
+ #include <drm/drm_module.h>
+ #include <drm/drm_probe_helper.h>
+ #include <drm/drm_vblank.h>
+@@ -1591,6 +1592,52 @@ module_param_cb(usb4_dptx_train, &usb4_dptx_train_ops, &usb4_force_dptx, 0644);
+ MODULE_PARM_DESC(usb4_dptx_train,
+ 		 "Write 1 after closing the lid to train USB4 DPTX (blanks eDP)");
+ 
++static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
++{
++	struct apple_dcp *dcp = usb4_armed_dcp;
++	struct dcp_display_mode *dm;
++	struct drm_display_mode *src;
++	int v, ret;
++
++	ret = kstrtoint(val, 0, &v);
++	if (ret)
++		return ret;
++	if (v != 1)
++		return -EINVAL;
++	if (!dcp || !dcp->connector)
++		return -ENODEV;
++
++	src = drm_cvt_mode(dcp->connector->base.dev, 1920, 1080, 60, false,
++			   false, false);
++	if (!src)
++		return -ENOMEM;
++	dm = kzalloc(sizeof(*dm), GFP_KERNEL);
++	if (!dm) {
++		drm_mode_destroy(dcp->connector->base.dev, src);
++		return -ENOMEM;
++	}
++	dm->mode = *src;
++	drm_mode_destroy(dcp->connector->base.dev, src);
++	dm->color_mode_id = 1;
++	dm->timing_mode_id = 2;
++	dcp->modes = dm;
++	dcp->nr_modes = 1;
++	WRITE_ONCE(dcp->connector->connected, true);
++	dev_info(dcp->dev,
++		 "USB4: fake 1920x1080 scanout (no lpdptxphy); expect firmware timing mismatch\n");
++	schedule_work(&dcp->connector->hotplug_wq);
++	return 0;
++}
++
++static int usb4_scanout;
++static const struct kernel_param_ops usb4_scanout_ops = {
++	.set = usb4_scanout_set,
++	.get = param_get_int,
++};
++module_param_cb(usb4_scanout, &usb4_scanout_ops, &usb4_scanout, 0644);
++MODULE_PARM_DESC(usb4_scanout,
++		 "Write 1 to advertise 1080p on USB4 without lpdptxphy");
++
+ static void dcp_typec_reconnect_work(struct work_struct *work)
+ {
+ 	struct apple_dcp *dcp =
+-- 
+2.55.0
+

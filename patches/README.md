@@ -39,4 +39,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0043-drm-apple-skip-USB4-DPTX-lpdptxphy-assign-blanks-eDP.patch` | Skip DPTX connect. Do not write lpdptxphy core+0x10. |
 | `0044-drm-apple-USB4-DPTX-train-via-sysfs-after-lid-close.patch` | Train ran; link 4→1 lanes then rate 0. DRM still suppressed (bug). |
 | `0045-drm-apple-USB4-manual-train-allows-DRM-hotplug.patch` | Trained 4 lanes, DPRX stayed 0, no 315c hotplug. lpdptxphy is not DP IN analog. |
-| `0046-drm-apple-USB4-auto-restore-eDP-10s-after-train.patch` | After manual train, assign lpdptxphy back to DCP 0 in 10 s. |
+| `0046-drm-apple-auto-restore-eDP-10s-after-USB4-DPTX-train.patch` | After manual train, assign lpdptxphy back to DCP 0 in 10 s. |
+| `0047-drm-apple-USB4-fake-1080p-scanout-without-lpdptxphy.patch` | `usb4_scanout=1` advertises 1920x1080 on USB4. No lpdptxphy. eDP should stay. |
