@@ -190,8 +190,9 @@ separately before those actions. Do not run load-appledrm.sh at this step.
 
 ## 2026-09-21 diagnostic 0090 — planned installation, no reboot
 
-Execute only after Oliver confirms the hub is unplugged and work is saved.
-The new loader additionally refuses installation if an external Thunderbolt
+Execute installation only after Oliver confirms the hub is unplugged.
+Saving work is required before the separately scheduled reboot, not this
+installation-only step. The new loader additionally refuses installation if an external Thunderbolt
 router remains in sysfs. No command in this entry has run at commit time.
 
 First preserve the installed appledrm and initramfs (file operations only):
@@ -228,3 +229,11 @@ All disp-block, lpdptxphy, ACIO analog and /dev/mem prohibitions remain in force
 After successful installation, extract the initramfs into a temporary directory
 and verify the embedded updates/appledrm.ko checksum before separately logging
 and scheduling a reboot. If installation fails, do not reboot.
+
+Installation prerequisite result: Oliver confirmed physical hub unplugging.
+/sys/bus/thunderbolt/devices is empty; Hyprland still shows eDP-1 active.
+The unplugged capture completed. Backups were copied successfully to
+/var/tmp/j416s-0090-before; both old appledrm copies hash to c4d3c30a…,
+and the saved initramfs SHA256 is
+1819205a61672ba2b0f30148a175d23b7897b13311b7a0ca78ce9b16e2d5f701.
+Next command remains the exact --no-reboot installer above.
