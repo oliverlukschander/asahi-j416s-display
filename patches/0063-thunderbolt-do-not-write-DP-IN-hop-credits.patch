@@ -1,0 +1,59 @@
+From 24ce1ffcdd005e7b7018ba97f738c8d727aec2fc Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:45:03 +0200
+Subject: [PATCH] thunderbolt: do not write Apple DP IN hop credits
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+0062 wrote hop 9 initial_credits 0→7 after the tunnel was up. The
+write returned -110, then hop/CS reads timed out and the laptop
+panel went black. USB4 video hops already have credits=0 by spec.
+
+Dump hops only. Do not write hop registers.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 1707198..1dcb638 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -705,24 +705,7 @@ static void apple_dp_dump_hop(struct tb_port *port, unsigned int hopid)
+ 		     hop.initial_credits);
+ }
+ 
+-static void apple_dp_set_video_credits(struct tb_port *port)
+-{
+-	struct tb_regs_hop hop;
+-	int ret;
+ 
+-	ret = tb_port_read(port, &hop, TB_CFG_HOPS, 2 * 9, 2);
+-	if (ret || !hop.enable)
+-		return;
+-	if (hop.initial_credits) {
+-		tb_port_warn(port, "DP IN hop 9 credits already %u\n",
+-			     hop.initial_credits);
+-		return;
+-	}
+-	hop.initial_credits = 7;
+-	ret = tb_port_write(port, &hop, TB_CFG_HOPS, 2 * 9, 2);
+-	tb_port_warn(port, "DP IN hop 9 credits 0 -> 7 write %d\n", ret);
+-	apple_dp_dump_hop(port, 9);
+-}
+ 
+ static void apple_dp_dump_adapter(struct tb_port *port, const char *tag)
+ {
+@@ -1093,7 +1076,6 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	if (tb_port_is_dpin(in)) {
+ 		apple_dp_dump_hop(in, 8);
+ 		apple_dp_dump_hop(in, 9);
+-		apple_dp_set_video_credits(in);
+ 	}
+ 	if (out && tb_port_is_dpout(out))
+ 		apple_dp_dump_adapter(out, "hub DP OUT");
+-- 
+2.55.0
+
