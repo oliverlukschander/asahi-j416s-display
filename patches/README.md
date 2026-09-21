@@ -81,4 +81,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0085-drm-apple-USB4-hold-DCPDPDevice-set_hpd-8s.patch` | 0084 start timer is 5s; AFK aborted at 1s. No ATC AUX. Wait 8s. |
 | `0086-drm-apple-keep-dcpext-run-mode-for-USB4-clock.patch` | Skip `setup_video_limits` on dcpext. Failed: firmware still steps run mode 2 to 0. |
 | `0087-drm-apple-USB4-dcpext-pipe-power-trigger.patch` | `appledrm.usb4_pipe=1` runs the panel handle-0 power sequence on dcpext. Not called at boot. Returned immediately. |
-| `0088-drm-apple-USB4-DPTX-clock-trigger.patch` | `appledrm.usb4_dptx=1` enables ATC DP pixel clocks without a lane switch, then HPD. |
+| `0088-drm-apple-USB4-DPTX-clock-trigger.patch` | ATC DP pixel clocks. `800` stayed 0. |
+| `0089-drm-apple-copy-panel-disp1-clock-to-dcpext1.patch` | Copy panel disp-1 words that are zero on dcpext1, then HPD. |
