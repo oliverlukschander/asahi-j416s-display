@@ -1,0 +1,128 @@
+From c89e3f813e62fab233a46693a3d69b3d0e8834f0 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 12:14:21 +0200
+Subject: [PATCH] drm/apple: USB4 DPTX remote-port is ATC 0 + DPIN 1
+
+HPD without connect still ACTIVATE'd ATC 2 (22/24). Validate/connect
+with remote-port 0x9000 (ATC=0, DPIN=dpin0). Do not bind ATC PHY.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 62 ++--------------------------------
+ drivers/gpu/drm/apple/dptxep.c | 13 +++++--
+ 2 files changed, 13 insertions(+), 62 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 2b8ea10..943076f 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1346,13 +1346,8 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (usb4) {
+-		dev_info(dcp->dev,
+-			 "USB4: skip DPTX connect; ACIO DP IN AUX must complete DPRX\n");
+-		ret = 0;
+-		goto out_unlock;
+-	}
+-	dcp->dptxport[port].atcphy = dcp->phy;
++	if (!usb4)
++		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+ 	if (ret) {
+@@ -1427,54 +1422,6 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	return ret;
+ }
+ 
+-static int dcp_usb4_notify_sink(struct apple_dcp *dcp)
+-{
+-	int ret;
+-
+-	mutex_lock(&dcp->hpd_mutex);
+-	if (!dcp->dptxport[0].enabled || !dcp->dptxport[0].service) {
+-		mutex_unlock(&dcp->hpd_mutex);
+-		dev_info(dcp->dev, "USB4: DPTX service not ready for sink HPD\n");
+-		return -ENODEV;
+-	}
+-	if (dcp->dptxport[0].connected) {
+-		mutex_unlock(&dcp->hpd_mutex);
+-		return 0;
+-	}
+-
+-	reinit_completion(&dcp->dptxport[0].linkcfg_completion);
+-	dcp->dptxport[0].usb4_inactive_sink = false;
+-
+-	ret = dptxport_request_display(dcp->dptxport[0].service);
+-	if (ret) {
+-		dev_warn(dcp->dev, "USB4: request_display (no connect): %d\n",
+-			 ret);
+-		mutex_unlock(&dcp->hpd_mutex);
+-		return ret;
+-	}
+-	dcp->dptxport[0].connected = true;
+-	ret = dptxport_set_hpd(dcp->dptxport[0].service, true);
+-	if (ret) {
+-		dev_warn(dcp->dev, "USB4: set_hpd (no connect): %d\n", ret);
+-		dcp->dptxport[0].connected = false;
+-		dptxport_release_display(dcp->dptxport[0].service);
+-		mutex_unlock(&dcp->hpd_mutex);
+-		return ret;
+-	}
+-	dev_info(dcp->dev, "USB4: DPTX request_display+HPD (no PHY connect)\n");
+-	mutex_unlock(&dcp->hpd_mutex);
+-
+-	ret = wait_for_completion_timeout(&dcp->dptxport[0].linkcfg_completion,
+-					  msecs_to_jiffies(8000));
+-	if (!ret) {
+-		dev_info(dcp->dev,
+-			 "USB4: no linkcfg after HPD-only notify\n");
+-		return -ETIMEDOUT;
+-	}
+-	dev_info(dcp->dev, "USB4: linkcfg after HPD-only notify\n");
+-	return 0;
+-}
+-
+ static void dcp_typec_reconnect_work(struct work_struct *work)
+ {
+ 	struct apple_dcp *dcp =
+@@ -1484,11 +1431,6 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 
+ 	if (!READ_ONCE(dcp->typec_cable_connected))
+ 		return;
+-	if (dcp_is_usb4_output(dcp)) {
+-		dcp_usb4_notify_sink(dcp);
+-		return;
+-	}
+-
+ 	ret = dcp_dptx_connect(dcp, 0);
+ 	if (!ret) {
+ 		dcp->typec_reconnect_tries = 0;
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 3da7c11..567b9a6 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -88,8 +88,17 @@ static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
+ 		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 		     DCPDPTX_REMOTE_PORT_CONNECTED;
+ 
+-	if (dcp_is_usb4_output(dcp))
+-		target |= usb4_target_or;
++	if (dcp_is_usb4_output(dcp)) {
++		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
++
++		/* ATC 2 has no firmware object in USB4; PHY 3 is HDMI. */
++		target = FIELD_PREP(DCPDPTX_REMOTE_PORT_CORE, core) |
++			 FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, 0) |
++			 FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
++			 FIELD_PREP(DCPDPTX_REMOTE_PORT_DPIN, dpin) |
++			 DCPDPTX_REMOTE_PORT_CONNECTED |
++			 usb4_target_or;
++	}
+ 	return target;
+ }
+ 
+-- 
+2.55.0
+
