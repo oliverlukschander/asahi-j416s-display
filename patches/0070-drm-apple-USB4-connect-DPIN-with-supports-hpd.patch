@@ -1,0 +1,33 @@
+From 208d06914159f69864af84be85d2fa5f20b278b3 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:10:12 +0200
+Subject: [PATCH] drm/apple: USB4 connect DPIN 0x9000 with supports_hpd
+
+0069 bind leaves analog +0x18 at 0x1016. Connect used supports_hpd=false
+then set_hpd. Pass supports_hpd=true on connect so firmware sees HPD
+capability in the remote-port unk field. Still no request_display.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 0e4cf1c..fb3b24f 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1445,9 +1445,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			if (!v)
+ 				c = dptxport_connect(dcp->dptxport[port].service,
+ 						     0, 0, dcp->dptx_die,
+-						     false);
++						     true);
+ 			dev_info(dcp->dev,
+-				 "USB4: analog DPIN connect atc=0 no-HPD: %d\n",
++				 "USB4: analog DPIN connect atc=0 HPD: %d\n",
+ 				 c);
+ 			if (!c)
+ 				h = dptxport_set_hpd(dcp->dptxport[port].service,
+-- 
+2.55.0
+
