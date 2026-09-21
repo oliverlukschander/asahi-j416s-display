@@ -1,0 +1,41 @@
+From 81f37a29eb3132e55b7d16d2872d24329185fca9 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:34:39 +0200
+Subject: [PATCH] drm/apple: USB4 GET_SUPPORTS_HPD on analog DPIN
+
+0072 CORE=1 request_display powered a nub and ACTIVATEd, then 22/24
+DEVICE_NOT_STARTED. GET_SUPPORTS_HPD returned 0 while connect used
+supports_hpd=true and set_hpd already returned 0. Advertise HPD so
+firmware uses that path instead of waiting for a PHY start.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dptxep.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index c8690ea..c7fd463 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -502,11 +502,14 @@ static int dptxport_call_get_supports_hpd(struct apple_epic_service *service,
+ 
+ 	reply->retcode = cpu_to_le32(0);
+ 	/*
+-	 * USB4 DP IN is not Type-C HPD. Advertising Type-C HPD makes
+-	 * firmware wait on AFK 8,8 which times out while the ATC is USB4.
++	 * Analog DPIN CORE=1 already uses AFK set_hpd (returns 0).
++	 * Denying HPD here made request_display ACTIVATE then 22/24
++	 * DEVICE_NOT_STARTED (~5.5s). Advertise HPD so firmware uses
++	 * that path instead of waiting for a PHY start.
+ 	 */
+-	reply->supported = cpu_to_le32(dcp_is_typec_output(dcp) &&
+-				       !dcp_is_usb4_output(dcp));
++	reply->supported = cpu_to_le32(dcp_is_typec_output(dcp) ? 1 : 0);
++	dev_info(dcp->dev, "DPTXPort: GET_SUPPORTS_HPD %u usb4=%d\n",
++		 le32_to_cpu(reply->supported), dcp_is_usb4_output(dcp));
+ 	return 0;
+ }
+ 
+-- 
+2.55.0
+
