@@ -1,0 +1,49 @@
+From ab2dfc2f6e02f118ddb61ad7d07dfe9f96d381f1 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:17:26 +0200
+Subject: [PATCH] drm/apple: USB4 kernel iomfb_modeset 1080p on scanout
+
+Hyprland listed USB-3 1920x1080 but left 0x0@60 and never committed.
+Call iomfb_modeset on dcpext from usb4_scanout so firmware gets
+set_digital_out_mode. No lpdptxphy.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 906d8c4..2a8e790 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -34,6 +34,7 @@
+ #include <linux/usb/typec_mux.h>
+ #include <linux/workqueue.h>
+ 
++#include <drm/drm_atomic.h>
+ #include <drm/drm_fb_dma_helper.h>
+ #include <drm/drm_fourcc.h>
+ #include <drm/drm_framebuffer.h>
+@@ -1626,7 +1627,18 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	dcp->nr_modes = 1;
+ 	WRITE_ONCE(dcp->connector->connected, true);
+ 	dev_info(dcp->dev,
+-		 "USB4: fake 1920x1080 scanout (no lpdptxphy); expect firmware timing mismatch\n");
++		 "USB4: fake 1920x1080 scanout (no lpdptxphy); kernel modeset\n");
++	{
++		struct drm_crtc_state fake = { };
++		int mret;
++
++		fake.mode = dm->mode;
++		if (dcp->fw_compat == DCP_FIRMWARE_V_13_5)
++			mret = iomfb_modeset_v13_3(dcp, &fake);
++		else
++			mret = iomfb_modeset_v12_3(dcp, &fake);
++		dev_info(dcp->dev, "USB4: kernel iomfb_modeset %d\n", mret);
++	}
+ 	schedule_work(&dcp->connector->hotplug_wq);
+ 	return 0;
+ }
+-- 
+2.55.0
+
