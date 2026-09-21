@@ -1,0 +1,42 @@
+From cb14eb94821a332a4953a594eb5a5a2a41d73485 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 20:50:42 +0200
+Subject: [PATCH] drm/apple: keep dcpext run mode for the USB4 clock
+
+setup_video_limits on a secondary DCP with no timing steps the
+pipe from run mode 2 to 0 and disables the device. The USB4
+crossbar write clock then stays off and DCPDPDevice times out.
+Skip that call on apple,dcpext. The internal panel still runs it.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/iomfb_template.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index a386ded..9c980bb 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -646,6 +646,19 @@ static void boot_3(struct apple_dcp *dcp, void *out, void *cookie)
+ 
+ static void boot_2(struct apple_dcp *dcp, void *out, void *cookie)
+ {
++	/*
++	 * dcpext comes out of iBoot at run mode 2. With no panel timing,
++	 * setup_video_limits steps that pipe 2 -> 0 and disables it, so
++	 * the USB4 crossbar write clock never starts. The internal panel
++	 * is not apple,dcpext and still takes this call.
++	 */
++	if (of_device_is_compatible(dcp->dev->of_node, "apple,dcpext")) {
++		dev_info(dcp->dev,
++			 "dcpext: skip setup_video_limits (keep run mode 2)\n");
++		boot_3(dcp, NULL, NULL);
++		return;
++	}
++
+ 	dcp_setup_video_limits(dcp, false, boot_3, NULL);
+ }
+ 
+-- 
+2.55.0
+

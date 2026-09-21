@@ -190,6 +190,15 @@ static void t602x_dump(struct apple_dpxbar *xbar, const char *tag)
 			break;
 	}
 	dev_info(xbar->dev, "t602x %s:%s\n", tag, buf);
+	dev_info(xbar->dev,
+		 "t602x %s clk: 000=%08x 800=%08x 020=%08x 820=%08x 024=%08x 81c=%08x\n",
+		 tag,
+		 readl(xbar->regs + T602X_FIFO_WR_DPTX_CLK_EN),
+		 readl(xbar->regs + FIFO_WR_DPTX_CLK_EN_STAT),
+		 readl(xbar->regs + FIFO_RD_PCLK1_EN),
+		 readl(xbar->regs + FIFO_RD_PCLK1_EN_STAT),
+		 readl(xbar->regs + T602X_FIFO_RD_PCLK2_EN),
+		 readl(xbar->regs + T602X_REG_81C_STAT));
 }
 
 static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
