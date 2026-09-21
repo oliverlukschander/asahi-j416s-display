@@ -427,3 +427,34 @@ reported physical action; it is not a claim of a new agent-issued command
 or a pre-action log for that spontaneous disconnect. No new MMIO, parameter,
 module, firmware command or reboot was issued. Keep the adapter disconnected
 and hub/keyboard attached while reviewing the evidence.
+
+## 2026-09-21 — 0092 exception approved; prepare hub unplug and backup
+
+Oliver explicitly approved trying the proposed 0092 exception after being
+shown its target, ordering, limits and the previous prohibition. This covers
+the single HPD-after-request_display probe described in
+notes/2026-09-21-0092-protocol-proposal.md, not other prohibited operations.
+
+Preflight: eDP connected/enabled, all external DRM connectors disconnected;
+external Thunderbolt router 0-1 is still attached. Do not install yet.
+Installed 0090 module SHA256 starts 790475c0059a; candidate 0092 starts
+ceb3aea107ee8. New backup directory and experiment config do not yet exist.
+
+After this entry is committed and pushed, ask Oliver to physically unplug
+the OWC hub from the Mac. Keep the display adapter disconnected. This
+uses the normal disconnect path for typec0, NHI 0x701f00000, ACIO
+0x701ac0000, crossbar 0x70304c000 and dcpext1 0x315c00000; no manual MMIO,
+PHY reconfiguration, module action or reboot is requested. eDP is driven
+by 0x389c00000. Confirm no external router before installation.
+
+While awaiting unplug, preserve regular files with these exact commands
+(no hardware access; mkdir must fail if backup directory already exists):
+
+```
+sudo -n mkdir -m 0700 /var/tmp/j416s-0092-before
+sudo -n cp -a /lib/modules/7.1.12-2.5-1-ARCH/kernel/drivers/gpu/drm/apple/appledrm.ko /var/tmp/j416s-0092-before/appledrm-kernel.ko
+sudo -n cp -a /lib/modules/7.1.12-2.5-1-ARCH/updates/appledrm.ko /var/tmp/j416s-0092-before/appledrm-updates.ko
+sudo -n cp -a /boot/initramfs-linux-aurora.img /var/tmp/j416s-0092-before/initramfs-linux-aurora.img
+```
+
+Installation and reboot remain separate logged steps after physical unplug.
