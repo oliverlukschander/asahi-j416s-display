@@ -42,4 +42,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0046-drm-apple-auto-restore-eDP-10s-after-USB4-DPTX-train.patch` | After manual train, assign lpdptxphy back to DCP 0 in 10 s. |
 | `0047-drm-apple-USB4-fake-1080p-scanout-without-lpdptxphy.patch` | Hyprland USB-3 0x0@60. LINK_STATUS_BAD blocked a real 1080p commit. |
 | `0048-drm-apple-do-not-mark-USB4-link-BAD-on-fake-scanout.patch` | Hyprland still 0x0; never called set_digital_out_mode on 315c. |
-| `0049-drm-apple-USB4-kernel-iomfb-modeset-1080p.patch` | usb4_scanout calls iomfb_modeset on 315c directly (color 1 timing 2). |
+| `0049-drm-apple-USB4-kernel-iomfb_modeset-1080p-on-scanout.patch` | Firmware 80000104: setmode failed, fDisplayPowerState=0. |
+| `0050-drm-apple-USB4-iomfb-poweron-before-fake-1080p.patch` | usb4_scanout calls iomfb_poweron then modeset. No lpdptxphy. |

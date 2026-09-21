@@ -1,0 +1,38 @@
+From f6749837ef8ab7a8aeed654d491cacc54f15dbb9 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:24:41 +0200
+Subject: [PATCH] drm/apple: USB4 iomfb poweron before fake 1080p modeset
+
+315c set_digital_out_mode returned 80000104: setmode failed,
+fDisplayPowerState=0. Call iomfb_poweron (display device 2, power
+state 1) before modeset. No lpdptxphy.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 2a8e790..5fa290d 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1627,11 +1627,15 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	dcp->nr_modes = 1;
+ 	WRITE_ONCE(dcp->connector->connected, true);
+ 	dev_info(dcp->dev,
+-		 "USB4: fake 1920x1080 scanout (no lpdptxphy); kernel modeset\n");
++		 "USB4: fake 1920x1080 scanout; iomfb poweron then modeset\n");
+ 	{
+ 		struct drm_crtc_state fake = { };
+ 		int mret;
+ 
++		if (dcp->fw_compat == DCP_FIRMWARE_V_13_5)
++			iomfb_poweron_v13_3(dcp);
++		else
++			iomfb_poweron_v12_3(dcp);
+ 		fake.mode = dm->mode;
+ 		if (dcp->fw_compat == DCP_FIRMWARE_V_13_5)
+ 			mret = iomfb_modeset_v13_3(dcp, &fake);
+-- 
+2.55.0
+
