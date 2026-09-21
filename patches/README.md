@@ -27,4 +27,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0031-drm-apple-USB4-DPTX-HPD-without-PHY-connect.patch` | Closed: request_display still ACTIVATE ATC 2, then 22/24. |
 | `0032-drm-apple-USB4-DPTX-remote-port-is-ATC-0-DPIN-1.patch` | Closed: 0x9000 device == NULL / INACTIVE_SINK. |
 | `0033-drm-apple-USB4-DPTX-engine-is-lpdptxphy-index-4.patch` | of_platform_device_create skipped disabled node. Firmware 22/24 on 0:4. |
-| `0034-drm-apple-instantiate-disabled-lpdptxphy-platform-de.patch` | platform_device_alloc+add for phy@39c000000 despite status=disabled. |
+| `0034-drm-apple-instantiate-disabled-lpdptxphy-platform-de.patch` | PHY probed; ACTIVATE still 22/24 — atcphy was NULL. |
+| `0035-drm-apple-USB4-ACTIVATE-phy_set_mode-on-lpdptxphy.patch` | Bind lpdptxphy as dptxport.atcphy so ACTIVATE phy_set_mode(DP) on it. |

@@ -1,0 +1,103 @@
+From 46b3f5ef2beb606588c42f23ee5761793be1abfd Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 12:45:37 +0200
+Subject: [PATCH] drm/apple: USB4 ACTIVATE phy_set_mode on lpdptxphy
+
+phy@39c000000 probed but DPTX ACTIVATE left atcphy NULL, so the
+dedicated PHY was never put in DP mode. Get the phy and let
+ACTIVATE/SET_LINK_RATE/SET_LANES configure it. Do not phy_configure
+the USB4 ATC.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 21 +++++++++++++++++++--
+ drivers/gpu/drm/apple/dptxep.c |  7 +++++--
+ 2 files changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 39fb09a..0decb01 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -20,6 +20,7 @@
+ #include <linux/of_device.h>
+ #include <linux/of_graph.h>
+ #include <linux/of_platform.h>
++#include <linux/phy/phy.h>
+ #include <linux/slab.h>
+ #include <linux/soc/apple/rtkit.h>
+ #include <linux/string.h>
+@@ -1322,12 +1323,15 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+ #define DPTX_RECONNECT_RETRIES 1
+ 
++static struct phy *usb4_lpdptx_phy;
++
+ static void dcp_usb4_enable_lpdptxphy(struct apple_dcp *dcp)
+ {
+ 	static bool tried;
+ 	struct device_node *np;
+ 	struct platform_device *pdev;
+ 	struct resource res[2];
++	struct of_phandle_args args = { };
+ 	int nres = 0, ret;
+ 
+ 	if (tried)
+@@ -1378,7 +1382,18 @@ static void dcp_usb4_enable_lpdptxphy(struct apple_dcp *dcp)
+ 	}
+ 	dev_info(dcp->dev, "USB4: instantiated lpdptxphy %s\n",
+ 		 dev_name(&pdev->dev));
+-	msleep(50);
++	wait_for_device_probe();
++	args.np = np;
++	usb4_lpdptx_phy = of_phy_simple_xlate(&pdev->dev, &args);
++	if (IS_ERR_OR_NULL(usb4_lpdptx_phy)) {
++		usb4_lpdptx_phy = phy_get(&pdev->dev, NULL);
++		if (IS_ERR(usb4_lpdptx_phy))
++			usb4_lpdptx_phy = NULL;
++	}
++	if (usb4_lpdptx_phy)
++		dev_info(dcp->dev, "USB4: got lpdptxphy phy\n");
++	else
++		dev_warn(dcp->dev, "USB4: lpdptxphy bound but phy_get failed\n");
+ }
+ 
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+@@ -1413,7 +1428,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (!usb4)
++	if (usb4)
++		dcp->dptxport[port].atcphy = usb4_lpdptx_phy;
++	else
+ 		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index bc95d02..88ca192 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -357,7 +357,8 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	}
+ 
+ 	if (dptx->phy_ops.dp.set_lanes) {
+-		if (dptx->atcphy && !dcp_is_usb4_output(dcp)) {
++		if (dptx->atcphy &&
++		    !(dcp_is_usb4_output(dcp) && dptx->atcphy == dcp->phy)) {
+ 			ret = phy_configure(dptx->atcphy, &dptx->phy_ops);
+ 			if (ret)
+ 				return ret;
+@@ -469,7 +470,9 @@ static int dptxport_call_set_link_rate(struct apple_epic_service *service,
+ 		dptx->phy_ops.dp.link_rate = phy_link_rate;
+ 		dptx->phy_ops.dp.set_rate = 1;
+ 
+-		if (dptx->atcphy && !dcp_is_usb4_output(service->ep->dcp)) {
++		if (dptx->atcphy &&
++		    !(dcp_is_usb4_output(service->ep->dcp) &&
++		      dptx->atcphy == service->ep->dcp->phy)) {
+ 			ret = phy_configure(dptx->atcphy, &dptx->phy_ops);
+ 			if (ret)
+ 				return ret;
+-- 
+2.55.0
+
