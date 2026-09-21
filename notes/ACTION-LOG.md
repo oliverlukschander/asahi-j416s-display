@@ -187,3 +187,44 @@ The script reads DRM/USB/Type-C/thunderbolt sysfs attributes and existing
 kernel logs, and queries Hyprland. It does not explicitly map or write MMIO.
 No new tunnel and no DP alt-mode request. Record installation and reboot
 separately before those actions. Do not run load-appledrm.sh at this step.
+
+## 2026-09-21 diagnostic 0090 — planned installation, no reboot
+
+Execute only after Oliver confirms the hub is unplugged and work is saved.
+The new loader additionally refuses installation if an external Thunderbolt
+router remains in sysfs. No command in this entry has run at commit time.
+
+First preserve the installed appledrm and initramfs (file operations only):
+
+```
+sudo -n install -d /var/tmp/j416s-0090-before
+sudo -n cp -an /usr/lib/modules/7.1.12-2.5-1-ARCH/kernel/drivers/gpu/drm/apple/appledrm.ko /var/tmp/j416s-0090-before/appledrm-kernel.ko
+sudo -n cp -an /usr/lib/modules/7.1.12-2.5-1-ARCH/updates/appledrm.ko /var/tmp/j416s-0090-before/appledrm-updates.ko
+sudo -n cp -an /boot/initramfs-linux-aurora.img /var/tmp/j416s-0090-before/initramfs-linux-aurora.img
+```
+
+Then the exact installation command, from the repository root:
+
+`sudo -n env -u USB4_GROK_CONTINUE -u USB4_GROK_SESSION /home/oliver/Development/asahi-j416s-display/scripts/load-appledrm.sh --no-reboot`
+
+This installs the built module into both kernel/drivers/gpu/drm/apple and
+updates, copies the other five modules (verified identical to installed
+versions), runs depmod and mkinitcpio -p linux-aurora, and returns WITHOUT
+reboot. No insmod/rmmod, direct MMIO, ioremap, PHY switch, or module-parameter
+write. The running display driver is not replaced until a separately logged
+reboot. No auto-continue will be armed.
+
+New appledrm SHA256:
+`790475c0059aea58b602de5a35f2f2a325ceafcb5e8756946e7e9b5b994704d1`.
+Previous kernel-path appledrm SHA256:
+`c4d3c30af6c5e820031543302bbbd3da444b8513028877a19487ce7e0b3d90ca`.
+
+Hardware addresses potentially used on the later boot (NOT accessed directly
+by this installation): eDP DCP `0x389c00000`, dcpext1 `0x315c00000`, HDMI DCP
+`0x289c00000`. Last active hub route: typec0 NHI `0x701f00000`, ACIO
+`0x701ac0000`, crossbar `0x70304c000`. Hub must stay unplugged until eDP is up.
+All disp-block, lpdptxphy, ACIO analog and /dev/mem prohibitions remain in force.
+
+After successful installation, extract the initramfs into a temporary directory
+and verify the embedded updates/appledrm.ko checksum before separately logging
+and scheduling a reboot. If installation fails, do not reboot.
