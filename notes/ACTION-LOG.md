@@ -60,3 +60,8 @@ Commands, after this file is pushed:
 
 What it does: `ioremap 0x315320000` size `0x4000`, `readl`, `iounmap`.
 No panel. No writes. No crossbar.
+
+Result: it returned. 1065 words nonzero. The first words are
+`+000 71699e03`, `+004 d3c60930`, `+008 9600df50`, and so on through
+`+05c`. That is not a clock-enable block. Do not copy the panel into
+it. Do not map `0x389320000`. The 21:36 crash stays closed.
