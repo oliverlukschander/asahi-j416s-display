@@ -1,0 +1,112 @@
+From b9538738d1ee6a6b74af7e7e582730cbcfe3b41b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 18:05:49 +0200
+Subject: [PATCH] drm/apple: USB4 0x9001 DCP verbose logs
+
+0081 ATC AUX on 0x9001 did not start SET_LINK_RATE (analog 0x17).
+Drop that AUX. Raise gAFKConfigLogMask on dcpext before the CORE=1
+bind so AppleDCPDPTX after the nub is in dmesg.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp-internal.h |  1 +
+ drivers/gpu/drm/apple/dcp.c          | 19 +++++--------------
+ drivers/gpu/drm/apple/dcp.h          |  1 +
+ drivers/gpu/drm/apple/systemep.c     | 19 +++++++++++++++++++
+ 4 files changed, 26 insertions(+), 14 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index b0b6013..b32f604 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -267,6 +267,7 @@ struct apple_dcp {
+ 
+ 	struct apple_dcp_afkep *systemep;
+ 	struct completion systemep_done;
++	struct apple_epic_service *system_service;
+ 
+ 	struct apple_dcp_afkep *ibootep;
+ 	struct apple_dcp_afkep *dcpavservep;
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 0c136b2..5fcf3da 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1437,23 +1437,14 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		/*
+ 		 * 0078 hub-from-init blanked eDP. Instantiating
+ 		 * phy-apple-dptx can write lpdptxphy core+0x10. Stay on
+-		 * 0x9001 unit 0, connect unk 0x100. Enable the USB-C
+-		 * ATC DP AUX block without lane switch so the CORE=1
+-		 * nub has analog AUX. Do not phy_set_mode(DP) the SS
+-		 * lanes (kills ACIO).
++		 * 0x9001 unit 0, connect unk 0x100. 0081 ATC AUX did
++		 * not start SET_LINK_RATE (analog 0x17). Raise DCP
++		 * firmware log mask so AppleDCPDPTX after the nub is
++		 * visible. No analog MMIO, no ATC AUX.
+ 		 */
+ 		dev_info(dcp->dev,
+ 			 "USB4: skip lpdptxphy instantiate (eDP stays on)\n");
+-		if (dcp->phy) {
+-			int aux;
+-
+-			dcp->dptxport[port].atcphy = dcp->phy;
+-			aux = phy_set_mode_ext(dcp->phy, PHY_MODE_DP,
+-					       dcp->index);
+-			dev_info(dcp->dev,
+-				 "USB4: ATC DP AUX without lane switch: %d\n",
+-				 aux);
+-		}
++		dcp_usb4_verbose_logs(dcp);
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+ 			u8 cores[2];
+ 			u8 atc = (usb4_atc >= 0) ? usb4_atc : 0;
+diff --git a/drivers/gpu/drm/apple/dcp.h b/drivers/gpu/drm/apple/dcp.h
+index c500c1b..f400920 100644
+--- a/drivers/gpu/drm/apple/dcp.h
++++ b/drivers/gpu/drm/apple/dcp.h
+@@ -75,6 +75,7 @@ void iomfb_shutdown(struct apple_dcp *dcp);
+ void iomfb_recv_msg(struct apple_dcp *dcp, u64 message);
+ 
+ int systemep_init(struct apple_dcp *dcp);
++int dcp_usb4_verbose_logs(struct apple_dcp *dcp);
+ int dptxep_init(struct apple_dcp *dcp);
+ int ibootep_init(struct apple_dcp *dcp);
+ int dpavservep_init(struct apple_dcp *dcp);
+diff --git a/drivers/gpu/drm/apple/systemep.c b/drivers/gpu/drm/apple/systemep.c
+index 9fe7a0c..7e053b9 100644
+--- a/drivers/gpu/drm/apple/systemep.c
++++ b/drivers/gpu/drm/apple/systemep.c
+@@ -41,11 +41,30 @@ static void system_log_work(struct work_struct *work_)
+ 	kfree(work);
+ }
+ 
++int dcp_usb4_verbose_logs(struct apple_dcp *dcp)
++{
++	u32 retcode = 0;
++	int ret;
++
++	if (!dcp || !dcp->system_service)
++		return -ENODEV;
++	ret = afk_send_command(dcp->system_service, SYSTEM_SET_PROPERTY,
++			       setprop_gAFKConfigLogMask_ffff,
++			       sizeof(setprop_gAFKConfigLogMask_ffff), NULL,
++			       sizeof(setprop_gAFKConfigLogMask_ffff),
++			       &retcode);
++	dev_info(dcp->dev, "USB4: DCP verbose logs ret=%d retcode=%u\n", ret,
++		 retcode);
++	return ret;
++}
++
+ static void system_init(struct apple_epic_service *service, const char *name,
+ 			const char *class, s64 unit)
+ {
+ 	struct systemep_work *work;
+ 
++	service->ep->dcp->system_service = service;
++
+ 	if (!enable_verbose_logging)
+ 		return;
+ 
+-- 
+2.55.0
+
