@@ -1,0 +1,121 @@
+From 1b4274b81cb14d544eadae397a17a0f5f20753af Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 09:26:32 +0200
+Subject: [PATCH 13/13] drm/apple: USB4 DPTX target ATC 2 + HPD kick after
+ INACTIVE_SINK
+
+SET_LINK_RATE 0x0 after an 8s wait is teardown, not training.
+Default USB4 remote port to Right ATC (phy 2) with dpin mux still
+selected, and after APCALL 20 assert DPTX HPD from a workqueue.
+---
+ drivers/gpu/drm/apple/dcp-internal.h |  1 +
+ drivers/gpu/drm/apple/dcp.c          | 31 +++++++++++++++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.c       |  3 +++
+ 3 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index 2d82ec5..9aea86f 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -293,6 +293,7 @@ struct apple_dcp {
+ 	bool typec_cable_connected;
+ 	struct delayed_work typec_reconnect_wq;
+ 	struct delayed_work typec_fabric_retrain_wq;
++	struct delayed_work usb4_hpd_wq;
+ 	u32 typec_reconnect_tries;
+ 
+ 	struct gpio_desc *hdmi_hpd;
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 5889ebd..700c4bf 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -65,6 +65,12 @@ module_param_named(usb4_dpin, usb4_dpin_index, int, 0644);
+ MODULE_PARM_DESC(usb4_dpin,
+ 		 "Display crossbar mux index for USB4 DP IN (1=dpin0, 2=dpin1)");
+ 
++/* -1 = Type-C ATC index. 3 = HDMI DPTX PHY. 2 = Right ATC. */
++static int usb4_atc = 2;
++module_param_named(usb4_atc, usb4_atc, int, 0644);
++MODULE_PARM_DESC(usb4_atc,
++		 "DPTX ATC/phy index for USB4 (-1=typec route, 2=Right ATC)");
++
+ /* -1 = auto (arm the typecN whose NHI has a Thunderbolt device). 0..2 force. */
+ static int usb4_arm = -1;
+ static int dcp_usb4_arm_typec(int typec_index);
+@@ -246,7 +252,12 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	 * (typec-dptx-phys) is DP alt-mode only — targeting it while the
+ 	 * ATC is in USB4 makes firmware report DEVICE_NOT_STARTED.
+ 	 */
+-	dcp->dptx_phy = usb4 ? dcp->fixed_dptx_phy : route->dptx_phy;
++	if (usb4 && usb4_atc >= 0)
++		dcp->dptx_phy = usb4_atc;
++	else if (usb4)
++		dcp->dptx_phy = dcp->fixed_dptx_phy;
++	else
++		dcp->dptx_phy = route->dptx_phy;
+ 	dcp->connector_type = DRM_MODE_CONNECTOR_USB;
+ 	if (route->port->connector) {
+ 		route->port->connector->dcp = to_platform_device(dcp->dev);
+@@ -1449,6 +1460,21 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 		dcp->typec_reconnect_tries, ret);
+ }
+ 
++static void dcp_usb4_hpd_work(struct work_struct *work)
++{
++	struct apple_dcp *dcp =
++		container_of(to_delayed_work(work), struct apple_dcp,
++			     usb4_hpd_wq);
++	int ret;
++
++	if (!dcp->dptxport[0].service || !dcp->dptxport[0].enabled)
++		return;
++	dev_info(dcp->dev, "USB4: kick DPTX HPD after INACTIVE_SINK\n");
++	ret = dptxport_set_hpd(dcp->dptxport[0].service, true);
++	if (ret)
++		dev_warn(dcp->dev, "USB4: HPD kick failed: %d\n", ret);
++}
++
+ static void disconnected_hpd_event(struct apple_connector *con)
+ {
+ 	if (con && con->connected) {
+@@ -2309,6 +2335,7 @@ static int dcp_platform_probe(struct platform_device *pdev)
+ 			  dcp_typec_reconnect_work);
+ 	INIT_DELAYED_WORK(&dcp->typec_fabric_retrain_wq,
+ 			  dcp_typec_retrain_work);
++	INIT_DELAYED_WORK(&dcp->usb4_hpd_wq, dcp_usb4_hpd_work);
+ 
+ 	platform_set_drvdata(pdev, dcp);
+ 
+@@ -2454,6 +2481,7 @@ static void dcp_platform_shutdown(struct platform_device *pdev)
+ 		WRITE_ONCE(dcp->typec_cable_connected, false);
+ 		cancel_delayed_work_sync(&dcp->typec_reconnect_wq);
+ 		cancel_delayed_work_sync(&dcp->typec_fabric_retrain_wq);
++		cancel_delayed_work_sync(&dcp->usb4_hpd_wq);
+ 	}
+ 	cancel_delayed_work_sync(&dcp_usb4_auto_arm_wq);
+ 	component_del(&pdev->dev, &dcp_comp_ops);
+@@ -2466,6 +2494,7 @@ static int dcp_platform_suspend(struct device *dev)
+ 	WRITE_ONCE(dcp->typec_cable_connected, false);
+ 	cancel_delayed_work_sync(&dcp->typec_reconnect_wq);
+ 	cancel_delayed_work_sync(&dcp->typec_fabric_retrain_wq);
++	cancel_delayed_work_sync(&dcp->usb4_hpd_wq);
+ 	cancel_delayed_work_sync(&dcp_usb4_auto_arm_wq);
+ 
+ 	if (dcp->avep)
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 94879db..8361974 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -630,6 +630,9 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 		 */
+ 		dev_info(service->ep->dcp->dev,
+ 			 "DPTXPort: INACTIVE_SINK_DETECTED (keep waiting for lanes)\n");
++		mod_delayed_work(system_freezable_wq,
++				 &service->ep->dcp->usb4_hpd_wq,
++				 msecs_to_jiffies(50));
+ 		memcpy(reply, data, min(reply_size, data_size));
+ 		if (reply_size >= 4)
+ 			memset(reply, 0, 4);
+-- 
+2.55.0
+

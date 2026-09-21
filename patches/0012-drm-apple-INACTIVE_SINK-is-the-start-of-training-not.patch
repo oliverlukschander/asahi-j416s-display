@@ -1,7 +1,7 @@
 From 4fa0cacb1466e86ea06b125679da95662539b64f Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:21:47 +0200
-Subject: [PATCH 12/12] drm/apple: INACTIVE_SINK is the start of training, not
+Subject: [PATCH 12/13] drm/apple: INACTIVE_SINK is the start of training, not
  a failure
 
 After APCALL 20 the firmware sent SET_ACTIVE_LANE_COUNT and
