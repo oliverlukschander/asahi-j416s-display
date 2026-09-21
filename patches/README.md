@@ -72,3 +72,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0076-drm-apple-USB4-DPIN-CORE-1-ATC-4-without-PHY-steal.patch` | 0075 analog pulse bounced. Bind 0x9041 (lpdptxphy object, no steal). |
 | `0077-drm-apple-USB4-analog-DPIN-on-RemotePort-unit-1.patch` | 0076 0x9041 DEACTIVATE. 0073 handshake on DPTX unit 1. |
 | `0078-drm-apple-USB4-analog-DPIN-stays-on-unit-0.patch` | 0077 unit 1 DEACTIVATE. Stay on unit 0 (0073 ACTIVATE). |
+| `0079-drm-apple-USB4-skip-lpdptxphy-instantiate.patch` | 0078 hub-from-init blanked eDP. Do not probe phy-apple-dptx. |
