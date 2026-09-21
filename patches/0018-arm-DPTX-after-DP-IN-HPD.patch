@@ -1,0 +1,208 @@
+From 54eb200569352690b30e9d36a6e57346414a81d3 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:09:48 +0200
+Subject: [PATCH] thunderbolt/drm: arm DPTX phy 3 only after DP IN HPD=1
+
+Do not connect DPTX to ATC 2 on USB4 mux set. Export DP IN HPD from
+the live tunnel dump; appledrm polls it and starts the HDMI DPTX PHY
+(firmware talks) with one HPD kick. Crossbar dpin stays selected.
+---
+ drivers/gpu/drm/apple/dcp-internal.h |  1 +
+ drivers/gpu/drm/apple/dcp.c          | 59 +++++++++++++++++-----------
+ drivers/gpu/drm/apple/dptxep.c       |  6 +++
+ drivers/thunderbolt/tunnel.c         | 37 +++++++++++++++++
+ 4 files changed, 79 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index 9aea86f..8f7f7f0 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -294,6 +294,7 @@ struct apple_dcp {
+ 	struct delayed_work typec_reconnect_wq;
+ 	struct delayed_work typec_fabric_retrain_wq;
+ 	struct delayed_work usb4_hpd_wq;
++	bool usb4_hpd_kicked;
+ 	u32 typec_reconnect_tries;
+ 
+ 	struct gpio_desc *hdmi_hpd;
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index da89450..c937deb 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -66,7 +66,7 @@ MODULE_PARM_DESC(usb4_dpin,
+ 		 "Display crossbar mux index for USB4 DP IN (1=dpin0, 2=dpin1)");
+ 
+ /* -1 = Type-C ATC index. 3 = HDMI DPTX PHY. 2 = Right ATC. */
+-static int usb4_atc = 2;
++static int usb4_atc = 3;
+ module_param_named(usb4_atc, usb4_atc, int, 0644);
+ MODULE_PARM_DESC(usb4_atc,
+ 		 "DPTX ATC/phy index for USB4 (-1=typec route, 2=Right ATC)");
+@@ -489,22 +489,12 @@ static int dcp_typec_route_set(struct typec_mux_dev *mux,
+ 		if (port->owner && port->owner->usb4_selected) {
+ 			struct apple_dcp *dcp = port->owner->dcp;
+ 
+-			/*
+-			 * Do not connect DPTX here: ACIO's DP tunnel is not
+-			 * up yet, and dcp_dptx_connect waits 2s under this
+-			 * lock. Arm reconnect so AUX/DPRX run in the tunnel
+-			 * window (~1s up, ~12s teardown).
+-			 */
++			/* dpin mux is up. Wait for Thunderbolt DP IN HPD. */
+ 			WRITE_ONCE(dcp->typec_cable_connected, true);
+ 			port->hpd = true;
+-			dcp->typec_reconnect_tries = 0;
+-			cancel_delayed_work(&dcp->typec_reconnect_wq);
+-			mod_delayed_work(system_freezable_wq,
+-					 &dcp->typec_reconnect_wq,
+-					 DPTX_USB4_CONNECT_DELAY);
+ 			dev_info(dcp->dev,
+-				 "USB4 DP IN armed; DPTX connect in %u ms\n",
+-				 jiffies_to_msecs(DPTX_USB4_CONNECT_DELAY));
++				 "USB4 dpin mux typec%u; waiting for DP IN HPD\n",
++				 port->owner->typec_index);
+ 		}
+ 		return 0;
+ 	}
+@@ -667,24 +657,45 @@ static int dcp_usb4_arm_typec(int typec_index)
+ 	return 0;
+ }
+ 
++static void dcp_usb4_auto_arm_work(struct work_struct *work);
++static DECLARE_DELAYED_WORK(dcp_usb4_auto_arm_wq, dcp_usb4_auto_arm_work);
++
+ static void dcp_usb4_auto_arm_work(struct work_struct *work)
+ {
+-	int i;
++	int *hpd, *idx;
++	int typec;
+ 
+ 	if (usb4_arm >= 0) {
+ 		dcp_usb4_arm_typec(usb4_arm);
+ 		return;
+ 	}
+-	for (i = 0; i < 3; i++) {
+-		if (dcp_typec_nhi_has_tb_device(i)) {
+-			pr_info("appledrm: NHI typec%u has a Thunderbolt device, arming DP IN\n",
+-				i);
+-			dcp_usb4_arm_typec(i);
+-		}
+-	}
+-}
+ 
+-static DECLARE_DELAYED_WORK(dcp_usb4_auto_arm_wq, dcp_usb4_auto_arm_work);
++	hpd = __symbol_get("tb_apple_dp_in_hpd");
++	idx = __symbol_get("tb_apple_dp_typec_index");
++	if (!hpd || !idx) {
++		if (hpd)
++			__symbol_put("tb_apple_dp_in_hpd");
++		if (idx)
++			__symbol_put("tb_apple_dp_typec_index");
++		mod_delayed_work(system_freezable_wq, &dcp_usb4_auto_arm_wq,
++				 msecs_to_jiffies(500));
++		return;
++	}
++	if (*hpd && *idx >= 0) {
++		typec = *idx;
++		usb4_atc = 3;
++		pr_info("appledrm: DP IN HPD=1 typec%u, DPTX phy 3 (not ATC)\n",
++			typec);
++		__symbol_put("tb_apple_dp_in_hpd");
++		__symbol_put("tb_apple_dp_typec_index");
++		dcp_usb4_arm_typec(typec);
++		return;
++	}
++	__symbol_put("tb_apple_dp_in_hpd");
++	__symbol_put("tb_apple_dp_typec_index");
++	mod_delayed_work(system_freezable_wq, &dcp_usb4_auto_arm_wq,
++			 msecs_to_jiffies(500));
++}
+ 
+ static struct apple_dcp_typec_port *
+ dcp_typec_port_get(struct device_node *connector_np)
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 917c16a..dc45fc3 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -646,6 +646,12 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 		 */
+ 		dev_info(service->ep->dcp->dev,
+ 			 "DPTXPort: INACTIVE_SINK_DETECTED (keep waiting for lanes)\n");
++		if (!service->ep->dcp->usb4_hpd_kicked) {
++			service->ep->dcp->usb4_hpd_kicked = true;
++			mod_delayed_work(system_freezable_wq,
++					 &service->ep->dcp->usb4_hpd_wq,
++					 msecs_to_jiffies(50));
++		}
+ 		memcpy(reply, data, min(reply_size, data_size));
+ 		if (reply_size >= 4)
+ 			memset(reply, 0, 4);
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index b1a6f90..14e3bbc 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -7,12 +7,19 @@
+  */
+ 
+ #include <linux/delay.h>
++#include <linux/export.h>
+ #include <linux/slab.h>
+ #include <linux/list.h>
+ #include <linux/ktime.h>
+ #include <linux/of.h>
++#include <linux/string.h>
+ #include <linux/string_helpers.h>
+ 
++int tb_apple_dp_in_hpd;
++EXPORT_SYMBOL_GPL(tb_apple_dp_in_hpd);
++int tb_apple_dp_typec_index = -1;
++EXPORT_SYMBOL_GPL(tb_apple_dp_typec_index);
++
+ #include "tunnel.h"
+ #include "tb.h"
+ 
+@@ -1587,11 +1594,41 @@ static void tb_dp_dump_apple_adapter(struct tb_port *port, const char *tag)
+ 		     !!(w[7] & DP_COMMON_CAP_DPRX_DONE));
+ }
+ 
++static int tb_apple_nhi_typec_index(struct tb_nhi *nhi)
++{
++	const char *name;
++
++	if (!nhi || !nhi->dev)
++		return -1;
++	name = dev_name(nhi->dev);
++	if (strstr(name, "701f"))
++		return 0;
++	if (strstr(name, "b01f"))
++		return 1;
++	if (strstr(name, "f01f"))
++		return 2;
++	return -1;
++}
++
+ static void tb_dp_dump_apple(struct tb_tunnel *tunnel)
+ {
++	u32 cs2 = 0;
++	int hpd;
++
+ 	tb_dp_dump_apple_adapter(tunnel->src_port, "DP IN");
+ 	if (tb_port_is_dpout(tunnel->dst_port))
+ 		tb_dp_dump_apple_adapter(tunnel->dst_port, "DP OUT");
++
++	if (!tb_port_read(tunnel->src_port, &cs2, TB_CFG_PORT,
++			  tunnel->src_port->cap_adap + ADP_DP_CS_2, 1)) {
++		hpd = !!(cs2 & ADP_DP_CS_2_HPD);
++		tb_apple_dp_in_hpd = hpd;
++		tb_apple_dp_typec_index =
++			tb_apple_nhi_typec_index(tunnel->tb->nhi);
++		tb_tunnel_warn(tunnel,
++			       "Apple: DP IN HPD=%d typec=%d (DPTX should use this adapter, not ATC)\n",
++			       hpd, tb_apple_dp_typec_index);
++	}
+ }
+ 
+ static void tb_dp_dump(struct tb_tunnel *tunnel)
+-- 
+2.55.0
+
