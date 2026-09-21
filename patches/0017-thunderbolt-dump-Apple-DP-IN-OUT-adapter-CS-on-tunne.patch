@@ -1,0 +1,93 @@
+From 203e332ceb9931a229cc942ea7fe4e4dd5c58d2b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:00:41 +0200
+Subject: [PATCH] thunderbolt: dump Apple DP IN/OUT adapter CS on tunnel up
+
+Print VE/AE/HPD/DPRX_DONE and CS0-CS8 for host 0:5 and hub 1:19
+when the DP tunnel is enabled and after DPRX timeout. Cap DPTX
+USB4 reconnects to 1 so ATC 2 22/24 does not spam.
+---
+ drivers/gpu/drm/apple/dcp.c  |  2 +-
+ drivers/thunderbolt/tunnel.c | 32 ++++++++++++++++++++++++++++++++
+ 2 files changed, 33 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 9e12c98..da89450 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1302,7 +1302,7 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ 
+ #define DPTX_CONNECT_TIMEOUT msecs_to_jiffies(2000)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+-#define DPTX_RECONNECT_RETRIES 6
++#define DPTX_RECONNECT_RETRIES 1
+ 
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ {
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index c91229f..b1a6f90 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -99,6 +99,8 @@ module_param(bw_alloc_mode, bool, 0444);
+ MODULE_PARM_DESC(bw_alloc_mode,
+ 		 "enable bandwidth allocation mode if supported (default: true)");
+ 
++static void tb_dp_dump_apple(struct tb_tunnel *tunnel);
++
+ static bool tb_nhi_is_apple(const struct tb_nhi *nhi)
+ {
+ 	struct device_node *np;
+@@ -1121,6 +1123,7 @@ static void tb_dp_dprx_work(struct work_struct *work)
+ 			if (tb_nhi_is_apple(tb->nhi)) {
+ 				tb_tunnel_warn(tunnel,
+ 					       "Apple: DPRX timeout, keeping DP tunnel\n");
++				tb_dp_dump_apple(tunnel);
+ 				tb_tunnel_set_active(tunnel, true);
+ 			}
+ 		} else {
+@@ -1208,6 +1211,9 @@ static int tb_dp_activate(struct tb_tunnel *tunnel, bool active)
+ 			return ret;
+ 	}
+ 
++	if (active && tb_nhi_is_apple(tunnel->tb->nhi))
++		tb_dp_dump_apple(tunnel);
++
+ 	return active ? tb_dp_dprx_start(tunnel) : 0;
+ }
+ 
+@@ -1562,6 +1568,32 @@ static int tb_dp_init_video_path(struct tb_path *path, bool pm_support)
+ 	return 0;
+ }
+ 
++static void tb_dp_dump_apple_adapter(struct tb_port *port, const char *tag)
++{
++	u32 w[9];
++	int i, ret;
++
++	for (i = 0; i <= 8; i++) {
++		ret = tb_port_read(port, &w[i], TB_CFG_PORT,
++				   port->cap_adap + i, 1);
++		if (ret)
++			w[i] = 0xffffffff;
++	}
++	tb_port_warn(port,
++		     "%s CS0=%08x CS1=%08x CS2=%08x CS3=%08x LOCAL=%08x REMOTE=%08x STAT=%08x COMMON=%08x CS8=%08x VE=%u AE=%u HPD=%u DPRX=%u\n",
++		     tag, w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8],
++		     !!(w[0] & ADP_DP_CS_0_VE), !!(w[0] & ADP_DP_CS_0_AE),
++		     !!(w[2] & ADP_DP_CS_2_HPD),
++		     !!(w[7] & DP_COMMON_CAP_DPRX_DONE));
++}
++
++static void tb_dp_dump_apple(struct tb_tunnel *tunnel)
++{
++	tb_dp_dump_apple_adapter(tunnel->src_port, "DP IN");
++	if (tb_port_is_dpout(tunnel->dst_port))
++		tb_dp_dump_apple_adapter(tunnel->dst_port, "DP OUT");
++}
++
+ static void tb_dp_dump(struct tb_tunnel *tunnel)
+ {
+ 	struct tb_port *in, *out;
+-- 
+2.55.0
+
