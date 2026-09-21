@@ -1,0 +1,100 @@
+From 316e4c1ed38953e3155120791cd2c8316cad418b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:57:46 +0200
+Subject: [PATCH] drm/apple: USB4 analog DPIN on RemotePort unit 1
+
+0076 0x9041 (ATC=4) powered the nub then DEACTIVATEd. ATC=4 is the
+eDP engine. Restore CORE=1 ATC=0 (0073 ACTIVATE) on the second
+DPTX RemotePort (unit 1 / channel 3). usb4_atc=4 retries 0076.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 34 +++++++++++++++++++---------------
+ drivers/gpu/drm/apple/dptxep.c |  1 +
+ 2 files changed, 20 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 9133d06..a3a7718 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1438,46 +1438,50 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		dev_info(dcp->dev,
+ 			 "USB4: skip DPTX connect (echo 1 > usb4_dptx_train after lid close)\n");
+ 		/*
+-		 * Analog PHY is up. 0075 analog pulse on ACTIVATE bounced
+-		 * and consumed +0x18. Bind CORE=1 with ATC=4 (lpdptxphy
+-		 * firmware object, target 0x9041) without core+0x10.
+-		 * usb4_atc=0 rolls back to 0x9001. No analog MMIO.
++		 * Analog PHY is up. 0076 0x9041 (ATC=4) DEACTIVATEd.
++		 * 0073 0x9001 ACTIVATEd. Bind the second RemotePort
++		 * (unit 1 / channel 3) with CORE=1 ATC=0. usb4_atc=4
++		 * retries 0076. No analog MMIO, no core+0x10.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+ 			u8 cores[2];
+-			u8 atc = (usb4_atc >= 0) ? usb4_atc : 4;
++			u8 atc = (usb4_atc >= 0) ? usb4_atc : 0;
++			u32 bind = port;
+ 			int n = 0, i, v = -EINVAL, c = -EINVAL, h = -EINVAL,
+ 			    r = -EINVAL;
+ 
++			if (dcp->dptxport[1].enabled &&
++			    dcp->dptxport[1].service)
++				bind = 1;
+ 			cores[n++] = (usb4_core == 2) ? 2 : 1;
+ 			cores[n++] = (cores[0] == 1) ? 2 : 1;
++			dev_info(dcp->dev,
++				 "USB4: analog DPIN bind port=%u (unit %u)\n",
++				 bind, dcp->dptxport[bind].unit);
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			for (i = 0; i < n; i++) {
+ 				u8 core = cores[i];
++				struct apple_epic_service *svc =
++					dcp->dptxport[bind].service;
+ 
+ 				v = dptxport_validate_connection(
+-					dcp->dptxport[port].service, core, atc,
+-					dcp->dptx_die);
++					svc, core, atc, dcp->dptx_die);
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN validate core=%u atc=%u: %d\n",
+ 					 core, atc, v);
+ 				if (v)
+ 					continue;
+-				c = dptxport_connect(dcp->dptxport[port].service,
+-						     core, atc, dcp->dptx_die,
+-						     true);
++				c = dptxport_connect(svc, core, atc,
++						     dcp->dptx_die, true);
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN connect core=%u atc=%u HPD: %d\n",
+ 					 core, atc, c);
+ 				if (!c)
+-					h = dptxport_set_hpd(
+-						dcp->dptxport[port].service,
+-						true);
++					h = dptxport_set_hpd(svc, true);
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN set_hpd: %d\n", h);
+ 				if (!h) {
+-					r = dptxport_request_display(
+-						dcp->dptxport[port].service);
++					r = dptxport_request_display(svc);
+ 					dev_info(dcp->dev,
+ 						 "USB4: analog DPIN request_display core=%u atc=%u: %d\n",
+ 						 core, atc, r);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 88ea906..4b9f2fa 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -570,6 +570,7 @@ dptxport_call_deactivate(struct apple_epic_service *service,
+ 	struct dptx_port *dptx = service->cookie;
+ 	const struct apple_dcp *dcp = service->ep->dcp;
+ 
++	dev_info(dcp->dev, "DPTXPort: DEACTIVATE\n");
+ 	if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_INVALID, 0);
+-- 
+2.55.0
+
