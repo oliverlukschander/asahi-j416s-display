@@ -35,6 +35,10 @@ static int read_ext0;
 module_param(read_ext0, int, 0444);
 MODULE_PARM_DESC(read_ext0, "1 = read first 4KB of dcpext1 disp-0 only");
 
+static int write_074;
+module_param(write_074, int, 0444);
+MODULE_PARM_DESC(write_074, "1 = set dcpext1 disp-2 +074 to 0");
+
 static int __init dispclk_init(void)
 {
 	void __iomem *ext;
@@ -44,6 +48,21 @@ static int __init dispclk_init(void)
 	if (apply) {
 		pr_err("dispclk: refusing apply=1 (crashed 2026-09-21)\n");
 		return -EINVAL;
+	}
+	if (write_074) {
+		void __iomem *ext;
+		u32 before, after;
+
+		pr_info("dispclk: write dcpext1 disp-2 +074 = 0\n");
+		ext = ioremap(DCPEXT_DISP2, 0x1000);
+		if (!ext)
+			return -ENOMEM;
+		before = readl(ext + 0x74);
+		writel(0, ext + 0x74);
+		after = readl(ext + 0x74);
+		iounmap(ext);
+		pr_info("dispclk: +074 before=%08x after=%08x\n", before, after);
+		return 0;
 	}
 	if (!read_ext && !read_ext2 && !read_panel2 && !read_ext0) {
 		pr_info("dispclk: loaded, not touching MMIO\n");

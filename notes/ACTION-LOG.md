@@ -130,3 +130,23 @@ Result: it returned. All 1024 words in the first 4 KB are nonzero,
 starting `+000 caf9b40c`. Same kind of data as disp-1, not a clock
 enable. eDP stayed on. Do not write disp-0. Do not map the panel's
 disp-0 or disp-1.
+
+## 2026-09-21 21:55 about to run
+
+disp-2 matches the panel except dcpext1 `+074 = 00000001` and the
+panel's `+074` is 0. Clear that one word.
+
+Command, after this file is pushed:
+
+`insmod src/dispclk/apple-dispclk.ko write_074=1`
+
+What it does:
+
+1. `ioremap` dcpext1 disp-2 `0x315344000` size `0x1000`. This read
+   already returned.
+2. `readl +074`.
+3. `writel 0` to `+074` only.
+4. `readl +074` again. `iounmap`.
+
+No panel map. No disp-0. No disp-1. No crossbar. No other writes.
+No reboot. No `iomfb_poweron`.
