@@ -1,0 +1,178 @@
+From 004fce0edd39b7a90df663bd0e85582b1a148ae8 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 11:54:30 +0200
+Subject: [PATCH] thunderbolt: scan ACIO MMIO for DP IN analog/AUX
+
+USB4 DPTX Discovery is closed on this host: CS13 bits all
+writable, CS9 never moves, no discovery notification. Scan the
+ACIO 16MB window, remaining RC, and NHI low pages for a live
+analog/AUX block.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 136 +++++++++++++++++++++++++-----------
+ 1 file changed, 96 insertions(+), 40 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 0a85131..8ae8130 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -730,52 +730,105 @@ static void apple_dp_dump_rc(struct apple_cio *acio)
+ 
+ static int apple_dp_dptx_discover(struct tb_port *in)
+ {
+-	static const u32 try_bits[] = {
+-		BIT(0), BIT(1), BIT(8), BIT(16), BIT(24), BIT(31),
+-	};
+-	struct tb_switch *sw = in->sw;
+-	u32 cs0 = 0, cs6 = 0, cs9 = 0, orig9 = 0, cs13 = 0;
+-	unsigned int i;
+-	int ret;
++	u32 cs0 = 0;
+ 
+ 	tb_port_read(in, &cs0, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_0, 1);
+-	ret = tb_sw_read(sw, &cs6, TB_CFG_SWITCH, ROUTER_CS_6, 1);
+-	if (ret)
+-		tb_port_warn(in, "ROUTER_CS_6 read failed: %d\n", ret);
+-	else
+-		tb_port_warn(in, "ROUTER_CS_6=%08x AE=%u VE=%u (discover before AE)\n",
+-			     cs6, !!(cs0 & ADP_DP_CS_0_AE),
+-			     !!(cs0 & ADP_DP_CS_0_VE));
++	tb_port_warn(in,
++		     "USB4 DPTX Discovery closed (CS13 writable, CS9 static); AE=%u VE=%u\n",
++		     !!(cs0 & ADP_DP_CS_0_AE), !!(cs0 & ADP_DP_CS_0_VE));
++	return 0;
++}
+ 
+-	ret = tb_port_read(in, &orig9, TB_CFG_PORT,
+-			   in->cap_adap + ADP_DP_CS_9, 1);
+-	if (ret)
+-		return ret;
++static bool apple_dp_win_skip(u32 off)
++{
++	if (off >= 0xa80000 && off < 0xac0000)
++		return true;
++	if (off >= 0xac0000 && off < 0xb00000)
++		return true;
++	if (off >= 0xdb0000 && off < 0xe00000)
++		return true;
++	if (off >= 0xf00000)
++		return true;
++	return false;
++}
+ 
+-	for (i = 0; i < ARRAY_SIZE(try_bits); i++) {
+-		cs13 = try_bits[i];
+-		ret = tb_port_write(in, &cs13, TB_CFG_PORT,
+-				    in->cap_adap + ADP_DP_CS_13, 1);
+-		if (ret) {
+-			tb_port_warn(in, "DPTX discovery CS13=%08x write failed: %d\n",
+-				     cs13, ret);
+-			continue;
+-		}
+-		fsleep(100000);
+-		tb_port_read(in, &cs9, TB_CFG_PORT,
+-			     in->cap_adap + ADP_DP_CS_9, 1);
+-		tb_port_read(in, &cs13, TB_CFG_PORT,
+-			     in->cap_adap + ADP_DP_CS_13, 1);
+-		tb_port_warn(in,
+-			     "DPTX discovery try CS13=%08x stuck=%08x CS9 %08x -> %08x\n",
+-			     try_bits[i], cs13, orig9, cs9);
+-		if (cs9 != orig9)
+-			return 0;
++static void apple_dp_scan_window(struct apple_cio *acio)
++{
++	const __be32 *ranges;
++	int len, hits = 0;
++	u64 phys;
++	u32 size, off, val;
++	void __iomem *win;
++
++	ranges = of_get_property(acio->np, "ranges", &len);
++	if (!ranges || len < 16)
++		return;
++
++	phys = ((u64)be32_to_cpu(ranges[1]) << 32) | be32_to_cpu(ranges[2]);
++	size = be32_to_cpu(ranges[3]);
++	if (!phys || !size || size > 0x1000000)
++		return;
++
++	win = ioremap_np(phys, size);
++	if (!win) {
++		dev_warn(acio->dev, "DP IN: ACIO window map failed phys=0x%llx\n",
++			 phys);
++		return;
+ 	}
+ 
+-	cs13 = ADP_DP_CS_13_DPTX_DISCOVERY_MODE;
+-	tb_port_write(in, &cs13, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_13, 1);
+-	return 0;
++	dev_info(acio->dev, "DP IN: scan ACIO window phys=0x%llx size=0x%x\n",
++		 phys, size);
++	for (off = 0; off < size; off += 0x10000) {
++		if (apple_dp_win_skip(off))
++			continue;
++		val = readl(win + off);
++		if (!val || val == 0xffffffff)
++			continue;
++		dev_info(acio->dev, "DP IN: ACIO win 0x%06x=%08x\n", off, val);
++		if (++hits >= 48)
++			break;
++	}
++	iounmap(win);
++}
++
++static void apple_dp_scan_rc_rest(struct apple_cio *acio)
++{
++	char buf[320];
++	int n = 0;
++	u32 off, end, val;
++
++	if (!acio->rc_base || !acio->rc_res)
++		return;
++
++	end = min_t(u32, resource_size(acio->rc_res), 0x1000);
++	for (off = 0x100; off < end; off += 4) {
++		val = readl(acio->rc_base + off);
++		if (!val)
++			continue;
++		n += scnprintf(buf + n, sizeof(buf) - n, " %03x=%08x", off, val);
++		if (n >= (int)sizeof(buf) - 20) {
++			dev_info(acio->dev, "ACIO RC+:%s\n", buf);
++			n = 0;
++			buf[0] = '\0';
++		}
++	}
++	if (n)
++		dev_info(acio->dev, "ACIO RC+:%s\n", buf);
++}
++
++static void apple_dp_scan_nhi(struct apple_nhi *anhi)
++{
++	u32 off, val;
++
++	if (!anhi->nhi_base)
++		return;
++
++	for (off = 0; off < 0x10000; off += 0x1000) {
++		val = readl(anhi->nhi_base + off);
++		if (!val || val == 0xffffffff)
++			continue;
++		dev_info(anhi->dev, "DP IN: NHI 0x%05x=%08x\n", off, val);
++	}
+ }
+ 
+ static void apple_dp_aux_work(struct work_struct *work)
+@@ -860,6 +913,9 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 		 out ? out->port : 0);
+ 
+ 	apple_dp_dump_rc(anhi->acio);
++	apple_dp_scan_rc_rest(anhi->acio);
++	apple_dp_scan_nhi(anhi);
++	apple_dp_scan_window(anhi->acio);
+ 	apple_dp_dump_host_adapters(anhi);
+ 	if (tb_port_is_dpin(in)) {
+ 		apple_dp_dump_hop(in, 8);
+-- 
+2.55.0
+
