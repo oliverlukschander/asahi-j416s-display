@@ -37,4 +37,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0041-drm-apple-do-not-ioremap-lpdptxphy.patch` | No lpdptxphy MMIO. Skip DPTX connect. |
 | `0042-drm-apple-USB4-lpdptxphy-assign_only-via-phy-driver.patch` | core+0x10=2 trains HBR3/4 lanes and blanks eDP. DCP-index mux is the steal. |
 | `0043-drm-apple-skip-USB4-DPTX-lpdptxphy-assign-blanks-eDP.patch` | Skip DPTX connect. Do not write lpdptxphy core+0x10. |
-| `0044-drm-apple-USB4-DPTX-train-via-sysfs-after-lid-close.patch` | Default skip. `echo 1 > usb4_dptx_train` assigns lpdptxphy and allows DRM hotplug. |
+| `0044-drm-apple-USB4-DPTX-train-via-sysfs-after-lid-close.patch` | Train ran; link 4→1 lanes then rate 0. DRM still suppressed (bug). |
+| `0045-drm-apple-USB4-train-allows-DRM-hotplug-full-analog.patch` | Manual train: full analog, av_service, DRM hotplug. echo 0 restores DCP index 0. |

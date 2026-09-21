@@ -26,7 +26,7 @@
 #include <linux/io.h>
 #include <linux/moduleparam.h>
 
-static bool assign_only = true;
+static bool assign_only;
 module_param(assign_only, bool, 0644);
 MODULE_PARM_DESC(assign_only,
 		 "USB4: write DCP index at core+0x10 only; skip analog activate");

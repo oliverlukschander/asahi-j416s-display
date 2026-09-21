@@ -1,0 +1,65 @@
+From e0521a2cd0e770fdb0690561ed085a20d462817e Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 13:54:19 +0200
+Subject: [PATCH] drm/apple: USB4 manual train allows DRM hotplug
+
+Last train got HBR3/4 lanes then dropped to 1 and rate 0. The USB4
+connect path always returned "DRM hotplug suppressed", so Hyprland
+never saw a connector. On usb4_dptx_train=1, run full analog
+activate, av_service_connect, and allow hotplug. echo 0 assigns
+lpdptxphy back to DCP 0.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 21 +++++++++++++++++----
+ 1 file changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 73c19ff..18810ed 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1497,9 +1497,13 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			ret = -ETIMEDOUT;
+ 			goto out_disconnect;
+ 		}
+-		dev_info(dcp->dev,
+-			 "USB4: DPTX trained %u lanes, DRM hotplug suppressed\n",
+-			 dcp->dptxport[port].lane_count);
++		dev_info(dcp->dev, "USB4: DPTX trained %u lanes%s\n",
++			 dcp->dptxport[port].lane_count,
++			 usb4_force_dptx ? "" : ", DRM hotplug suppressed");
++		if (!usb4_force_dptx)
++			return 0;
++		if (dcp->avep)
++			av_service_connect(dcp);
+ 		return 0;
+ 	}
+ 
+@@ -1544,6 +1548,15 @@ static int usb4_dptx_train_set(const char *val, const struct kernel_param *kp)
+ 	ret = kstrtoint(val, 0, &v);
+ 	if (ret)
+ 		return ret;
++	if (v == 0) {
++		usb4_force_dptx = false;
++		if (usb4_lpdptx_phy)
++			phy_set_mode_ext(usb4_lpdptx_phy, PHY_MODE_DP, 0);
++		if (usb4_armed_dcp)
++			dev_info(usb4_armed_dcp->dev,
++				 "USB4: DPTX train off, lpdptxphy DCP index 0\n");
++		return 0;
++	}
+ 	if (v != 1)
+ 		return -EINVAL;
+ 	if (!usb4_armed_dcp)
+@@ -1551,7 +1564,7 @@ static int usb4_dptx_train_set(const char *val, const struct kernel_param *kp)
+ 
+ 	usb4_force_dptx = true;
+ 	dev_info(usb4_armed_dcp->dev,
+-		 "USB4: user DPTX train (lpdptxphy assign; blanks eDP)\n");
++		 "USB4: user DPTX train (full analog; blanks eDP)\n");
+ 	ret = dcp_dptx_connect(usb4_armed_dcp, 0);
+ 	return ret ? ret : 0;
+ }
+-- 
+2.55.0
+
