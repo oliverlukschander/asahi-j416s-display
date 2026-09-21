@@ -11,6 +11,7 @@
 #define DISP_SIZE	0x4000
 #define DCPEXT_DISP1	0x315320000ULL
 #define DCPEXT_DISP2	0x315344000ULL
+#define PANEL_DISP2	0x389344000ULL
 
 static int apply;
 module_param(apply, int, 0444);
@@ -24,6 +25,10 @@ static int read_ext2;
 module_param(read_ext2, int, 0444);
 MODULE_PARM_DESC(read_ext2, "1 = read dcpext1 disp-2 only, no panel, no writes");
 
+static int read_panel2;
+module_param(read_panel2, int, 0444);
+MODULE_PARM_DESC(read_panel2, "1 = read panel disp-2 only, no writes");
+
 static int __init dispclk_init(void)
 {
 	void __iomem *ext;
@@ -33,14 +38,19 @@ static int __init dispclk_init(void)
 		pr_err("dispclk: refusing apply=1 (crashed 2026-09-21)\n");
 		return -EINVAL;
 	}
-	if (!read_ext && !read_ext2) {
+	if (!read_ext && !read_ext2 && !read_panel2) {
 		pr_info("dispclk: loaded, not touching MMIO\n");
 		return 0;
 	}
 
-	pr_info("dispclk: read-only dcpext1 %s\n",
-		read_ext2 ? "disp-2 0x315344000" : "disp-1 0x315320000");
-	ext = ioremap(read_ext2 ? DCPEXT_DISP2 : DCPEXT_DISP1, DISP_SIZE);
+	if (read_panel2) {
+		pr_info("dispclk: read-only panel disp-2 0x389344000\n");
+		ext = ioremap(PANEL_DISP2, DISP_SIZE);
+	} else {
+		pr_info("dispclk: read-only dcpext1 %s\n",
+			read_ext2 ? "disp-2 0x315344000" : "disp-1 0x315320000");
+		ext = ioremap(read_ext2 ? DCPEXT_DISP2 : DCPEXT_DISP1, DISP_SIZE);
+	}
 	if (!ext)
 		return -ENOMEM;
 	for (i = 0; i < DISP_SIZE; i += 4) {
@@ -55,8 +65,9 @@ static int __init dispclk_init(void)
 		}
 	}
 	iounmap(ext);
-	pr_info("dispclk: dcpext1 %s nonzero words %d\n",
-		read_ext2 ? "disp-2" : "disp-1", nonzero);
+	pr_info("dispclk: %s nonzero words %d\n",
+		read_panel2 ? "panel disp-2" :
+		read_ext2 ? "dcpext1 disp-2" : "dcpext1 disp-1", nonzero);
 	return 0;
 }
 
