@@ -375,3 +375,42 @@ sudo -n dmesg > /home/oliver/Development/asahi-j416s-display/captures/2026-09-21
 The capture script queries DRM/USB/Thunderbolt sysfs and Hyprland, and reads
 existing kernel logs. It issues no direct MMIO, firmware request, or modeset.
 Installed kernel remains 0090; 0091 is built but not installed.
+
+## 2026-09-21 — HDMI result and direct USB-C adapter baseline
+
+The HDMI baseline completed: Oliver reports a working monitor, and the
+capture shows eDP-1 and HDMI-A-1 both active. SET_LINK_RATE and four active
+lanes precede 22 firmware timings and the HDMI connected callback. The hub
+keyboard remains enumerated. See notes/2026-09-21-hdmi-baseline-result.md.
+
+After this entry is committed and pushed, ask Oliver to perform this exact
+physical action, with no reboot: disconnect the monitor HDMI cable from the
+Mac HDMI socket; remove the VMM7100 USB-C-to-HDMI adapter from the OWC hub;
+attach the monitor HDMI cable to that adapter; plug the adapter into the
+Mac's RIGHT-SIDE USB-C socket. Keep the hub and keyboard connected to their
+current left-side socket throughout.
+
+Expected separate right-port path: NHI 0xf01f00000, ACIO 0xf01ac0000,
+crossbar 0xf0304c000. Normal Type-C routing may allocate dcpext0 0x289c00000
+or dcpext1 0x315c00000; confirm actual allocation from dmesg rather than
+assuming it. Panel DCP remains 0x389c00000. The hub's current typec0 path
+is NHI 0x701f00000 / ACIO 0x701ac0000 / crossbar 0x70304c000.
+
+Normal drivers negotiate DP alt mode on the separate adapter port and may
+perform their ordinary PHY and display initialization. Do not switch the
+hub port out of USB4, create a manual tunnel, access registers manually,
+load a module, write parameters, or reboot. The existing USB4 tunnel may
+be torn down by the connection manager when its downstream adapter is
+removed; no manual tunnel operation is requested.
+
+If eDP blacks out, unplug the directly connected adapter, unplug the hub,
+and stop hardware testing. Otherwise ask Oliver to report picture and
+keyboard function. Capture after the user reports the connection:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-direct-usbc-baseline.txt
+sudo -n dmesg > /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-direct-usbc-baseline-kernel.log
+```
+
+This action is prepared, not yet reported performed. Installed module is
+still 0090; 0091 remains an uninstalled build artifact.
