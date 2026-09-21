@@ -481,3 +481,38 @@ mapped or written. No direct MMIO or new live hardware request in this step.
 Keep hub absent. Verify extracted initramfs module and config before the
 separately logged reboot. The config will be removed and initramfs rebuilt
 after boot, before the actual hub reconnect, to disarm subsequent boots.
+
+## 2026-09-21 — 0092 installed and verified; hub-absent reboot
+
+Loader --no-reboot completed successfully. Extracted initramfs at
+/tmp/j416s-0092-initramfs-q6tlp2sy contains candidate appledrm SHA256
+ceb3aea107ee878ca1004098ae23f5b0ab2fdfa929dd244271224919e668e30f
+and options appledrm usb4_protocol_probe=1. Both installed module copies
+match. Backups of both 0090 module copies match SHA256
+790475c0059aea58b602de5a35f2f2a325ceafcb5e8756946e7e9b5b994704d1;
+backed-up initramfs SHA256 is
+fef9c5d9d3e73ac496dcbca0f946ec8d9ca34aed0d673252cc8e8f8802e3c73d.
+
+After this entry is committed/pushed and absence of external routers is
+rechecked, schedule the approved test boot with this exact command:
+
+```
+sudo -n systemd-run --unit=j416s-0092-reboot --on-active=30s /usr/bin/systemctl reboot
+```
+
+This reboot initializes normal hardware, including panel DCP 0x389c00000
+and external DCPs 0x289c00000/0x315c00000. Hub must remain physically absent;
+no USB4 protocol probe is expected until later reconnect. No manual MMIO.
+The SDDM readiness gate is installed. No unattended reconnect/continue.
+
+After boot, keep hub absent, inspect panel/current module parameter/logs,
+and remove the opt-in config plus rebuild initramfs (log commands first)
+before the separately logged reconnect. Stop if the panel fails to recover.
+
+Conditional recovery prepared if 0092 boot fails; do not execute during a
+successful boot or with hub attached:
+`sudo -n bash /home/oliver/Development/asahi-j416s-display/scripts/restore-0090.sh`
+This verifies the saved hashes, restores only the two 0090 appledrm files and
+the 0090 initramfs, removes only the 0092 config, and runs depmod. No live
+driver reload, no direct hardware access, and no automatic reboot. Any
+subsequent recovery reboot must be recorded separately before execution.
