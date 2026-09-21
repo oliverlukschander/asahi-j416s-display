@@ -53,3 +53,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0057-thunderbolt-Apple-DP-IN-analog-hands-off-until-timeout.patch` | Analog MMIO writes closed. Do not dump/write analog at tunnel-up; dump at DPRX timeout. |
 | `0058-thunderbolt-Apple-log-ACIO-RTKit-and-dump-VSE.patch` | Analog closed (`+0x18` still 0x1017). Log RTKit client msgs; dump Apple VSE. |
 | `0059-thunderbolt-Apple-start-ACIO-RTKit-eps-probe-VSE.patch` | Start RTKit ep 0x10–0x1f. Probe VSE +0x02–0x0b writability. |
+| `0060-thunderbolt-do-not-write-Apple-VSE-2-0b.patch` | Closed: VSE +0x0b write timed out NHI (`ffffffff` CS). Dump-only VSE. |

@@ -1,0 +1,93 @@
+From b1570c096a8a32b1c8b6f210a0bea3bd4ee245ba Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:29:10 +0200
+Subject: [PATCH] thunderbolt: do not write Apple VSE +0x02..+0x0b
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+0059 wrote 1 to VSE words 2–0a (they stuck) then +0x0b, which
+returned ffffffff and timed out USB4 config space (-110). Later CS
+dumps were all-ones, so DPRX/LCK bits looked set; that was a dead
+NHI, not a sink.
+
+Remove the VSE probe. Keep dump-only VSE. Abort adapter dumps when
+CS0 is ffffffff so a wedged NHI does not stall 20 s.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 44 ++++++-------------------------------
+ 1 file changed, 7 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index e21a02b..f0bf029 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -710,7 +710,13 @@ static void apple_dp_dump_adapter(struct tb_port *port, const char *tag)
+ 	u32 w[17], cs4 = 0xffffffff;
+ 	int i, ret;
+ 
+-	for (i = 0; i <= 16; i++) {
++	ret = tb_port_read(port, &w[0], TB_CFG_PORT, port->cap_adap, 1);
++	if (ret || w[0] == 0xffffffff) {
++		tb_port_warn(port, "%s config space dead ret=%d (not DPRX)\n",
++			     tag, ret);
++		return;
++	}
++	for (i = 1; i <= 16; i++) {
+ 		ret = tb_port_read(port, &w[i], TB_CFG_PORT,
+ 				   port->cap_adap + i, 1);
+ 		if (ret)
+@@ -809,40 +815,6 @@ static void apple_dp_dump_vse(struct tb_switch *sw)
+ 		tb_sw_warn(sw, "Apple VSE cap=%d:%s\n", cap, buf);
+ }
+ 
+-static void apple_dp_probe_vse(struct tb_switch *sw)
+-{
+-	int cap, i, ret;
+-	u32 orig, val;
+-
+-	cap = tb_switch_find_vse_cap(sw, TB_VSE_CAP_APPLE);
+-	if (cap < 0)
+-		return;
+-
+-	/* Words 2–11 are zero on this host. See which bits stick. */
+-	for (i = 2; i <= 11; i++) {
+-		ret = tb_sw_read(sw, &orig, TB_CFG_SWITCH, cap + i, 1);
+-		if (ret || orig)
+-			continue;
+-		val = 1;
+-		ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, cap + i, 1);
+-		if (ret) {
+-			tb_sw_warn(sw, "Apple VSE +0x%02x write 1 failed %d\n",
+-				   i, ret);
+-			continue;
+-		}
+-		ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, cap + i, 1);
+-		tb_sw_warn(sw, "Apple VSE +0x%02x wrote 1 read %08x\n", i,
+-			   ret ? 0xffffffff : val);
+-		if (!ret && val == 1) {
+-			/* Neighbor of cable_info: leave enable bit. */
+-			if (i == 2)
+-				continue;
+-		}
+-		val = orig;
+-		tb_sw_write(sw, &val, TB_CFG_SWITCH, cap + i, 1);
+-	}
+-}
+-
+ static void apple_dp_dump_analog(struct apple_cio *acio, const char *tag)
+ {
+ 	apple_dp_dump_rc_range(acio, APPLE_CIO_DPIN0_ANALOG,
+@@ -1054,8 +1026,6 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 
+ 	apple_dp_dump_rc(anhi->acio);
+ 	apple_dp_dump_vse(in->sw);
+-	apple_dp_probe_vse(in->sw);
+-	apple_dp_dump_vse(in->sw);
+ 	dev_info(anhi->dev,
+ 		 "DP IN analog block 0x%x (port %u) dpin_aux=%d (0=hands-off)\n",
+ 		 anhi->analog_base, in->port, apple_dpin_aux);
+-- 
+2.55.0
+
