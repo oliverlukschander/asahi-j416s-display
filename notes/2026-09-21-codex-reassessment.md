@@ -108,3 +108,21 @@ kernel tree. Initial diagnostic printf format warning was fixed (%zu for
 chunk length). The remaining build warning reports the unavailable pahole
 version; module BTF was explicitly disabled. No runtime validation occurred.
 Patch: patches/0090-drm-apple-trace-timing-discovery-drop-repeated-hpd.patch.
+
+## Full-access continuation
+
+The patch is now kernel commit `a0df2ede847714b1de9fd2d0341cb1050c831df6`.
+The build in the normal src/appledrm directory succeeds with the supplied
+headers, MODPOST and module link. Existing unused-function warnings remain.
+Candidate appledrm.ko SHA256:
+`790475c0059aea58b602de5a35f2f2a325ceafcb5e8756946e7e9b5b994704d1`.
+
+Hyprland IPC now succeeds with full access: eDP-1 is active at
+3456x2160@120, and no external monitor is active.
+
+All five other modules copied by load-appledrm.sh have hashes identical to
+the files currently installed under the kernel module tree. Only appledrm
+changes. The loader now refuses installation while any external Thunderbolt
+router is present and accepts --no-reboot, so initramfs can be checked before
+reboot is logged and scheduled separately. bash -n and git diff --check pass.
+The loader has not yet been executed.

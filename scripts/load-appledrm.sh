@@ -3,6 +3,23 @@
 # appledrm is loaded from initramfs, so updates/ alone is ignored.
 # Do not rmmod the live display driver — that blacks the panel.
 set -euo pipefail
+REBOOT=1
+case "${1:-}" in
+  "") ;;
+  --no-reboot) REBOOT=0 ;;
+  *) echo "Usage: $0 [--no-reboot]" >&2; exit 2 ;;
+esac
+[[ $# -le 1 ]] || { echo "Too many arguments" >&2; exit 2; }
+
+# An attached USB4 hub has previously blanked eDP during early boot.
+# Require it to be physically unplugged before changing the boot modules.
+for router in /sys/bus/thunderbolt/devices/*-*; do
+  [[ -e $router ]] || continue
+  name=${router##*/}
+  [[ $name == *:* || $name == *-0 ]] && continue
+  echo "Refusing installation with external Thunderbolt router $name attached" >&2
+  exit 1
+done
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VER="$(uname -r)"
 KO="$ROOT/src/appledrm/appledrm.ko"
@@ -90,6 +107,11 @@ if [[ ${USB4_GROK_CONTINUE:-0} == 1 && -s $ROOT/notes/boot-continue.session ]]; 
 	echo "Armed Grok continue for session $(tr -d '[:space:]' <"$ROOT/notes/boot-continue.session")"
 else
 	rm -f "$ROOT/notes/boot-continue.armed"
+fi
+
+if [[ $REBOOT == 0 ]]; then
+  echo "Installation complete. Reboot was not requested (--no-reboot)."
+  exit 0
 fi
 
 echo "Rebooting in 3s. GRUB default is Aurora."

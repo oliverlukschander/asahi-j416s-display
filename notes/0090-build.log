@@ -1,0 +1,16 @@
+make: Entering directory '/home/oliver/Development/omarchy/aurora-j416s/kbuild/usr/lib/modules/7.1.12-2.5-1-ARCH/build'
+make[1]: Entering directory '/home/oliver/Development/asahi-j416s-display/src/appledrm'
+warning: pahole version differs from the one used to build the kernel
+  The kernel was built with: 132
+  You are using:             0
+  CC [M]  dcp.o
+  CC [M]  iomfb_v13_3.o
+  CC [M]  iomfb_v12_3.o
+dcp.c:589:13: warning: ‘dcp_typec_nhi_has_tb_device’ defined but not used [-Wunused-function]
+  589 | static bool dcp_typec_nhi_has_tb_device(int typec_index)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  LD [M]  appledrm.o
+  MODPOST Module.symvers
+  LD [M]  appledrm.ko
+make[1]: Leaving directory '/home/oliver/Development/asahi-j416s-display/src/appledrm'
+make: Leaving directory '/home/oliver/Development/omarchy/aurora-j416s/kbuild/usr/lib/modules/7.1.12-2.5-1-ARCH/build'
