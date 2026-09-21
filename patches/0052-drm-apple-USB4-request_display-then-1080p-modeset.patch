@@ -1,0 +1,35 @@
+From a78f80a80635febadc47258fc4ad6479ba93a2ce Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:31:24 +0200
+Subject: [PATCH] drm/apple: USB4 request_display then 1080p modeset
+
+iomfb_poweron left fDisplayPowerState=0 and hung reboot. Call
+DPTX request_display with no PHY assign, then the fake 1080p
+modeset. That is the 0031 sequence plus scanout.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 435fc16..5879288 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1627,7 +1627,12 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	dcp->nr_modes = 1;
+ 	WRITE_ONCE(dcp->connector->connected, true);
+ 	dev_info(dcp->dev,
+-		 "USB4: fake 1920x1080 scanout (no iomfb_poweron; it hung reboot)\n");
++		 "USB4: fake 1920x1080; request_display then modeset (no lpdptxphy)\n");
++	if (dcp->dptxport[0].enabled && dcp->dptxport[0].service) {
++		int r = dptxport_request_display(dcp->dptxport[0].service);
++
++		dev_info(dcp->dev, "USB4: request_display %d (no PHY assign)\n", r);
++	}
+ 	{
+ 		struct drm_crtc_state fake = { };
+ 		int mret;
+-- 
+2.55.0
+
