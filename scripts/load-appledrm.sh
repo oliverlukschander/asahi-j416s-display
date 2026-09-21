@@ -80,13 +80,16 @@ mkinitcpio -p linux-aurora
 echo OK >"$STATUS"
 echo "Installed into $INTREE and initramfs-linux-aurora.img"
 
-# Arm post-boot Grok continue if a session id is present.
+# Arm post-boot Grok continue only when USB4_GROK_CONTINUE=1.
+# 0078 unattended boot with hub from init blanked eDP; do not auto-arm.
 if [[ -n ${USB4_GROK_SESSION:-} ]]; then
 	printf '%s\n' "$USB4_GROK_SESSION" >"$ROOT/notes/boot-continue.session"
 fi
-if [[ -s $ROOT/notes/boot-continue.session ]]; then
+if [[ ${USB4_GROK_CONTINUE:-0} == 1 && -s $ROOT/notes/boot-continue.session ]]; then
 	touch "$ROOT/notes/boot-continue.armed"
 	echo "Armed Grok continue for session $(tr -d '[:space:]' <"$ROOT/notes/boot-continue.session")"
+else
+	rm -f "$ROOT/notes/boot-continue.armed"
 fi
 
 echo "Rebooting in 3s. GRUB default is Aurora."
