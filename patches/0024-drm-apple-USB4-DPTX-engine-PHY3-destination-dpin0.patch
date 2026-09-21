@@ -1,0 +1,102 @@
+From b2c1e39f2ccb51d19ecef76669450817555859ce Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 11:03:03 +0200
+Subject: [PATCH] drm/apple: USB4 DPTX engine is HDMI PHY 3, destination is
+ dpin0
+
+ATC 2 in USB4 has no firmware DPTX object even with lpdptx up
+(device == NULL on 0x8020). Use the hybrid dcpext so firmware
+talks to PHY 3, keep USB-C dpin0 analog, set DPIN bits 13:12.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 23 +++++++++++++----------
+ drivers/gpu/drm/apple/dptxep.c | 12 ++++++------
+ 2 files changed, 19 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 8ffafb2..cd51ca0 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -196,14 +196,15 @@ static unsigned int dcp_typec_route_score(struct apple_dcp_typec_route *route)
+ }
+ 
+ /*
+- * USB4 DP IN: prefer the USB-C dcpext. The HDMI hybrid's dedicated DPTX PHY 3
+- * trains the empty HDMI jack even when the USB-C crossbar dpin mux is selected.
++ * USB4 DP IN: prefer the HDMI hybrid dcpext. Firmware has a DPTX object
++ * for PHY 3; ATC 2 in USB4 has none (device == NULL). Digital from
++ * dispext0 feeds both HDMI analog and USB-C dpin0.
+  */
+ static unsigned int dcp_typec_route_score_usb4(struct apple_dcp_typec_route *route)
+ {
+ 	unsigned int score = dcp_typec_route_score(route);
+ 
+-	if (route->dcp->fixed_phy)
++	if (!route->dcp->fixed_phy)
+ 		score += 100;
+ 	return score;
+ }
+@@ -253,14 +254,17 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 
+ 	dcp->phy = route->phy;
+ 	/*
+-	 * USB4 pixels leave the DCP as digital DPTX; the crossbar must
+-	 * switch dpin0/dpin1 onto ACIO DP IN. Firmware remote-port ATC is
+-	 * the Type-C port index. HDMI PHY 3 is the empty analog jack.
++	 * USB4: firmware DPTX object is HDMI PHY 3 on the hybrid dcpext.
++	 * Crossbar dpin0 still takes this DCP's digital onto ACIO DP IN.
+ 	 */
+ 	if (usb4 && usb4_atc >= 0)
+ 		dcp->dptx_phy = usb4_atc;
++	else if (usb4 && dcp->fixed_dptx_phy)
++		dcp->dptx_phy = dcp->fixed_dptx_phy;
+ 	else
+ 		dcp->dptx_phy = route->dptx_phy;
++	if (usb4 && dcp->fixed_phy)
++		dcp->phy = dcp->fixed_phy;
+ 	dcp->connector_type = DRM_MODE_CONNECTOR_USB;
+ 	if (route->port->connector) {
+ 		route->port->connector->dcp = to_platform_device(dcp->dev);
+@@ -285,11 +289,10 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	route->selected = true;
+ 
+ 	/*
+-	 * Firmware looks up the DPTX device at validate/connect, before
+-	 * ACTIVATE. Enable lpdptx AUX now so ATC 2 exists as a DPTX object.
+-	 * phy-apple-atc does not switch USB4 lanes.
++	 * ATC 2 in USB4 has no firmware DPTX object. Only poke lpdptx when
++	 * this DCP has no dedicated PHY 3 engine.
+ 	 */
+-	if (usb4 && route->phy) {
++	if (usb4 && route->phy && !dcp->fixed_phy) {
+ 		ret = phy_set_mode_ext(route->phy, PHY_MODE_DP, dcp->index);
+ 		if (ret)
+ 			dev_warn(dcp->dev,
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 801a412..53dfc03 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -88,13 +88,13 @@ static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
+ 		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 		     DCPDPTX_REMOTE_PORT_CONNECTED;
+ 
+-	/*
+-	 * DPIN bits 13:12 made firmware look up a device that does not
+-	 * exist (device == NULL). Use ATC index only; extra bits via
+-	 * usb4_target_or.
+-	 */
+-	if (dcp_is_usb4_output(dcp))
++	if (dcp_is_usb4_output(dcp)) {
++		/* Destination is USB-C dpin; engine is HDMI PHY 3 (atc). */
++		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
++
++		target |= FIELD_PREP(DCPDPTX_REMOTE_PORT_DPIN, dpin);
+ 		target |= usb4_target_or;
++	}
+ 	return target;
+ }
+ 
+-- 
+2.55.0
+
