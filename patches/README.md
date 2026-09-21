@@ -49,3 +49,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0053-drm-apple-USB4-drop-fake-1080p-no-request_display.patch` | echo 0 drops USB-3. Scanout no longer request_display. |
 | `0054-thunderbolt-Apple-DP-IN-analog-PHY-in-ACIO-RC.patch` | Dump/reapply RC `0x4000`/`0x8000` DP IN analog (mapped). Set CS8 DPME. `dpin_aux=2` pulses start. |
 | `0055-thunderbolt-Apple-DP-IN-analog-FSM-at-0x18.patch` | Stop analog tunable reapply (`+0x18` 0x17→0x80000000). Drive analog+0x18 (`dpin_fsm` default 0x08). |
+| `0056-thunderbolt-Apple-DP-IN-analog-start-0x00-fill-0x20.patch` | `+0x18` is status (write ignored). Pulse `+0x00` bit 0; fill `+0x20` if 0. |
