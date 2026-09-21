@@ -1,0 +1,114 @@
+From 1f9238d057394dd43207fded2dd7915a1b9f2457 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 12:25:23 +0200
+Subject: [PATCH] drm/apple: USB4 DPTX engine is lpdptxphy index 4
+
+ATC 0/2 and HDMI PHY 3 have no usable USB4 DPTX object. T602x
+has phy@39c000000 (apple,t6020-dptx-phy), disabled on laptops.
+macOS names it AppleT602XDPTXPort(lpdptx-phy0); desktop DT uses
+apple,dptx-phy=4. Instantiate it at USB4 connect and target 0x9040.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 44 +++++++++++++++++++++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.c |  4 ++--
+ 2 files changed, 45 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 943076f..8ac69d6 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -13,6 +13,7 @@
+ #include <linux/jiffies.h>
+ #include <linux/kconfig.h>
+ #include <linux/kernel.h>
++#include <linux/kmod.h>
+ #include <linux/module.h>
+ #include <linux/moduleparam.h>
+ #include <linux/of_address.h>
+@@ -255,10 +256,14 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	dcp->phy = route->phy;
+ 	/*
+ 	 * USB4: digital into the USB-C dpin mux. Do not bind HDMI PHY 3
+-	 * (empty jack) or switch ATC lanes to DP. AUX is ACIO DP IN.
++	 * or ATC 2. Desktop DT uses apple,dptx-phy=4 for lpdptxphy
++	 * (phy@39c000000), the dedicated DPTX that macOS calls
++	 * AppleT602XDPTXPort(lpdptx-phy0).
+ 	 */
+ 	if (usb4 && usb4_atc >= 0)
+ 		dcp->dptx_phy = usb4_atc;
++	else if (usb4)
++		dcp->dptx_phy = 4;
+ 	else
+ 		dcp->dptx_phy = route->dptx_phy;
+ 	dcp->connector_type = DRM_MODE_CONNECTOR_USB;
+@@ -1317,6 +1322,40 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+ #define DPTX_RECONNECT_RETRIES 1
+ 
++static void dcp_usb4_enable_lpdptxphy(struct apple_dcp *dcp)
++{
++	static bool tried;
++	struct device_node *np;
++	struct platform_device *pdev;
++
++	if (tried)
++		return;
++	tried = true;
++
++	request_module("phy_apple_dptx");
++	np = of_find_compatible_node(NULL, NULL, "apple,t6020-dptx-phy");
++	if (!np) {
++		dev_info(dcp->dev, "USB4: no lpdptxphy DT node\n");
++		return;
++	}
++	pdev = of_find_device_by_node(np);
++	if (pdev) {
++		dev_info(dcp->dev, "USB4: lpdptxphy already instantiated\n");
++		put_device(&pdev->dev);
++		of_node_put(np);
++		return;
++	}
++	pdev = of_platform_device_create(np, NULL, NULL);
++	of_node_put(np);
++	if (!pdev) {
++		dev_warn(dcp->dev, "USB4: failed to instantiate lpdptxphy\n");
++		return;
++	}
++	dev_info(dcp->dev, "USB4: instantiated lpdptxphy %s\n",
++		 dev_name(&pdev->dev));
++	msleep(50);
++}
++
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ {
+ 	bool usb4 = false;
+@@ -1333,6 +1372,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 dcp->active_typec_route ? "borrowed" : "fixed",
+ 		 dcp->connector_type, dcp->dptxport[port].connected);
+ 
++	if (dcp_is_usb4_output(dcp))
++		dcp_usb4_enable_lpdptxphy(dcp);
++
+ 	mutex_lock(&dcp->hpd_mutex);
+ 	if (!dcp->dptxport[port].enabled) {
+ 		dev_warn(dcp->dev, "dcp_dptx_connect: dptx service for port %d not enabled\n", port);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 567b9a6..bc95d02 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -91,9 +91,9 @@ static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
+ 	if (dcp_is_usb4_output(dcp)) {
+ 		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
+ 
+-		/* ATC 2 has no firmware object in USB4; PHY 3 is HDMI. */
++		/* atc is lpdptxphy (4). DPIN selects USB-C dpin analog. */
+ 		target = FIELD_PREP(DCPDPTX_REMOTE_PORT_CORE, core) |
+-			 FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, 0) |
++			 FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, atc) |
+ 			 FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 			 FIELD_PREP(DCPDPTX_REMOTE_PORT_DPIN, dpin) |
+ 			 DCPDPTX_REMOTE_PORT_CONNECTED |
+-- 
+2.55.0
+

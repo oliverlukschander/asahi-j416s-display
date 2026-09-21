@@ -25,4 +25,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0029-thunderbolt-scan-ACIO-MMIO-for-DP-IN-analog-AUX.patch` | Closed: ACIO window `readl` hung the machine (reboot loop with dock). |
 | `0030-thunderbolt-do-not-scan-ACIO-MMIO.patch` | Remove window/RC+/NHI scans. USB4 CS dumps only. |
 | `0031-drm-apple-USB4-DPTX-HPD-without-PHY-connect.patch` | Closed: request_display still ACTIVATE ATC 2, then 22/24. |
-| `0032-drm-apple-USB4-DPTX-remote-port-ATC0-DPIN1.patch` | Connect with target 0x9000 (ATC=0, DPIN=1). No PHY 3, no ATC 2, no phy_set_mode DP. |
+| `0032-drm-apple-USB4-DPTX-remote-port-is-ATC-0-DPIN-1.patch` | Closed: 0x9000 device == NULL / INACTIVE_SINK. |
+| `0033-drm-apple-USB4-DPTX-engine-is-lpdptxphy-index-4.patch` | Instantiate disabled `phy@39c000000` (lpdptxphy) and connect target ATC=4 + DPIN. |
