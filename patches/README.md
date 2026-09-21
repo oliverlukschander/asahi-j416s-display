@@ -35,4 +35,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0039-drm-apple-skip-USB4-DPTX-connect-lpdptxphy-DP-mode-b.patch` | Skip DPTX connect. Fix false "trained 4 lanes" from GET_MAX_LANE_COUNT. |
 | `0040-drm-apple-USB4-assign-lpdptxphy-DCP-index-only.patch` | Closed: second ioremap of lpdptxphy core hung the fabric (~1 s boot). |
 | `0041-drm-apple-do-not-ioremap-lpdptxphy.patch` | No lpdptxphy MMIO. Skip DPTX connect. |
-| `0042-drm-apple-USB4-lpdptxphy-assign_only-via-phy-driver.patch` | phy_set_mode through phy-apple-dptx (assign_only=core+0x10). No second ioremap, no analog activate. |
+| `0042-drm-apple-USB4-lpdptxphy-assign_only-via-phy-driver.patch` | core+0x10=2 trains HBR3/4 lanes and blanks eDP. DCP-index mux is the steal. |
+| `0043-drm-apple-skip-USB4-DPTX-lpdptxphy-assign-blanks-eDP.patch` | Skip DPTX connect. Do not write lpdptxphy core+0x10. |
