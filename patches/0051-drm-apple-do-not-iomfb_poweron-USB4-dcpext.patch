@@ -1,0 +1,37 @@
+From 03a1e0d8ce2aaaaba10b6da2110d9511bb7087bc Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:28:29 +0200
+Subject: [PATCH] drm/apple: do not iomfb_poweron USB4 dcpext
+
+iomfb_poweron on 315c left fDisplayPowerState=0 and hung the next
+reboot on the Omarchy logo. Keep fake 1080p modeset only.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 5fa290d..435fc16 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1627,15 +1627,11 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	dcp->nr_modes = 1;
+ 	WRITE_ONCE(dcp->connector->connected, true);
+ 	dev_info(dcp->dev,
+-		 "USB4: fake 1920x1080 scanout; iomfb poweron then modeset\n");
++		 "USB4: fake 1920x1080 scanout (no iomfb_poweron; it hung reboot)\n");
+ 	{
+ 		struct drm_crtc_state fake = { };
+ 		int mret;
+ 
+-		if (dcp->fw_compat == DCP_FIRMWARE_V_13_5)
+-			iomfb_poweron_v13_3(dcp);
+-		else
+-			iomfb_poweron_v12_3(dcp);
+ 		fake.mode = dm->mode;
+ 		if (dcp->fw_compat == DCP_FIRMWARE_V_13_5)
+ 			mret = iomfb_modeset_v13_3(dcp, &fake);
+-- 
+2.55.0
+
