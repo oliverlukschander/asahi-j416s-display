@@ -14,9 +14,9 @@
 #define DCPEXT_DISP1		0x315320000ULL
 #define XBAR_BASE		0x70304c000ULL
 
-static int apply = 1;
+static int apply;
 module_param(apply, int, 0444);
-MODULE_PARM_DESC(apply, "1 = copy panel-only words onto dcpext1");
+MODULE_PARM_DESC(apply, "Must stay 0. apply=1 ioremaps disp-1 and crashed on 2026-09-21");
 
 static void dispclk_xbar(const char *tag)
 {
@@ -42,6 +42,11 @@ static void dispclk_xbar(const char *tag)
 static int __init dispclk_init(void)
 {
 	void __iomem *panel_io, *ext_io;
+
+	if (!apply) {
+		pr_info("dispclk: loaded, not touching MMIO\n");
+		return 0;
+	}
 	u32 *panel, *ext;
 	int i, n = 0, stuck = 0, logged = 0;
 
