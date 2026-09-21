@@ -77,3 +77,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0081-drm-apple-USB4-0x9001-ATC-AUX-without-lane-switch.patch` | Revert unk 0x100. Enable USB-C ATC DP AUX on 0x9001 skip path. |
 | `0082-drm-apple-USB4-0x9001-DCP-verbose-logs.patch` | 0081 no SET_LINK_RATE. Drop ATC AUX. Raise DCP log mask on 0x9001. |
 | `0083-drm-apple-reselect-USB4-dpin-after-nub-reset.patch` | pmgr 0x25 reset after request_display. Reselect dpin. Crossbar 0x050 dispext enable is in src/mux. |
+| `0084-drm-apple-USB4-DCPDPDevice-start-with-ATC-AUX.patch` | Second set_hpd starts DCPDPDevice. Enable ATC AUX first so the PHY can answer. |
