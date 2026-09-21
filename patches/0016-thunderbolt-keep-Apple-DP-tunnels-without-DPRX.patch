@@ -1,0 +1,116 @@
+From 3757708f73a94fa3293e53bc4d27fa6b1927cac7 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 09:44:18 +0200
+Subject: [PATCH 16/16] thunderbolt: keep Apple DP tunnels without DPRX
+
+Apple DPTX talks AUX through DP IN after the tunnel paths exist.
+Tearing the tunnel down on DPRX timeout (12s) makes that impossible.
+On apple,t8103-usb4-nhi mark the tunnel active immediately and do not
+call tb_dp_resource_unavailable when DPRX never completes.
+---
+ drivers/thunderbolt/tb.c     | 24 +++++++++++++++---------
+ drivers/thunderbolt/tunnel.c | 24 ++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/thunderbolt/tb.c b/drivers/thunderbolt/tb.c
+index a2bcd35..33334b1 100644
+--- a/drivers/thunderbolt/tb.c
++++ b/drivers/thunderbolt/tb.c
+@@ -10,6 +10,7 @@
+ #include <linux/slab.h>
+ #include <linux/errno.h>
+ #include <linux/delay.h>
++#include <linux/of.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/platform_data/x86/apple.h>
+ 
+@@ -1954,16 +1955,21 @@ static void tb_dp_tunnel_active(struct tb_tunnel *tunnel, void *data)
+ 		 * loaded or not all DP cables where connected to the
+ 		 * discrete router.
+ 		 *
+-		 * In both cases we remove the DP IN adapter from the
+-		 * available resources as it is not usable. This will
+-		 * also tear down the tunnel and try to re-use the
+-		 * released DP OUT.
+-		 *
+-		 * It will be added back only if there is hotplug for
+-		 * the DP IN again.
++		 * On Apple Silicon, DPTX talks AUX through the DP IN
++		 * adapter after the tunnel paths exist. Tearing the
++		 * tunnel down on DPRX timeout makes that impossible.
++		 * Keep the tunnel; DPTX can still fail independently.
+ 		 */
+-		tb_tunnel_warn(tunnel, "not active, tearing down\n");
+-		tb_dp_resource_unavailable(tb, in, "DPRX negotiation failed");
++		if (tb->nhi && tb->nhi->dev && tb->nhi->dev->of_node &&
++		    of_device_is_compatible(tb->nhi->dev->of_node,
++					    "apple,t8103-usb4-nhi")) {
++			tb_tunnel_warn(tunnel,
++				       "Apple: DPRX not done, keeping DP tunnel\n");
++		} else {
++			tb_tunnel_warn(tunnel, "not active, tearing down\n");
++			tb_dp_resource_unavailable(tb, in,
++						   "DPRX negotiation failed");
++		}
+ 	}
+ 	mutex_unlock(&tb->lock);
+ 
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index ffe97ba..c91229f 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -10,6 +10,7 @@
+ #include <linux/slab.h>
+ #include <linux/list.h>
+ #include <linux/ktime.h>
++#include <linux/of.h>
+ #include <linux/string_helpers.h>
+ 
+ #include "tunnel.h"
+@@ -98,6 +99,18 @@ module_param(bw_alloc_mode, bool, 0444);
+ MODULE_PARM_DESC(bw_alloc_mode,
+ 		 "enable bandwidth allocation mode if supported (default: true)");
+ 
++static bool tb_nhi_is_apple(const struct tb_nhi *nhi)
++{
++	struct device_node *np;
++
++	if (!nhi || !nhi->dev)
++		return false;
++	np = nhi->dev->of_node;
++	if (!np && nhi->dev->parent)
++		np = nhi->dev->parent->of_node;
++	return np && of_device_is_compatible(np, "apple,t8103-usb4-nhi");
++}
++
+ static const char * const tb_tunnel_names[] = { "PCI", "DP", "DMA", "USB3" };
+ 
+ static const char * const tb_event_names[] = {
+@@ -1105,6 +1118,11 @@ static void tb_dp_dprx_work(struct work_struct *work)
+ 				mutex_unlock(&tb->lock);
+ 				return;
+ 			}
++			if (tb_nhi_is_apple(tb->nhi)) {
++				tb_tunnel_warn(tunnel,
++					       "Apple: DPRX timeout, keeping DP tunnel\n");
++				tb_tunnel_set_active(tunnel, true);
++			}
+ 		} else {
+ 			tb_tunnel_set_active(tunnel, true);
+ 		}
+@@ -1126,6 +1144,12 @@ static int tb_dp_dprx_start(struct tb_tunnel *tunnel)
+ 
+ 	tunnel->dprx_started = true;
+ 
++	if (tb_nhi_is_apple(tunnel->tb->nhi)) {
++		tb_tunnel_warn(tunnel,
++			       "Apple: DP tunnel paths up, not waiting for DPRX\n");
++		tb_tunnel_set_active(tunnel, true);
++	}
++
+ 	if (tunnel->callback) {
+ 		tunnel->dprx_timeout = dprx_timeout_to_ktime(dprx_timeout);
+ 		queue_delayed_work(tunnel->tb->wq, &tunnel->dprx_work, 0);
+-- 
+2.55.0
+

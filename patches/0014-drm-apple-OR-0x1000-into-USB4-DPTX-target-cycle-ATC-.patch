@@ -1,7 +1,7 @@
 From f5004e5d08b76594a5f8096340d5c1f3883308c1 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:29:58 +0200
-Subject: [PATCH 14/15] drm/apple: OR 0x1000 into USB4 DPTX target; cycle ATC
+Subject: [PATCH 14/16] drm/apple: OR 0x1000 into USB4 DPTX target; cycle ATC
  on fault
 
 ATC 2 is DEVICE_NOT_STARTED; HDMI PHY 3 is INACTIVE_SINK. Try remote

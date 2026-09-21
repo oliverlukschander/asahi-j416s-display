@@ -1,7 +1,7 @@
 From 9d8a9996d1a34edd50f1b3ee73e2382363141818 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:18:30 +0200
-Subject: [PATCH 11/15] drm/apple: INACTIVE_SINK is a failed USB4 mux, not a
+Subject: [PATCH 11/16] drm/apple: INACTIVE_SINK is a failed USB4 mux, not a
  link
 
 Faking linkcfg after ACTIVATE marked the port connected, so dpin1

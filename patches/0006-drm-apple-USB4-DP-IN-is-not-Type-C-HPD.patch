@@ -1,7 +1,7 @@
 From 1de65606dc3b9510590811fd3b78efc4148e54ee Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 08:33:11 +0200
-Subject: [PATCH 06/15] drm/apple: USB4 DP IN is not Type-C HPD
+Subject: [PATCH 06/16] drm/apple: USB4 DP IN is not Type-C HPD
 
 Advertising Type-C HPD made DCP firmware wait on AFK 8,8, which
 times out while ATC2 is in USB4. Return supports_hpd=false for USB4,

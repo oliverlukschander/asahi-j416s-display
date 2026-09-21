@@ -1,7 +1,7 @@
 From 7245afb0675c6358399459185a95f5547d1e592a Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:33:24 +0200
-Subject: [PATCH 15/15] drm/apple: stop INACTIVE_SINK HPD storm; cycle target
+Subject: [PATCH 15/16] drm/apple: stop INACTIVE_SINK HPD storm; cycle target
  bits on ATC2
 
 HPD kick after APCALL 20 retriggered INACTIVE_SINK hundreds of times

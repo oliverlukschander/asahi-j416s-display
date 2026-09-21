@@ -1,7 +1,7 @@
 From 0e8ba55d581e1f1142cf035a98144ca843af72b0 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 08:37:52 +0200
-Subject: [PATCH 07/15] drm/apple: USB4 max lanes without ATC PHY, complete
+Subject: [PATCH 07/16] drm/apple: USB4 max lanes without ATC PHY, complete
  after ACTIVATE
 
 GET_MAX_LANE_COUNT was phy_validate() on a NULL USB4 ATC. Return 4

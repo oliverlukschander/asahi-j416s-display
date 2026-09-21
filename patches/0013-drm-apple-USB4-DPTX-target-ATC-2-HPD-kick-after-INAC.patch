@@ -1,7 +1,7 @@
 From 1b4274b81cb14d544eadae397a17a0f5f20753af Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:26:32 +0200
-Subject: [PATCH 13/15] drm/apple: USB4 DPTX target ATC 2 + HPD kick after
+Subject: [PATCH 13/16] drm/apple: USB4 DPTX target ATC 2 + HPD kick after
  INACTIVE_SINK
 
 SET_LINK_RATE 0x0 after an 8s wait is teardown, not training.
