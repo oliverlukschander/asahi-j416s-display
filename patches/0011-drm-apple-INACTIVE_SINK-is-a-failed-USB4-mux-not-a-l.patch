@@ -1,0 +1,111 @@
+From 9d8a9996d1a34edd50f1b3ee73e2382363141818 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 09:18:30 +0200
+Subject: [PATCH 11/11] drm/apple: INACTIVE_SINK is a failed USB4 mux, not a
+ link
+
+Faking linkcfg after ACTIVATE marked the port connected, so dpin1
+never ran. Treat APCALL 20 as -EAGAIN, disconnect, and flip dpin0
+to dpin1 on the first retry.
+---
+ drivers/gpu/drm/apple/dcp.c    |  9 ++++++++-
+ drivers/gpu/drm/apple/dptxep.c | 26 +++++---------------------
+ drivers/gpu/drm/apple/dptxep.h |  1 +
+ 3 files changed, 14 insertions(+), 22 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 8d07e07..e192236 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1320,6 +1320,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		goto out_unlock;
+ 
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
++	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+ 	/* USB4: drive the dedicated DPTX PHY (not the USB4 ATC). */
+ 	dcp->dptxport[port].atcphy = usb4 ? dcp->fixed_phy : dcp->phy;
+@@ -1364,6 +1365,11 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	mutex_unlock(&dcp->hpd_mutex);
+ 	ret = wait_for_completion_timeout(&dcp->dptxport[port].linkcfg_completion,
+ 				    DPTX_CONNECT_TIMEOUT);
++	if (dcp->dptxport[port].usb4_inactive_sink) {
++		dev_info(dcp->dev, "USB4: inactive sink on this mux, will retry dpin\n");
++		ret = -EAGAIN;
++		goto out_disconnect;
++	}
+ 	if (!ret) {
+ 		dev_err(dcp->dev,
+ 			"dcp_dptx_connect: timed out waiting for port %u link configuration\n",
+@@ -1412,7 +1418,8 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 		return;
+ 	}
+ 
+-	if (dcp_is_usb4_output(dcp) && dcp->typec_reconnect_tries == 2 &&
++	if (dcp_is_usb4_output(dcp) &&
++	    (dcp->typec_reconnect_tries == 0 || dcp->typec_reconnect_tries == 2) &&
+ 	    dcp->active_typec_route && dcp->active_typec_route->xbar &&
+ 	    dcp->active_typec_route->xbar->chip) {
+ 		struct apple_dcp_typec_route *route = dcp->active_typec_route;
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 4811bc8..fb28877 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -603,19 +603,9 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 	case DPTX_APCALL_SET_DRIVE_SETTINGS:
+ 		return dptxport_call_set_drive_settings(service, data, data_size,
+ 							reply, reply_size);
+-        case DPTX_APCALL_ACTIVATE: {
+-		int ret = dptxport_call_activate(service, data, data_size,
+-						 reply, reply_size);
+-
+-		if (!ret && dcp_is_usb4_output(service->ep->dcp) &&
+-		    dptx->lane_count) {
+-			dev_info(service->ep->dcp->dev,
+-				 "USB4: complete linkcfg after ACTIVATE (lanes=%u)\n",
+-				 dptx->lane_count);
+-			complete(&dptx->linkcfg_completion);
+-		}
+-		return ret;
+-	}
++        case DPTX_APCALL_ACTIVATE:
++		return dptxport_call_activate(service, data, data_size,
++					      reply, reply_size);
+ 	case DPTX_APCALL_DEACTIVATE:
+ 		return dptxport_call_deactivate(service, data, data_size,
+ 						reply, reply_size);
+@@ -630,17 +620,11 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 	case DPTX_APCALL_INACTIVE_SINK_DETECTED:
+ 		dev_info(service->ep->dcp->dev,
+ 			 "DPTXPort: INACTIVE_SINK_DETECTED\n");
++		dptx->usb4_inactive_sink = true;
++		complete(&dptx->linkcfg_completion);
+ 		memcpy(reply, data, min(reply_size, data_size));
+ 		if (reply_size >= 4)
+ 			memset(reply, 0, 4);
+-		if (dcp_is_usb4_output(service->ep->dcp)) {
+-			struct apple_dcp *dcp = service->ep->dcp;
+-
+-			dcp->typec_reconnect_tries = 2;
+-			mod_delayed_work(system_freezable_wq,
+-					 &dcp->typec_reconnect_wq,
+-					 msecs_to_jiffies(200));
+-		}
+ 		return 0;
+ 	default:
+ 		/* just try to ACK and hope for the best... */
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index c8816a0..6cd53cf 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -49,6 +49,7 @@ struct apple_epic_service;
+ 
+ struct dptx_port {
+ 	bool enabled, connected;
++	bool usb4_inactive_sink;
+ 	struct completion enable_completion;
+ 	struct completion linkcfg_completion;
+ 	u32 unit;
+-- 
+2.55.0
+
