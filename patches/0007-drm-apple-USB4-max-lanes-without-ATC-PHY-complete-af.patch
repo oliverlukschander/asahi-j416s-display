@@ -1,0 +1,111 @@
+From 0e8ba55d581e1f1142cf035a98144ca843af72b0 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 08:37:52 +0200
+Subject: [PATCH 7/7] drm/apple: USB4 max lanes without ATC PHY, complete after
+ ACTIVATE
+
+GET_MAX_LANE_COUNT was phy_validate() on a NULL USB4 ATC. Return 4
+lanes, complete linkcfg after ACTIVATE, and flip dpin0->dpin1 on
+retry. Log APCALLs already in place.
+---
+ drivers/gpu/drm/apple/dcp.c    | 24 ++++++++++++++++++++++++
+ drivers/gpu/drm/apple/dptxep.c | 34 +++++++++++++++++++++++++++++++---
+ 2 files changed, 55 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 641c4c3..1cec5a7 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1406,6 +1406,30 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 		return;
+ 	}
+ 
++	if (dcp_is_usb4_output(dcp) && dcp->typec_reconnect_tries == 2 &&
++	    dcp->active_typec_route && dcp->active_typec_route->xbar &&
++	    dcp->active_typec_route->xbar->chip) {
++		struct apple_dcp_typec_route *route = dcp->active_typec_route;
++		struct mux_chip *chip = route->xbar->chip;
++		int next = (usb4_dpin_index == 1) ? 2 : 1;
++
++		if (next < (int)chip->controllers) {
++			mux_control_deselect(dcp_typec_route_mux(route));
++			route->usb4_xbar = &chip->mux[next];
++			route->usb4_xbar_borrowed = true;
++			usb4_dpin_index = next;
++			if (mux_control_select(route->usb4_xbar,
++					       route->mux_index))
++				dev_err(dcp->dev,
++					"USB4: failed to select mux %d\n",
++					next);
++			else
++				dev_info(dcp->dev,
++					 "USB4: flipped to crossbar mux %d\n",
++					 next);
++		}
++	}
++
+ 	if (++dcp->typec_reconnect_tries < DPTX_RECONNECT_RETRIES) {
+ 		mod_delayed_work(system_freezable_wq, &dcp->typec_reconnect_wq,
+ 				 DPTX_RECONNECT_DELAY);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 8f83d99..5e8a831 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -261,6 +261,15 @@ static int dptxport_call_get_max_lane_count(struct apple_epic_service *service,
+ 	if (reply_size < sizeof(*reply))
+ 		return -EINVAL;
+ 
++	if (!dptx->atcphy) {
++		/* USB4 DP IN: no ATC DP PHY to validate. */
++		dptx->lane_count = 4;
++		reply->retcode = cpu_to_le32(0);
++		reply->lane_count = cpu_to_le64(4);
++		dev_info(dcp->dev, "get_max_lane_count: USB4 DP IN, 4 lanes\n");
++		return 0;
++	}
++
+ 	ret = phy_validate(dptx->atcphy, PHY_MODE_DP, 0, &phy_ops);
+ 	if (ret < 0) {
+ 		dev_err(dcp->dev, "phy_validate failed: %d\n", ret);
+@@ -553,6 +562,15 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 						   reply, reply_size);
+ 	case DPTX_APCALL_GET_MAX_LANE_COUNT:
+ 		return dptxport_call_get_max_lane_count(service, reply, reply_size);
++	case DPTX_APCALL_GET_ACTIVE_LANE_COUNT: {
++		struct dptxport_apcall_lane_count *lc = reply;
++
++		if (reply_size < sizeof(*lc))
++			return -EINVAL;
++		lc->retcode = cpu_to_le32(0);
++		lc->lane_count = cpu_to_le64(dptx->lane_count);
++		return 0;
++	}
+         case DPTX_APCALL_SET_ACTIVE_LANE_COUNT:
+ 		return dptxport_call_set_active_lane_count(service, data, data_size,
+ 							   reply, reply_size);
+@@ -583,9 +601,19 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 	case DPTX_APCALL_SET_DRIVE_SETTINGS:
+ 		return dptxport_call_set_drive_settings(service, data, data_size,
+ 							reply, reply_size);
+-        case DPTX_APCALL_ACTIVATE:
+-		return dptxport_call_activate(service, data, data_size,
+-					      reply, reply_size);
++        case DPTX_APCALL_ACTIVATE: {
++		int ret = dptxport_call_activate(service, data, data_size,
++						 reply, reply_size);
++
++		if (!ret && dcp_is_usb4_output(service->ep->dcp) &&
++		    dptx->lane_count) {
++			dev_info(service->ep->dcp->dev,
++				 "USB4: complete linkcfg after ACTIVATE (lanes=%u)\n",
++				 dptx->lane_count);
++			complete(&dptx->linkcfg_completion);
++		}
++		return ret;
++	}
+ 	case DPTX_APCALL_DEACTIVATE:
+ 		return dptxport_call_deactivate(service, data, data_size,
+ 						reply, reply_size);
+-- 
+2.55.0
+

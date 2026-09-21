@@ -1,7 +1,7 @@
 From 36aed056d8c9ae3273e419a9145552ca6985770c Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 08:07:12 +0200
-Subject: [PATCH 4/6] drm/apple: auto-arm USB4 DP IN on the NHI that has a dock
+Subject: [PATCH 4/7] drm/apple: auto-arm USB4 DP IN on the NHI that has a dock
 
 The Type-C mux set path never armed DPTX on the OWC hub (no
 "USB4 DP IN armed" after the first reboot). Treat TBT alt-mode as

@@ -1,7 +1,7 @@
 From 5305f7eeb9c9b65012f8a396b3583d466679af72 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Sun, 20 Sep 2026 22:27:03 +0200
-Subject: [PATCH 1/6] drm/apple: route DPTX to USB4 DP IN on Type-C USB4
+Subject: [PATCH 1/7] drm/apple: route DPTX to USB4 DP IN on Type-C USB4
 
 USB4 docks (OWC Thunderbolt 5 Hub plus a USB-C HDMI adapter) need
 pixels on the ACIO DP IN adapter, not the ATC PHY. dcp_typec_route_set()
