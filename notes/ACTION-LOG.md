@@ -237,3 +237,35 @@ The unplugged capture completed. Backups were copied successfully to
 and the saved initramfs SHA256 is
 1819205a61672ba2b0f30148a175d23b7897b13311b7a0ca78ce9b16e2d5f701.
 Next command remains the exact --no-reboot installer above.
+
+## 2026-09-21 diagnostic 0090 — installation completed; reboot pending
+
+The --no-reboot installation returned exit 0 and notes/load-status is OK.
+mkinitcpio completed successfully. Extracted the new initramfs with
+`lsinitcpio -x /boot/initramfs-linux-aurora.img` in
+`/tmp/j416s-0090-initramfs` and compared its embedded
+`usr/lib/modules/7.1.12-2.5-1-ARCH/updates/appledrm.ko` with the built module.
+Both installed module paths and the embedded module have SHA256
+`790475c0059aea58b602de5a35f2f2a325ceafcb5e8756946e7e9b5b994704d1`.
+The running module has not been unloaded or replaced.
+
+Pending action, ONLY after Oliver says work is saved and ready for reboot:
+
+`sudo -n systemd-run --unit=j416s-0090-reboot --on-active=30s /usr/bin/systemctl reboot`
+
+Before scheduling, verify /sys/bus/thunderbolt/devices has no external router.
+This deliberately reboots the computer 30 seconds after scheduling. It is a
+planned diagnostic reboot, not an unexpected reset. No USB4_GROK_CONTINUE,
+no live insmod/rmmod, no manual MMIO/ioremap or module-parameter write.
+
+The next boot loads 0090 appledrm from initramfs. Normal DCP initialization
+uses panel DCP `0x389c00000`, dcpext1 `0x315c00000`, HDMI DCP `0x289c00000`;
+the last hub route was typec0 / NHI `0x701f00000`, ACIO `0x701ac0000`, xbar
+`0x70304c000`. Keep hub physically unplugged throughout reboot. No forbidden
+panel disp-block or lpdptxphy experiment is requested.
+
+After boot: resume this conversation with hub still unplugged. Read dmesg
+for read_edt_data and DCP property logs, confirm eDP in Hyprland, then log and
+push a separate hub-replug action before requesting it. Stop/unplug if eDP
+blacks out. Do not interpret empty timings at disconnected boot as a fix or
+failure until the later discovery sequence has been observed.

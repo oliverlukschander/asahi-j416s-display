@@ -1,0 +1,35 @@
+Rebuilding Aurora initramfs so the patched appledrm is what boots
+==> Building image from preset: /etc/mkinitcpio.d/linux-aurora.preset: 'default'
+==> Using default configuration file: '/etc/mkinitcpio.conf'
+  -> -k 7.1.12-2.5-1-ARCH -g /boot/initramfs-linux-aurora.img
+==> Using drop-in configuration file: 'apple_hid_modules.conf'
+==> Using drop-in configuration file: 'omarchy_hooks.conf'
+==> Using drop-in configuration file: 'thunderbolt_module.conf'
+==> Starting build: '7.1.12-2.5-1-ARCH'
+  -> Running build hook: [base]
+  -> Running build hook: [asahi]
+==> WARNING: Possibly missing firmware for module: 'xhci_pci'
+==> WARNING: Possibly missing firmware for module: 'dockchannel_hid'
+  -> Running build hook: [udev]
+  -> Running build hook: [plymouth]
+  -> Running build hook: [keyboard]
+==> WARNING: Possibly missing firmware for module: 'xhci_pci_renesas'
+  -> Running build hook: [autodetect]
+  -> Running build hook: [microcode]
+==> WARNING: architecture 'aarch64' not supported, skipping hook
+  -> Running build hook: [modconf]
+  -> Running build hook: [kms]
+==> WARNING: No module containing the symbol 'drm_privacy_screen_register' found in: 'drivers/platform'
+  -> Running build hook: [keymap]
+  -> Running build hook: [consolefont]
+==> WARNING: consolefont: no font found in configuration
+  -> Running build hook: [block]
+  -> Running build hook: [encrypt]
+  -> Running build hook: [filesystems]
+  -> Running build hook: [fsck]
+==> Generating module dependencies
+==> Creating gzip-compressed initcpio image: '/boot/initramfs-linux-aurora.img'
+  -> Early uncompressed CPIO image generation successful
+==> Initcpio image generation successful
+Installed into /lib/modules/7.1.12-2.5-1-ARCH/kernel/drivers/gpu/drm/apple/appledrm.ko and initramfs-linux-aurora.img
+Installation complete. Reboot was not requested (--no-reboot).
