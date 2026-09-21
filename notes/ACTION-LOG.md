@@ -534,3 +534,36 @@ matches. No live parameter write, module reload, reboot, MMIO or firmware
 request. Addresses directly accessed: none. Loaded probe stays enabled for
 this boot only; future boots default to disabled. Keep the hub unplugged.
 
+
+## 2026-09-21 — future boots disarmed; single 0092 reconnect prepared
+
+Config removal and initramfs rebuild succeeded. Extracted image contains
+0092 appledrm with the expected ceb3aea107ee8 hash and no experiment config.
+Current loaded module still has usb4_protocol_probe=Y. No probe has been
+manually issued; no reboot or live parameter write occurred.
+
+After this entry is committed and pushed, ask Oliver to attach the display
+adapter and monitor to the OWC hub, then reconnect the hub to the SAME
+LEFT-BACK Mac port used before. Keep eDP on. This invokes the one-attempt
+0092 path: validate/connect 0x8001, request_display, existing crossbar
+reselect, one HPD assertion (eight-second RPC timeout). No early HPD, no
+second HPD, no physical PHY assigned, no automatic retry. Confirm actual
+live route in the resulting kernel log.
+
+Expected addresses: typec0, NHI 0x701f00000, ACIO 0x701ac0000, crossbar
+0x70304c000, dcpext1 0x315c00000; panel DCP 0x389c00000. Normal connection
+manager may create its standard tunnel after enumeration; no extra manual
+tunnel or DP-alt-mode switch is requested. Existing crossbar driver's normal
+MMIO runs as logged for this firmware experiment; no direct userspace MMIO.
+
+If the panel blacks out, unplug the hub immediately and stop. If it stays
+on, wait about 15 seconds and report external picture and keyboard function.
+Capture after the user reports reconnection, using these exact commands:
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-0092-replugged.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-0092-replug-kernel.log
+```
+No claim that the probe has run or succeeded yet. A reset must not be
+followed by booting with the hub attached. 0090 backups and restore script
+remain available as documented in the preceding reboot entry.
+
