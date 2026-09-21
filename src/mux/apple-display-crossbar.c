@@ -259,6 +259,7 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
 
 		dpxbar_clear32(dpxbar, T602X_REG_034, atc_bit);
 		dpxbar_clear32(dpxbar, CROSSBAR_ATC_EN, atc_bit);
+		dpxbar_clear32(dpxbar, CROSSBAR_DISPEXT_EN, prev_dispext_bit);
 		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, 0);
 
 		dpxbar->selected_dispext[index] = -1;
@@ -283,6 +284,12 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
 		dpxbar_set32(dpxbar, T602X_REG_01C, atc_bit);
 		dpxbar_set32(dpxbar, T602X_REG_034, atc_bit);
 		dpxbar_set32(dpxbar, CROSSBAR_ATC_EN, atc_bit);
+		/*
+		 * t8103 enables the dispext source at 0x050. T602x left
+		 * that register at 0, so dpin0 was selected with no
+		 * source clock into the ACIO analog PHY.
+		 */
+		dpxbar_set32(dpxbar, CROSSBAR_DISPEXT_EN, dispext_bit);
 
 		dpxbar_set32(dpxbar, T602X_FIFO_RD_UNK_EN, dispext_bit);
 

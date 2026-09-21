@@ -1,0 +1,45 @@
+From 99217e1d29345b4e0818fd6b5094de2d9c658e36 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 18:25:40 +0200
+Subject: [PATCH] drm/apple: reselect USB4 dpin after nub reset
+
+request_display resets DCP pmgr device 0x25. Re-apply the dpin
+mux afterwards so the crossbar source enable is not lost.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 5fcf3da..9740e53 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1484,6 +1484,24 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 					dev_info(dcp->dev,
+ 						 "USB4: analog DPIN request_display core=%u atc=%u: %d\n",
+ 						 core, atc, r);
++					/*
++					 * request_display resets DCP pmgr 0x25.
++					 * Re-apply dpin (including dispext enable)
++					 * after that reset.
++					 */
++					if (!r && dcp->active_typec_route &&
++					    dcp->active_typec_route->usb4_xbar) {
++						struct apple_dcp_typec_route *route =
++							dcp->active_typec_route;
++						int m;
++
++						mux_control_deselect(route->usb4_xbar);
++						m = mux_control_select(route->usb4_xbar,
++								       route->mux_index);
++						dev_info(dcp->dev,
++							 "USB4: reselect dpin after nub: %d\n",
++							 m);
++					}
+ 				}
+ 				break;
+ 			}
+-- 
+2.55.0
+
