@@ -1,7 +1,7 @@
 From 1f0a2424dd5f83291d95d6339549835d6ced0dc3 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:13:17 +0200
-Subject: [PATCH 10/11] drm/apple: cancel USB4 DPTX work on shutdown; keep HDMI
+Subject: [PATCH 10/12] drm/apple: cancel USB4 DPTX work on shutdown; keep HDMI
  xbar on USB4
 
 udev-worker blocked 245s on reboot while DPTX reconnects ran. Cancel
