@@ -32,4 +32,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0036-drm-apple-do-not-phy_set_mode-lpdptxphy-on-USB4.patch` | Unbind lpdptxphy atcphy. Do not complete USB4 linkcfg on SET_ACTIVE_LANE. |
 | `0037-drm-apple-USB4-train-lpdptxphy-without-DRM-hotplug.patch` | Trained 4 lanes, hotplug ignored, eDP still blanked. phy_set_mode lpdptxphy is unsafe on this laptop. |
 | `0038-drm-apple-do-not-phy_set_mode-lpdptxphy.patch` | Unbind lpdptxphy atcphy again. Instantiating the device is OK; DP mode blanks eDP. |
-| `0039-drm-apple-skip-USB4-DPTX-connect-lpdptxphy-blanks-eD.patch` | Skip DPTX connect. Fix false "trained 4 lanes" from GET_MAX_LANE_COUNT. |
+| `0039-drm-apple-skip-USB4-DPTX-connect-lpdptxphy-DP-mode-b.patch` | Skip DPTX connect. Fix false "trained 4 lanes" from GET_MAX_LANE_COUNT. |
+| `0040-drm-apple-USB4-assign-lpdptxphy-DCP-index-only.patch` | Write DCP index to lpdptxphy core+0x10 only. No analog activate. Then DPTX connect. |
