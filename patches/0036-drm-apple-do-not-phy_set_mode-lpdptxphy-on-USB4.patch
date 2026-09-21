@@ -1,0 +1,53 @@
+From f4cf299adb06f727f6065bf50927d846cebb6b52 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 12:54:23 +0200
+Subject: [PATCH] drm/apple: do not phy_set_mode lpdptxphy on USB4
+
+phy_set_mode(DP) on lpdptxphy trained HBR3/4 lanes, then KMS
+modeset 3456x2234@120 onto dcpext and blanked the laptop panel.
+Leave atcphy NULL for USB4. Do not complete linkcfg on USB4
+SET_ACTIVE_LANE_COUNT.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 4 +---
+ drivers/gpu/drm/apple/dptxep.c | 8 +++++++-
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 0decb01..27bdad3 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1428,9 +1428,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (usb4)
+-		dcp->dptxport[port].atcphy = usb4_lpdptx_phy;
+-	else
++	if (!usb4)
+ 		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 88ca192..233248e 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -373,7 +373,13 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	if (lane_count > 0) {
+ 		dev_info(dcp->dev, "USB4/DPTX: SET_ACTIVE_LANE_COUNT %llu\n",
+ 			 lane_count);
+-		complete(&dptx->linkcfg_completion);
++		/*
++		 * Completing linkcfg on USB4 made KMS modeset 3456x2234@120
++		 * onto dcpext and blanked eDP. Train, but do not mark the
++		 * DRM connector connected until the sink EDID is real.
++		 */
++		if (!dcp_is_usb4_output(dcp))
++			complete(&dptx->linkcfg_completion);
+ 	}
+ 
+ 	return ret;
+-- 
+2.55.0
+
