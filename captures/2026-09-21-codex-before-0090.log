@@ -1,0 +1,318 @@
+[    1.191076] apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[    1.191219] apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[    1.191506] apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[    1.191634] apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[    1.195571] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[    1.199129] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[    1.210094] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[    1.226398] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[    1.240863] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   11.237893] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   11.247901] platform 315c00000.dcp: deferred probe pending: apple-dcp: /soc/dcp@315c00000/typec-routes/route@0: failed to get display crossbar
+[   12.853674] apple-display-crossbar 70304c000.mux: Switched dpphy to disconnected state
+[   12.853684] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.853688] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.853690] apple-display-crossbar 70304c000.mux: Switched dpin0 to disconnected state
+[   12.853698] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.853701] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.853703] apple-display-crossbar 70304c000.mux: Switched dpin1 to disconnected state
+[   12.853710] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.853713] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.858409] apple-display-crossbar b0304c000.mux: Switched dpphy to disconnected state
+[   12.858416] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.858418] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.858419] apple-display-crossbar b0304c000.mux: Switched dpin0 to disconnected state
+[   12.858424] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.858426] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.858427] apple-display-crossbar b0304c000.mux: Switched dpin1 to disconnected state
+[   12.858431] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.858433] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.862889] apple-display-crossbar f0304c000.mux: Switched dpphy to disconnected state
+[   12.862896] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.862899] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.862900] apple-display-crossbar f0304c000.mux: Switched dpin0 to disconnected state
+[   12.862906] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.862908] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.862909] apple-display-crossbar f0304c000.mux: Switched dpin1 to disconnected state
+[   12.862914] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.862916] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.869014] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   12.869026] apple-display-crossbar 130304c000.mux: Switched dpphy to disconnected state
+[   12.869032] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.869034] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.869036] apple-display-crossbar 130304c000.mux: Switched dpin0 to disconnected state
+[   12.869040] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.869042] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.869043] apple-display-crossbar 130304c000.mux: Switched dpin1 to disconnected state
+[   12.869048] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.869050] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   12.874727] apple-dcp 315c00000.dcp: typec0 USB4 DP IN using crossbar mux 1
+[   12.881242] apple-dcp 315c00000.dcp: typec1 USB4 DP IN using crossbar mux 1
+[   12.886590] apple-dcp 315c00000.dcp: typec2 USB4 DP IN using crossbar mux 1
+[   12.949798] apple-display-crossbar 130304c000.mux: Switched dpphy to dispext0,0 (t602x atc=0x100 mux=0x0)
+[   12.949805] apple-display-crossbar 130304c000.mux: t602x dpphy: 000=00000001 004=000001fe 008=00000001 00c=00000001 014=000001fb 018=00000001 01c=00000100 024=00000011 028=00000100 02c=00000001 030=00000000 034=00000100 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   12.949807] apple-display-crossbar 130304c000.mux: t602x dpphy clk: 000=00000001 800=00000000 020=00000000 820=00000000 024=00000011 81c=00000011
+[   12.950456] apple-dcp 289c00000.dcp: typec_mux_set() returned: 0
+[   12.954079] apple-dcp 289c00000.dcp: typec0 USB4 DP IN using crossbar mux 1
+[   12.960549] apple-dcp 289c00000.dcp: typec1 USB4 DP IN using crossbar mux 1
+[   12.966753] apple-dcp 289c00000.dcp: typec2 USB4 DP IN using crossbar mux 1
+[   12.971986] apple-dcp 389c00000.dcp: Detected display with notch of 74 pixel
+[   12.973484] apple-dcp 389c00000.dcp: RTKit: Initializing (protocol version 12)
+[   12.973546] apple-dcp 389c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107ddbb4000 -> iomem: ffff80008f830000
+[   12.973555] apple-dcp 389c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff80008f818000
+[   12.974497] apple-dcp 389c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008f844000
+[   12.974586] apple-dcp 289c00000.dcp: DCP index:1 dptx target phy: 3 dptx die: 0
+[   12.974757] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2611: IOMFB LACS_ERROR: DCP took too long to respond to LAS stats
+[   12.974806] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2646: IOMFB: BLM LTS data hasn't been read in more than 10 secs
+[   12.986131] apple-dcp 289c00000.dcp: RTKit: Initializing (protocol version 12)
+[   12.986208] apple-dcp 289c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107dd8b4000 -> iomem: ffff80008fac0000
+[   12.986218] apple-dcp 289c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff80008fad4000
+[   12.987606] apple-dcp 289c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008bb10000
+[   12.989429] apple-dcp 315c00000.dcp: DCP index:2 dptx target phy: 1 dptx die: 0
+[   12.990010] apple-dcp 315c00000.dcp: RTKit: Initializing (protocol version 12)
+[   12.990105] apple-dcp 315c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107dc5b4000 -> iomem: ffff80008fb40000
+[   12.990123] apple-dcp 315c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff80008fb54000
+[   12.991116] apple-dcp 315c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008fb5c000
+[   12.992027] apple-dcp 389c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00680000
+[   12.992059] apple-dcp 389c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[   12.992873] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[   12.992904] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[   12.992908] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[   12.992931] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1864: start_ios_gated: trigger pending HPD notification
+[   12.992937] apple-dcp 389c00000.dcp: cb_hotplug() connected:1, valid_mode:0
+[   12.992943] apple-dcp 389c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:0
+[   12.994798] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[   12.995066] apple-dcp 389c00000.dcp: RTKit: syslog message: ableCompensator.cpp:903: IOMFB setup_table: Could not find table 'display-backlight-compensation-v1' in registry. Using default table.
+[   12.995209] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[   12.995253] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[   12.995420] apple-dcp 389c00000.dcp: RTKit: syslog message: UPPipeDCP_H13P.cpp:1532: IOMFB: videoClock is zero, defaulting to 521065000
+[   12.995809] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[   12.995911] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[   12.995954] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[   12.996160] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[   12.996178] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[   12.996571] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[   12.996778] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[   12.996951] apple-dcp 389c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[   12.999954] apple-dcp 289c00000.dcp: AFK[ep:20]: new service system on channel 1
+[   12.999996] apple-dcp 289c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 3
+[   13.002007] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Int RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1208
+[   13.002091] apple-dcp 389c00000.dcp: AFK[ep:20]: new service system on channel 5
+[   13.002176] apple-dcp 389c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 7
+[   13.003250] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[   13.003307] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[   13.020505] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[   13.023628] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2611: IOMFB LACS_ERROR: DCP took too long to respond to LAS stats
+[   13.023692] apple-dcp 389c00000.dcp: DCP booted
+[   13.024218] apple-dcp 389c00000.dcp: DCP is_main_display: 1
+[   13.024223] apple-dcp 389c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:6
+[   14.052564] apple-dcp 289c00000.dcp: AFK[ep:23]: new service disp0-service on channel 1
+[   14.058694] apple-dcp 289c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 1
+[   14.058772] apple-dcp 289c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 3
+[   14.058931] apple-dcp 289c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00027000
+[   14.058978] apple-dcp 289c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[   14.060108] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[   14.060174] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[   14.060180] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[   14.062890] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[   14.063404] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   14.064507] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[   14.064658] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   14.066121] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[   14.066214] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[   14.066676] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[   14.066749] apple-dcp 315c00000.dcp: AFK[ep:20]: new service system on channel 1
+[   14.066790] apple-dcp 315c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 3
+[   14.066982] apple-dcp 289c00000.dcp: DCP booted
+[   14.067147] apple-dcp 289c00000.dcp: DCP is_main_display: 0
+[   14.067152] apple-dcp 289c00000.dcp: dcp_hotplug() connected:0 valid_mode:0 nr_modes:0
+[   15.077481] apple-dcp 315c00000.dcp: AFK[ep:23]: new service disp0-service on channel 1
+[   15.083503] apple-dcp 315c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 1
+[   15.083578] apple-dcp 315c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 3
+[   15.083654] apple-dcp 289c00000.dcp: dcp_enable_dp2hdmi_hpd: DP2HDMI HPD connected:0
+[   15.083736] apple-dcp 315c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00027000
+[   15.083784] apple-dcp 315c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[   15.083859] apple-dcp 289c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:1962: IOMFB: swap_submit_dcp: swallowed swap ID 2 as fControllerPowerState is 0 for External Display
+[   15.083868] apple-dcp 289c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:1967: IOMFB: swap_submit_dcp: swallowed swap ID 2 as timinsg are not enabled for External Display
+[   15.084330] apple-dcp 289c00000.dcp: dcp_poweroff() done
+[   15.084864] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[   15.084934] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[   15.084938] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[   15.088016] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[   15.088625] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   15.089905] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[   15.090060] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   15.091843] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[   15.091941] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[   15.092415] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[   15.092722] apple-dcp 315c00000.dcp: DCP booted
+[   15.092890] apple-dcp 315c00000.dcp: DCP is_main_display: 0
+[   15.212827] apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[   15.218351] apple-dcp 315c00000.dcp: typec mux set typec1 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[   15.379486] apple-dcp 315c00000.dcp: typec mux set typec0 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[   15.428020] apple-dcp 389c00000.dcp: dcp_poweron() starting
+[   15.428108] apple-dcp 389c00000.dcp: dcp_set_power_state_req returned, 10000 ms remaining
+[   15.428111] apple-dcp 389c00000.dcp: set_digital_out_mode(color:1 timing:2) "3456x2160": 120 1042130 3456 3464 3496 3536 2160 2278 2360 2456 0x48 0x0
+[   15.428114] apple-dcp 389c00000.dcp: set_digital_out_mode() color mode depth:8 format:0 colorimetry:16 eotf:0 range:0 vrr:1
+[   15.428160] apple-dcp 389c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:5931: IOMFBParameter_adaptive_sync Req minRR = 0x0, mediaTargetRate = 0x0, Fractional Rate = 0
+[   15.428202] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7462: set_digital_out_mode: Modeset requested for colorID: 1, timingID: 2
+[   15.428238] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:18011: Dual pipe disabled offset 0
+[   15.428441] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 4 -> 1
+[   15.428443] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[   15.428468] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:150: IOMFBStatus IOMFB::UPTSQManager::power_down_M3(IOMFB::AppleRegisterStream *, UPTSQManager::ModeChangeWaiter *): request mode ch
+[   15.432532] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:162: IOMFBStatus IOMFB::UPTSQManager::power_down_M3(IOMFB::AppleRegisterStream *, UPTSQManager::ModeChangeWaiter *): disabling M3
+[   15.432697] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[   15.433024] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:3300: Quiescing callback
+[   15.511635] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[   15.511848] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7700: set_mode: timingID: 2 colorID: 1
+[   15.513232] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[   15.513316] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[   15.513588] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7356: IOMFBStatus UnifiedPipeline::mode_set_gated(uint32_t, uint32_t): 3456x2234@120 Hz link: 1
+[   15.513616] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 0, requested state: 1
+[   15.513867] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 0 -> 1
+[   15.513893] apple-dcp 389c00000.dcp: RTKit: syslog message: ock_Tunables_v1.cpp:651: IOMFB: Writing tunables with target 4
+[   15.514927] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_Config_H13P.cpp:1771: program_frame_size: pixel_clock 1042130000, vid0 521065000, 00020910 0000007e
+[   15.515328] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LED M3 IMem : size 0x7b74
+[   15.515835] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LED M3 DMem : size 0x102e0
+[   15.518266] apple-dcp 389c00000.dcp: RTKit: syslog message: ock_PCC2DLTM_v4.cpp:324: IOMFBStatus IOMFB::UPBlock_PCC2DLTM_v4::set_mcpu_power(IOMFB::AppleRegisterStream *, bool) Loading M3 Hal
+[   15.518272] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LTM M3 IMem : size 0x7308
+[   15.518692] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LTM M3 DMem : size 0xd190
+[   15.519905] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:4938: [set_lts_buffer] buffer 0x10001cc4000 Add_lo = 0x1cc4000, Add_hi = 0x100, size 0x2900 stride 0x100
+[   15.526947] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 2
+[   15.527227] apple-dcp 389c00000.dcp: RTKit: syslog message: UPPipeDCP_H13P.cpp:1532: IOMFB: videoClock is zero, defaulting to 521065000
+[   15.527302] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load BLM M3 IMem : size 0x764c
+[   15.527720] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load BLM M3 DMem : size 0xaf6c
+[   15.528372] apple-dcp 389c00000.dcp: RTKit: syslog message: FBPropertyManager.h:189: value_t<P> IOMFB::PropMgr::getVal(IOMFB::RuntimeProperty) [P = IOMFB::RuntimePropertyType::boolean]: WARNING - type mismatch on
+[   15.528681] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[   15.528687] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[   15.528734] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[   15.528924] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[   15.529097] apple-dcp 389c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[   15.529666] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Int RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1208
+[   15.529713] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[   15.529769] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[   15.543934] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[   15.544204] apple-dcp 389c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:296: IOMFB: VideoInterfaceIOAV::power_on: m_power_ctrl->setPower( 1 )
+[   15.549939] apple-dcp 389c00000.dcp: set_digital_out_mode finished:8378
+[   15.549963] apple-dcp 389c00000.dcp: RTKit: syslog message: MMailboxHandler.cpp:214: pcc firmware: MailBox Printf is enabled in BLM Pipe Line Init
+[   15.554450] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:17179: handle_stage1_enable blm_en 1 ltm_en 0
+[   15.891717] apple-dcp 315c00000.dcp: typec mux set typec0 alt=0000000000000000 svid=0000 mode=4 dp=0 usb4=1 tbt=0 usb4_xbar=yes
+[   15.891730] apple-dcp 315c00000.dcp: dcp_dptx_disconnect(port=0)
+[   15.891748] apple-display-crossbar 70304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[   15.891754] apple-display-crossbar 70304c000.mux: t602x dpin0: 000=00000004 004=000001fb 008=00000004 00c=00000004 014=000001fb 018=00000010 01c=00000001 024=00000110 028=00000001 02c=00000004 030=00002002 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   15.891756] apple-display-crossbar 70304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[   15.891758] apple-dcp 315c00000.dcp: allocated Type-C DPTX PHY 4 (USB4 DP IN, ACIO AUX)
+[   15.891759] apple-dcp 315c00000.dcp: USB4 dpin mux typec0; waiting for DP IN HPD
+[   15.894685] thunderbolt-apple-nhi 701f00000.nhi: device links to tunneled native ports are missing!
+[   16.924494] thunderbolt-apple-nhi 701f00000.nhi: 0:5: USB4 DPTX Discovery closed (CS13 writable, CS9 static); AE=0 VE=0
+[   16.925131] thunderbolt-apple-nhi 701f00000.nhi: 0:5: DP IN CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=00000000 COMMON=15402134 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[   16.925510] thunderbolt-apple-nhi 701f00000.nhi: 1:19: DP OUT CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[   16.925547] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=0 (DPTX should use this adapter, not ATC)
+[   16.925548] thunderbolt-apple-nhi 701f00000.nhi: DP IN analog/AUX serializer: tunnel 0:5 <-> 1:19
+[   16.926219] thunderbolt-apple-nhi 701f00000.nhi: 0: Apple VSE cap=53: 00=ca0005ff 01=00000013 02=00000000 03=00000000 04=00000000 05=00000000 06=00000000 07=00000000 08=00000000 09=00000000 0a=00000000 0b=00000000 0c=00000fff 0d=00000fff 0e=00000000 0f=00000000
+[   16.926220] thunderbolt-apple-nhi 701f00000.nhi: DP IN analog block 0x4000 (port 5) dpin_aux=0 (0=hands-off)
+[   16.926221] thunderbolt-apple-nhi 701f00000.nhi: DP IN analog: leaving PHY alone until DPRX timeout
+[   16.927242] thunderbolt-apple-nhi 701f00000.nhi: 0:5: host DP IN type=0e0101 cap=9 CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=00000000 COMMON=15402134 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[   16.927246] thunderbolt-apple-nhi 701f00000.nhi: 0:5: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[   16.927938] thunderbolt-apple-nhi 701f00000.nhi: 0:6: host DP IN type=0e0101 cap=9 CS0=00090400 CS1=00004008 CS2=00000000 CS3=00000000 LOCAL=15402334 REMOTE=00000000 STAT=00000000 COMMON=00000000 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=0 AE=0 HPD=0 DPRX=0 LCK=0
+[   16.927940] thunderbolt-apple-nhi 701f00000.nhi: 0:6: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[   16.927975] thunderbolt-apple-nhi 701f00000.nhi: 0:5: DP IN hop 8 enable=1 out=1 next=11 credits=1
+[   16.928009] thunderbolt-apple-nhi 701f00000.nhi: 0:5: DP IN hop 9 enable=1 out=1 next=10 credits=0
+[   16.928711] thunderbolt-apple-nhi 701f00000.nhi: 1:19: hub DP OUT type=0e0102 cap=57 CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 CS9=00000000 CS10=00000000 ADP_CS4=40800000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[   16.928714] thunderbolt-apple-nhi 701f00000.nhi: 1:19: hub DP OUT CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[   16.929282] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP tunnel paths up, not waiting for DPRX
+[   17.025312] appledrm: DP IN HPD=1 typec0, dpin mux only (ACIO AUX, no DPTX PHY)
+[   17.025335] apple-dcp 315c00000.dcp: USB4 DP IN armed typec0; DPTX HPD in 200 ms (no PHY connect)
+[   17.096769] usb 1-1.2: Product: VMM7100
+[   17.232277] apple-dcp 315c00000.dcp: dcp_dptx_connect(port=0) target=0:4 typec=1 route=borrowed conn_type=20 connected=0
+[   17.232289] apple-dcp 315c00000.dcp: USB4: skip lpdptxphy instantiate (eDP stays on)
+[   17.232702] apple-dcp 315c00000.dcp: USB4: DCP verbose logs ret=0 retcode=0
+[   17.232707] apple-dcp 315c00000.dcp: USB4: analog DPIN bind port=0 (unit 0)
+[   17.232710] apple-dcp 315c00000.dcp: DPTX validate target=0x9001 core=1 atc=0 die=0 or=0x0
+[   17.232974] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233015] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.233031] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePort:0x1a] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233072] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePort:0x1a] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.233273] apple-dcp 315c00000.dcp: USB4: analog DPIN validate core=1 atc=0: 0
+[   17.233278] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePort:0x1a] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233279] apple-dcp 315c00000.dcp: DPTX connect target=0x9001 unk=0x100
+[   17.233289] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePort:0x1a] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233347] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233385] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233520] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233558] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.233572] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePort:0x1a] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233613] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePort:0x1a] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.233782] apple-dcp 315c00000.dcp: USB4: analog DPIN connect core=1 atc=0 HPD: 0
+[   17.233803] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePort:0x1a] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233815] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePort:0x1a] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233886] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.233900] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234050] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234063] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.234103] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePort:0x1a] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234131] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePort:0x1a] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.234335] apple-dcp 315c00000.dcp: USB4: analog DPIN set_hpd: 0
+[   17.234358] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePort:0x1a] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234373] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePort:0x1a] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234446] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234455] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234603] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234642] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.234670] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePort:0x1a] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.234701] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePort:0x1a] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.234841] apple-dcp 315c00000.dcp: RTKit: syslog message: AppleDCPDPTX.cpp:355: [AFK]powering nub 0x854e10
+[   17.234850] apple-dcp 315c00000.dcp: RTKit: syslog message: PmgrService.cpp:147: [AFK]pmgrSetPowerState devID = 0x25, devMode = 0xF
+[   17.234918] apple-dcp 315c00000.dcp: RTKit: syslog message: PmgrService.cpp:301: [AFK]pmgrResetDevice devID = 0x25
+[   17.235048] apple-dcp 315c00000.dcp: DPTXPort: APCALL 18 (32 bytes)
+[   17.235057] apple-dcp 315c00000.dcp: DPTXPort: GET_SUPPORTS_HPD 1 usb4=1
+[   17.235289] apple-dcp 315c00000.dcp: DPTXPort: APCALL 10 (32 bytes)
+[   17.235300] apple-dcp 315c00000.dcp: get_max_lane_count: USB4 DP IN, 4 lanes
+[   17.235608] apple-dcp 315c00000.dcp: DPTXPort: APCALL 0 (16 bytes)
+[   17.235873] apple-dcp 315c00000.dcp: USB4: analog DPIN request_display core=1 atc=0: 0
+[   17.235885] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePort:0x1a] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.235893] apple-display-crossbar 70304c000.mux: Switched dpin0 to disconnected state
+[   17.235901] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePort:0x1a] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.235910] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000004 014=000001ff 018=00000000 01c=00000000 024=00000110 028=00000000 02c=00000000 030=00000000 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   17.235918] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000001 820=00000000 024=00000110 81c=00000110
+[   17.235946] apple-display-crossbar 70304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[   17.235951] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.235960] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.235964] apple-display-crossbar 70304c000.mux: t602x dpin0: 000=00000004 004=000001fb 008=00000004 00c=00000004 014=000001fb 018=00000010 01c=00000001 024=00000110 028=00000001 02c=00000004 030=00002002 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   17.235972] apple-display-crossbar 70304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000001 820=00000000 024=00000110 81c=00000110
+[   17.235977] apple-dcp 315c00000.dcp: USB4: reselect dpin after nub: 0
+[   17.236172] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.236213] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.236227] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:538: [AFK][AppleDCPDPTXRemotePort:0x1a] handleOpen by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   17.236264] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:529: [AFK][AppleDCPDPTXRemotePort:0x1a] open by [AFKMailboxSharedMemoryEndpointInterface:0x46] : 1
+[   17.236424] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:245: [AFK][DCPDPDevice:0x48] init
+[   17.236530] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:153: [AFK][DCPDPDevice:0x48] attach to [AppleDCPDPTXController:0x14] : 1
+[   17.236535] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:54: [AFK][DCPDPDevice:0x48] start
+[   17.268666] usb 1-1.3: Product: Keychron Q4
+[   17.268668] usb 1-1.3: Manufacturer: Keychron
+[   17.300557] input: Keychron Keychron Q4 as /devices/platform/soc/702280000.usb/xhci-hcd.3.auto/usb1/1-1/1-1.3/1-1.3:1.0/0003:3434:0140.0006/input/input6
+[   17.406345] hid-generic 0003:3434:0140.0006: input,hidraw3: USB HID v1.11 Keyboard [Keychron Keychron Q4] on usb-xhci-hcd.3.auto-1.3/input0
+[   17.406705] hid-generic 0003:3434:0140.0007: hiddev96,hidraw4: USB HID v1.11 Device [Keychron Keychron Q4] on usb-xhci-hcd.3.auto-1.3/input1
+[   17.407194] input: Keychron Keychron Q4 Mouse as /devices/platform/soc/702280000.usb/xhci-hcd.3.auto/usb1/1-1/1-1.3/1-1.3:1.2/0003:3434:0140.0008/input/input7
+[   17.407268] input: Keychron Keychron Q4 System Control as /devices/platform/soc/702280000.usb/xhci-hcd.3.auto/usb1/1-1/1-1.3/1-1.3:1.2/0003:3434:0140.0008/input/input8
+[   17.458335] input: Keychron Keychron Q4 Consumer Control as /devices/platform/soc/702280000.usb/xhci-hcd.3.auto/usb1/1-1/1-1.3/1-1.3:1.2/0003:3434:0140.0008/input/input9
+[   17.458375] input: Keychron Keychron Q4 Keyboard as /devices/platform/soc/702280000.usb/xhci-hcd.3.auto/usb1/1-1/1-1.3/1-1.3:1.2/0003:3434:0140.0008/input/input10
+[   17.483402] hid-generic 0003:3434:0140.0008: input,hidraw5: USB HID v1.11 Mouse [Keychron Keychron Q4] on usb-xhci-hcd.3.auto-1.3/input2
+[   22.244467] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:281: [AFK][AppleDCPDPTXAudioLinkDelegate:0x16] message:-535736286
+[   22.244484] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:281: [AFK][DCPDPDevice:0x48] message:-535736286
+[   22.244593] apple-dcp 315c00000.dcp: DPTXPort: APCALL 22 (16 bytes)
+[   22.244600] apple-dcp 315c00000.dcp: DPTXPort: firmware reports link fault 22 on target 0:4
+[   22.244884] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:71: [AFK][DCPDPDevice:0x48] stop
+[   22.244890] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:162: [AFK][DCPDPDevice:0x48] detach from [AppleDCPDPTXController:0x14]
+[   22.244973] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:281: [AFK][AppleDCPDPTXAudioLinkDelegate:0x16] message:-535736285
+[   22.245044] apple-dcp 315c00000.dcp: DPTXPort: APCALL 24 (16 bytes)
+[   22.245047] apple-dcp 315c00000.dcp: DPTXPort: firmware reports link fault 24 on target 0:4
+[   22.245481] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePort:0x1a] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   22.245491] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePort:0x1a] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   22.245544] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:590: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] handleClose by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   22.245562] apple-dcp 315c00000.dcp: RTKit: syslog message: AFKService.cpp:576: [AFK][AppleDCPDPTXRemotePortEPClient:0x1b] close by [AFKMailboxSharedMemoryEndpointInterface:0x46]
+[   22.248286] apple-dcp 315c00000.dcp: USB4: set_hpd after nub 8s (DCPDPDevice): 0
+[   28.938413] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DPRX timeout, keeping DP tunnel
+[   28.938859] thunderbolt-apple-nhi 701f00000.nhi: 0:5: DP IN CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=00000000 COMMON=15402134 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[   28.939347] thunderbolt-apple-nhi 701f00000.nhi: 1:19: DP OUT CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[   28.939410] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=0 (DPTX should use this adapter, not ATC)

@@ -162,3 +162,28 @@ The panel DCP reaches `nr_modes:6` and `set_run_mode 2 -> 4`, then
 `set_digital_out_mode(color:1 timing:2)` for 3456x2160. dcpext1 never
 gets a timing id, so that call cannot be made for it. No module was
 loaded and no register was written.
+
+## 2026-09-21 Codex diagnostic 0090 — prepare physical unplug and capture
+
+No hardware action has occurred in this investigation. Kernel commit
+`a0df2ede847714b1de9fd2d0341cb1050c831df6` adds EDT/property logging and
+removes the automatic second HPD request. It does not add MMIO or timings.
+The old no-timing/clock causal interpretation is unproven; see
+`notes/2026-09-21-codex-reassessment.md`.
+
+Next action after this entry is committed and pushed: ask Oliver to save work
+and physically unplug the OWC hub from the Mac. The hub keyboard will be
+unavailable while physically unplugged; use the MacBook keyboard.
+This boot's port is typec0: NHI `0x701f00000`, ACIO `0x701ac0000`, display
+crossbar `0x70304c000`. DCP external instance `0x315c00000`; panel
+`0x389c00000`. No register mapping, direct MMIO access, parameter write,
+module load, or reboot is part of this step.
+
+After Oliver confirms unplugging, exact snapshot command:
+
+`cd /home/oliver/Development/asahi-j416s-display && ./scripts/capture-display.sh captures/2026-09-21-0090-unplugged.txt`
+
+The script reads DRM/USB/Type-C/thunderbolt sysfs attributes and existing
+kernel logs, and queries Hyprland. It does not explicitly map or write MMIO.
+No new tunnel and no DP alt-mode request. Record installation and reboot
+separately before those actions. Do not run load-appledrm.sh at this step.

@@ -1,0 +1,96 @@
+From a0df2ede847714b1de9fd2d0341cb1050c831df6 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 22:08:59 +0200
+Subject: [PATCH] drm/apple: trace external timing discovery and drop repeated
+ USB4 HPD
+
+Record external EDT callbacks and property arrivals without changing their replies. Log mode state before request_display to distinguish boot timing absence from later sink discovery failure.
+
+Remove the post-request HPD retry, which the j416s action notes prohibit after its five-second DCPDPDevice timeout. This is a diagnostic candidate, not a demonstrated USB4 display fix.
+---
+ drivers/gpu/drm/apple/dcp.c            | 22 +++++++---------------
+ drivers/gpu/drm/apple/iomfb_template.c | 13 +++++++++++++
+ 2 files changed, 20 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index eb287ef..3be3fcf 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1481,6 +1481,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN set_hpd: %d\n", h);
+ 				if (!h) {
++					dev_info(dcp->dev,
++						 "USB4: before request_display nr_modes=%u valid_mode=%d\n",
++						 dcp->nr_modes, dcp->valid_mode);
+ 					r = dptxport_request_display(svc);
+ 					dev_info(dcp->dev,
+ 						 "USB4: analog DPIN request_display core=%u atc=%u: %d\n",
+@@ -1494,7 +1497,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 					    dcp->active_typec_route->usb4_xbar) {
+ 						struct apple_dcp_typec_route *route =
+ 							dcp->active_typec_route;
+-						int m, h2;
++						int m;
+ 
+ 						mux_control_deselect(route->usb4_xbar);
+ 						m = mux_control_select(route->usb4_xbar,
+@@ -1503,21 +1506,10 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 							 "USB4: reselect dpin after nub: %d\n",
+ 							 m);
+ 						/*
+-						 * Second set_hpd starts
+-						 * DCPDPDevice. 0084 armed ATC
+-						 * AUX and aborted this call
+-						 * at 1s; firmware's start
+-						 * timer is 5s and then 22/24.
+-						 * No ATC AUX (that dropped
+-						 * analog 0x1017 to 0x17).
+-						 * Hold the call for 8s.
++						 * The post-request HPD retry was already
++						 * tested: the device timed out after 5s.
++						 * Keep only the pre-request HPD above.
+ 						 */
+-						h2 = dptxport_set_hpd_timeout(svc,
+-									      true,
+-									      8000);
+-						dev_info(dcp->dev,
+-							 "USB4: set_hpd after nub 8s (DCPDPDevice): %d\n",
+-							 h2);
+ 					}
+ 				}
+ 				break;
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index af7e8a1..f0d4e47 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -493,6 +493,13 @@ static struct DCP_FW_NAME(dcp_map_reg_resp) dcpep_cb_map_reg(struct apple_dcp *d
+ static struct dcp_read_edt_data_resp
+ dcpep_cb_read_edt_data(struct apple_dcp *dcp, struct dcp_read_edt_data_req *req)
+ {
++	/* Observe boot-property requests without inventing firmware timings. */
++	if (dcp->fixed_connector_type != DRM_MODE_CONNECTOR_eDP)
++		dev_info(dcp->dev,
++			 "read_edt_data key=%.*s count=%u default0=%#x ret=0\n",
++			 (int)sizeof(req->key), req->key, req->count,
++			 req->value[0]);
++
+ 	return (struct dcp_read_edt_data_resp){
+ 		.value[0] = req->value[0],
+ 		.ret = 0,
+@@ -603,6 +610,12 @@ static u8 dcpep_cb_prop_end(struct apple_dcp *dcp,
+ {
+ 	u8 resp = dcpep_process_chunks(dcp, req);
+ 
++	if (dcp->fixed_connector_type != DRM_MODE_CONNECTOR_eDP)
++		dev_info(dcp->dev,
++			 "DCP property key=%.*s bytes=%zu accepted=%u nr_modes=%u\n",
++			 (int)sizeof(req->key), req->key, dcp->chunks.length,
++			 resp, dcp->nr_modes);
++
+ 	/* move chunked data to connector to provide it via debugfs */
+ 	dcp_connector_update_dict(dcp->connector, req->key, &dcp->chunks);
+ 	dcp->chunks.data = NULL;
+-- 
+2.55.0
+
