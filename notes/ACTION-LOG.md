@@ -103,3 +103,25 @@ What it does:
 
 This is not `0x389320000` (the block in the 21:36 crash). No writes.
 No dcpext map. No crossbar. No reboot.
+
+Result: it returned. Panel disp-2 has the same four words as dcpext1
+disp-2 (`+02c 00000044`, `+064 3fffffff`, `+068 000003f0`,
+`+070 00000001`). dcpext1 also has `+074 00000001`. Not the clock.
+eDP stayed on.
+
+## 2026-09-21 21:50 about to run
+
+Read the first 4 KB of dcpext1 disp-0 only.
+
+Command, after this file is pushed:
+
+`rmmod apple_dispclk`
+`insmod src/dispclk/apple-dispclk.ko read_ext0=1`
+
+What it does:
+
+1. `ioremap` `0x314000000` size `0x1000`.
+2. Read every word. Print the first 24 non-zero words and the count.
+3. `iounmap`.
+
+No panel. No disp-1. No disp-2. No writes. No crossbar. No reboot.
