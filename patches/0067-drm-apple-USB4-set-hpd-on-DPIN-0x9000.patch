@@ -1,0 +1,48 @@
+From 3ef4bf8b9fd04b05dfa21ae8636c809644683d15 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:00:47 +0200
+Subject: [PATCH] drm/apple: USB4 set_hpd on DPIN 0x9000 after connect
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Connect of ATC=0 DPIN succeeded and analog +0x18 moved 0x17→0x1016.
+Call dptxport_set_hpd(true) on that port. No request_display, no PHY.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index f13f372..0e4cf1c 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1433,7 +1433,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 * connect, request_display, or set_hpd.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+-			int v, c;
++			int v, c, h = -EINVAL;
+ 
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			v = dptxport_validate_connection(
+@@ -1446,10 +1446,14 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 				c = dptxport_connect(dcp->dptxport[port].service,
+ 						     0, 0, dcp->dptx_die,
+ 						     false);
+-			mutex_unlock(&dcp->hpd_mutex);
+ 			dev_info(dcp->dev,
+ 				 "USB4: analog DPIN connect atc=0 no-HPD: %d\n",
+ 				 c);
++			if (!c)
++				h = dptxport_set_hpd(dcp->dptxport[port].service,
++						     true);
++			mutex_unlock(&dcp->hpd_mutex);
++			dev_info(dcp->dev, "USB4: analog DPIN set_hpd: %d\n", h);
+ 		}
+ 		return 0;
+ 	}
+-- 
+2.55.0
+
