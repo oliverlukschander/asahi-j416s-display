@@ -1,0 +1,35 @@
+From 390ae8eb8f4bde90ef064f4f6fb17b476925c1d3 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 08:57:39 +0200
+Subject: [PATCH 8/8] drm/apple: USB4 DPTX target is apple,dptx-phy, not the
+ ATC index
+
+Firmware DEVICE_NOT_STARTED on target 0:2 (Right ATC). USB4 pixels
+leave the DCP's own DPTX (phy 1 on dcpext1) and the crossbar feeds
+DP IN. Keep ATC index for DP alt-mode only.
+---
+ drivers/gpu/drm/apple/dcp.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 1cec5a7..fd873cc 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -240,7 +240,13 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	route->usb4_selected = usb4;
+ 
+ 	dcp->phy = route->phy;
+-	dcp->dptx_phy = route->dptx_phy;
++	/*
++	 * USB4 DP IN is the DCP's own DPTX (apple,dptx-phy), routed onto
++	 * the USB4 DP IN adapter by the crossbar. The Type-C ATC index
++	 * (typec-dptx-phys) is DP alt-mode only — targeting it while the
++	 * ATC is in USB4 makes firmware report DEVICE_NOT_STARTED.
++	 */
++	dcp->dptx_phy = usb4 ? dcp->fixed_dptx_phy : route->dptx_phy;
+ 	dcp->connector_type = DRM_MODE_CONNECTOR_USB;
+ 	if (route->port->connector) {
+ 		route->port->connector->dcp = to_platform_device(dcp->dev);
+-- 
+2.55.0
+

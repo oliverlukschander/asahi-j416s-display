@@ -1,7 +1,7 @@
 From 38125c572f7acba441714c61b2ae2ce052545d6e Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Sun, 20 Sep 2026 22:34:17 +0200
-Subject: [PATCH 2/7] drm/apple: borrow USB4 DP IN mux from the same crossbar
+Subject: [PATCH 2/8] drm/apple: borrow USB4 DP IN mux from the same crossbar
  chip
 
 The live j416 DT only wires dpphy (cell 0). Look up dpin0 (cell 1, or
