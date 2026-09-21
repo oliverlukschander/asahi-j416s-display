@@ -1,0 +1,44 @@
+From ed5bff86de2b7dcc0c3eddfcf35912f1d79e314a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:03:47 +0200
+Subject: [PATCH] drm/apple: USB4 request_display on DPIN 0x9000
+
+validate/connect/set_hpd all returned 0 with eDP still on. Call
+request_display on that remote port. Do not assign lpdptxphy.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 0e4cf1c..cf779da 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1433,7 +1433,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 * connect, request_display, or set_hpd.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+-			int v, c, h = -EINVAL;
++			int v, c, h = -EINVAL, r = -EINVAL;
+ 
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			v = dptxport_validate_connection(
+@@ -1452,8 +1452,13 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			if (!c)
+ 				h = dptxport_set_hpd(dcp->dptxport[port].service,
+ 						     true);
+-			mutex_unlock(&dcp->hpd_mutex);
+ 			dev_info(dcp->dev, "USB4: analog DPIN set_hpd: %d\n", h);
++			if (!h)
++				r = dptxport_request_display(
++					dcp->dptxport[port].service);
++			mutex_unlock(&dcp->hpd_mutex);
++			dev_info(dcp->dev,
++				 "USB4: analog DPIN request_display: %d\n", r);
+ 		}
+ 		return 0;
+ 	}
+-- 
+2.55.0
+

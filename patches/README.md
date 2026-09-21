@@ -61,3 +61,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0065-drm-apple-USB4-validate-DPIN-ATC-0-no-connect.patch` | Skip connect still. Validate DPIN target ATC=0 only. |
 | `0066-drm-apple-USB4-connect-DPIN-ATC-0-no-HPD.patch` | Validate 0x9000 succeeded. Connect atc=0, no HPD/request_display. |
 | `0067-drm-apple-USB4-set-hpd-on-DPIN-0x9000.patch` | Connect 0x9000 + analog 0x1016. set_hpd only. |
+| `0068-drm-apple-USB4-request-display-on-DPIN-0x9000.patch` | set_hpd 0. request_display on 0x9000, no PHY. |
