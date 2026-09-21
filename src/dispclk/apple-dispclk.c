@@ -50,19 +50,8 @@ static int __init dispclk_init(void)
 		return -EINVAL;
 	}
 	if (write_074) {
-		void __iomem *ext;
-		u32 before, after;
-
-		pr_info("dispclk: write dcpext1 disp-2 +074 = 0\n");
-		ext = ioremap(DCPEXT_DISP2, 0x1000);
-		if (!ext)
-			return -ENOMEM;
-		before = readl(ext + 0x74);
-		writel(0, ext + 0x74);
-		after = readl(ext + 0x74);
-		iounmap(ext);
-		pr_info("dispclk: +074 before=%08x after=%08x\n", before, after);
-		return 0;
+		pr_err("dispclk: refusing write_074\n");
+		return -EINVAL;
 	}
 	if (!read_ext && !read_ext2 && !read_panel2 && !read_ext0) {
 		pr_info("dispclk: loaded, not touching MMIO\n");

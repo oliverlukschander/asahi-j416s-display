@@ -131,22 +131,19 @@ starting `+000 caf9b40c`. Same kind of data as disp-1, not a clock
 enable. eDP stayed on. Do not write disp-0. Do not map the panel's
 disp-0 or disp-1.
 
-## 2026-09-21 21:55 about to run
+## 2026-09-21 21:55 about to run, then reset
 
-disp-2 matches the panel except dcpext1 `+074 = 00000001` and the
-panel's `+074` is 0. Clear that one word.
-
-Command, after this file is pushed:
+Logged and pushed before the command. The command was:
 
 `insmod src/dispclk/apple-dispclk.ko write_074=1`
 
-What it does:
+Planned steps: map `0x315344000`, read `+074`, write 0, read it back.
 
-1. `ioremap` dcpext1 disp-2 `0x315344000` size `0x1000`. This read
-   already returned.
-2. `readl +074`.
-3. `writel 0` to `+074` only.
-4. `readl +074` again. `iounmap`.
+The crashed boot's kernel log has no `dispclk: write` and no
+`+074 before`. The last dispclk line that did land is the disp-0
+read at 21:49:53, which returned (`1024` nonzero words). UFW lines
+continue until 21:50:59. The next boot is 21:52. No panic.
 
-No panel map. No disp-0. No disp-1. No crossbar. No other writes.
-No reboot. No `iomfb_poweron`.
+So this write is the action that was in flight, and it left no
+completion line. Do not run it. Do not repeat `read_ext0`.
+`write_074` now refuses to load.
