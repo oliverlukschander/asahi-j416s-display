@@ -1,0 +1,264 @@
+From 36aed056d8c9ae3273e419a9145552ca6985770c Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 08:07:12 +0200
+Subject: [PATCH 4/4] drm/apple: auto-arm USB4 DP IN on the NHI that has a dock
+
+The Type-C mux set path never armed DPTX on the OWC hub (no
+"USB4 DP IN armed" after the first reboot). Treat TBT alt-mode as
+USB4, log every mux set, and 2s after routes register arm typecN
+whose Apple NHI already has a Thunderbolt device. usb4_arm=0..2
+forces a port.
+---
+ drivers/gpu/drm/apple/dcp-internal.h |   1 +
+ drivers/gpu/drm/apple/dcp.c          | 174 ++++++++++++++++++++++++++-
+ 2 files changed, 174 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index 98ceb23..f5ffc2b 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -40,6 +40,7 @@ struct apple_dcp_typec_route {
+ 	struct typec_mux_dev *typec_mux;
+ 	u32 dptx_phy;
+ 	u32 mux_index;
++	u32 typec_index;
+ 	bool selected;
+ 	bool usb4_selected;
+ };
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 04d042d..4cddcfe 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -26,6 +26,7 @@
+ #include <linux/module.h>
+ #include <linux/mux/driver.h>
+ #include <linux/usb/typec.h>
++#include <linux/usb/typec_tbt.h>
+ #include <linux/usb/typec_altmode.h>
+ #include <linux/usb/typec_dp.h>
+ #include <linux/usb/typec_mux.h>
+@@ -63,6 +64,27 @@ static int usb4_dpin_index = 1;
+ module_param_named(usb4_dpin, usb4_dpin_index, int, 0644);
+ MODULE_PARM_DESC(usb4_dpin,
+ 		 "Display crossbar mux index for USB4 DP IN (1=dpin0, 2=dpin1)");
++
++/* -1 = auto (arm the typecN whose NHI has a Thunderbolt device). 0..2 force. */
++static int usb4_arm = -1;
++static int dcp_usb4_arm_typec(int typec_index);
++static int usb4_arm_set(const char *val, const struct kernel_param *kp)
++{
++	int ret = param_set_int(val, kp);
++
++	if (ret)
++		return ret;
++	if (usb4_arm >= 0)
++		dcp_usb4_arm_typec(usb4_arm);
++	return 0;
++}
++static const struct kernel_param_ops usb4_arm_ops = {
++	.set = usb4_arm_set,
++	.get = param_get_int,
++};
++module_param_cb(usb4_arm, &usb4_arm_ops, &usb4_arm, 0644);
++MODULE_PARM_DESC(usb4_arm,
++		 "Force USB4 DP IN on typecN (0=Left Back, 1=Left Front, 2=Right)");
+ module_param(show_notch, bool, 0644);
+ MODULE_PARM_DESC(show_notch, "Use the full display height and shows the notch");
+ 
+@@ -364,8 +386,17 @@ static int dcp_typec_route_set(struct typec_mux_dev *mux,
+ 	port->applied_conf = dp_conf;
+ 	port->applied_valid = true;
+ 
++	dev_info(route->dcp->dev,
++		 "typec mux set typec%u alt=%p svid=%04x mode=%lu dp=%d usb4=%d tbt=%d usb4_xbar=%s\n",
++		 route->typec_index, state->alt,
++		 state->alt ? state->alt->svid : 0, state->mode, is_dp,
++		 state->mode == TYPEC_MODE_USB4,
++		 state->alt && state->alt->svid == USB_TYPEC_TBT_SID,
++		 route->usb4_xbar ? "yes" : "no");
++
+ 	if (!is_dp) {
+-		bool usb4 = state->mode == TYPEC_MODE_USB4;
++		bool usb4 = state->mode == TYPEC_MODE_USB4 ||
++			    (state->alt && state->alt->svid == USB_TYPEC_TBT_SID);
+ 
+ 		if (port->owner && !(usb4 && port->owner->usb4_selected)) {
+ 			struct apple_dcp *dcp = port->owner->dcp;
+@@ -410,6 +441,9 @@ static int dcp_typec_route_set(struct typec_mux_dev *mux,
+ 			}
+ 
+ 			if (!best) {
++				dev_info(route->dcp->dev,
++					 "USB4/TBT on typec%u: no DP IN mux candidate\n",
++					 route->typec_index);
+ 				dcp_typec_retrain_active_routes();
+ 				return 0;
+ 			}
+@@ -486,6 +520,140 @@ static int dcp_typec_route_set(struct typec_mux_dev *mux,
+ 	return 0;
+ }
+ 
++static int dcp_tb_child_has_device(struct device *dev, void *data)
++{
++	int *found = data;
++	const char *name = dev_name(dev);
++
++	if (strchr(name, '-') && !strchr(name, ':') && strcmp(name, "0-0")) {
++		*found = 1;
++		return 1;
++	}
++	if (device_for_each_child(dev, data, dcp_tb_child_has_device))
++		return 1;
++	return 0;
++}
++
++static bool dcp_typec_nhi_has_tb_device(int typec_index)
++{
++	static const char *const nhi_names[] = {
++		"701f00000.nhi",
++		"b01f00000.nhi",
++		"f01f00000.nhi",
++	};
++	struct device *nhi;
++	int found = 0;
++
++	if (typec_index < 0 || typec_index >= ARRAY_SIZE(nhi_names))
++		return false;
++	nhi = bus_find_device_by_name(&platform_bus_type, NULL,
++				      nhi_names[typec_index]);
++	if (!nhi)
++		return false;
++	device_for_each_child(nhi, &found, dcp_tb_child_has_device);
++	put_device(nhi);
++	return found;
++}
++
++static int dcp_usb4_arm_typec(int typec_index)
++{
++	struct apple_dcp_typec_port *port, *target = NULL;
++	struct apple_dcp_typec_route *route, *candidate, *best = NULL;
++	unsigned int best_score = UINT_MAX;
++	int ret = 0;
++
++	mutex_lock(&dcp_typec_fabric_lock);
++	list_for_each_entry(port, &dcp_typec_ports, link) {
++		list_for_each_entry(route, &port->routes, port_link) {
++			if (route->typec_index == (u32)typec_index) {
++				target = port;
++				break;
++			}
++		}
++		if (target)
++			break;
++	}
++	if (!target) {
++		mutex_unlock(&dcp_typec_fabric_lock);
++		return -ENODEV;
++	}
++
++	if (target->owner && !target->owner->usb4_selected) {
++		struct apple_dcp *dcp = target->owner->dcp;
++
++		if (target->hpd || dcp->typec_cable_connected)
++			dcp_dptx_disconnect_oob(to_platform_device(dcp->dev), 0);
++		dcp_typec_route_deactivate(target->owner);
++		target->owner = NULL;
++		target->hpd = false;
++	}
++
++	if (!target->owner) {
++		list_for_each_entry(candidate, &target->routes, port_link) {
++			unsigned int score;
++
++			if (candidate->typec_index != (u32)typec_index)
++				continue;
++			if (!candidate->usb4_xbar)
++				continue;
++			if (!dcp_typec_route_available(candidate))
++				continue;
++			score = dcp_typec_route_score(candidate);
++			if (score < best_score) {
++				best = candidate;
++				best_score = score;
++			}
++		}
++		if (!best) {
++			mutex_unlock(&dcp_typec_fabric_lock);
++			pr_info("appledrm: USB4 arm typec%u: no DP IN mux\n",
++				typec_index);
++			return -ENODEV;
++		}
++		ret = dcp_typec_route_activate(best, true);
++		if (ret) {
++			mutex_unlock(&dcp_typec_fabric_lock);
++			return ret;
++		}
++		target->owner = best;
++	}
++
++	if (target->owner && target->owner->usb4_selected) {
++		struct apple_dcp *dcp = target->owner->dcp;
++
++		WRITE_ONCE(dcp->typec_cable_connected, true);
++		target->hpd = true;
++		dcp->typec_reconnect_tries = 0;
++		cancel_delayed_work(&dcp->typec_reconnect_wq);
++		mod_delayed_work(system_freezable_wq, &dcp->typec_reconnect_wq,
++				 DPTX_USB4_CONNECT_DELAY);
++		dev_info(dcp->dev,
++			 "USB4 DP IN armed typec%u; DPTX connect in %u ms\n",
++			 typec_index, jiffies_to_msecs(DPTX_USB4_CONNECT_DELAY));
++	}
++	mutex_unlock(&dcp_typec_fabric_lock);
++	return 0;
++}
++
++static void dcp_usb4_auto_arm_work(struct work_struct *work)
++{
++	int i;
++
++	if (usb4_arm >= 0) {
++		dcp_usb4_arm_typec(usb4_arm);
++		return;
++	}
++	for (i = 0; i < 3; i++) {
++		if (dcp_typec_nhi_has_tb_device(i)) {
++			pr_info("appledrm: NHI typec%u has a Thunderbolt device, arming DP IN\n",
++				i);
++			dcp_usb4_arm_typec(i);
++		}
++	}
++}
++
++static DECLARE_DELAYED_WORK(dcp_usb4_auto_arm_wq, dcp_usb4_auto_arm_work);
++
+ static struct apple_dcp_typec_port *
+ dcp_typec_port_get(struct device_node *connector_np)
+ {
+@@ -680,6 +848,7 @@ static int dcp_register_typec_routes(struct apple_dcp *dcp)
+ 
+ 		route = &dcp->typec_routes[dcp->nr_typec_routes];
+ 		route->dcp = dcp;
++		route->typec_index = route_index;
+ 		INIT_LIST_HEAD(&route->port_link);
+ 		route->phy = devm_phy_get(dev, name);
+ 		if (IS_ERR(route->phy))
+@@ -782,6 +951,8 @@ static int dcp_register_typec_routes(struct apple_dcp *dcp)
+ 		return dev_err_probe(dev, -EINVAL, "Type-C route container is empty\n");
+ 
+ 	dcp->phy_managed_by_typec = true;
++	mod_delayed_work(system_freezable_wq, &dcp_usb4_auto_arm_wq,
++			 msecs_to_jiffies(2000));
+ 	return 0;
+ }
+ 
+@@ -2313,5 +2484,6 @@ void __init dcp_register(void)
+ 
+ void __exit dcp_unregister(void)
+ {
++	cancel_delayed_work_sync(&dcp_usb4_auto_arm_wq);
+ 	platform_driver_unregister(&apple_platform_driver);
+ }
+-- 
+2.55.0
+

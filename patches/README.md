@@ -11,3 +11,4 @@ Kernel patches against `aurora-silicon/linux` `aurora-wip` (this machine:
 USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6](https://github.com/aurora-silicon/linux/pull/6).
 
 `dpin0` vs `dpin1` is still a guess. If the tunnel still dies after this is running, try cell `2` in the DT mux-controls.
+| `0004-drm-apple-auto-arm-USB4-DP-IN-on-the-NHI-that-has-a-.patch` | If the Type-C mux never delivers USB4 to DCP, arm DP IN on the typecN whose NHI has the hub. `usb4_arm=0..2` forces a port. |
