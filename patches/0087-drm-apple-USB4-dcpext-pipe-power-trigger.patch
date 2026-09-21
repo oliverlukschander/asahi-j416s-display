@@ -1,0 +1,165 @@
+From d21da42698b7e075f1e5314d1b08e9d1674e2413 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 21:01:53 +0200
+Subject: [PATCH] drm/apple: add USB4 dcpext pipe-power trigger
+
+Fairydust lights a USB-C display by putting the port in DP alt mode
+and then running the normal panel power-on. That tears down USB4, so
+it cannot be used with this hub. dcpext is not the main display, so
+iomfb_poweron takes handle 2 and leaves fDisplayPowerState clear.
+
+appledrm.usb4_pipe=1 runs the handle-0 power sequence on the armed
+dcpext, reselects dpin, and asserts HPD again. No modeset and no
+lpdptxphy. Default is off, so boot does not call it.
+
+Drop the setup_video_limits skip. Firmware runs that itself during
+start_ios_gated and still steps run mode 2 to 0.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c            | 53 ++++++++++++++++++++++++++
+ drivers/gpu/drm/apple/iomfb_template.c | 44 ++++++++++++++-------
+ drivers/gpu/drm/apple/iomfb_template.h |  1 +
+ 3 files changed, 85 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 516384c..70e6f1c 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1760,6 +1760,59 @@ module_param_cb(usb4_scanout, &usb4_scanout_ops, &usb4_scanout, 0644);
+ MODULE_PARM_DESC(usb4_scanout,
+ 		 "Write 1 to advertise 1080p on USB4 without lpdptxphy");
+ 
++static int usb4_pipe_set(const char *val, const struct kernel_param *kp)
++{
++	struct apple_dcp *dcp = usb4_armed_dcp;
++	struct apple_dcp_typec_route *route;
++	int v, ret, h;
++
++	ret = kstrtoint(val, 0, &v);
++	if (ret)
++		return ret;
++	if (v == 0)
++		return 0;
++	if (v != 1)
++		return -EINVAL;
++	if (!dcp)
++		return -ENODEV;
++
++	dev_info(dcp->dev,
++		 "USB4: pipe power (handle 0, no modeset, no lpdptxphy)\n");
++	switch (dcp->fw_compat) {
++	case DCP_FIRMWARE_V_12_3:
++		iomfb_poweron_pipe_v12_3(dcp);
++		break;
++	case DCP_FIRMWARE_V_13_5:
++		iomfb_poweron_pipe_v13_3(dcp);
++		break;
++	default:
++		return -EOPNOTSUPP;
++	}
++
++	route = dcp->active_typec_route;
++	if (route && route->usb4_xbar) {
++		mux_control_deselect(route->usb4_xbar);
++		ret = mux_control_select(route->usb4_xbar, route->mux_index);
++		dev_info(dcp->dev, "USB4: reselect dpin after pipe power: %d\n",
++			 ret);
++	}
++	if (dcp->dptxport[0].enabled && dcp->dptxport[0].service) {
++		h = dptxport_set_hpd_timeout(dcp->dptxport[0].service, true,
++					     8000);
++		dev_info(dcp->dev, "USB4: set_hpd after pipe power: %d\n", h);
++	}
++	return 0;
++}
++
++static int usb4_pipe;
++static const struct kernel_param_ops usb4_pipe_ops = {
++	.set = usb4_pipe_set,
++	.get = param_get_int,
++};
++module_param_cb(usb4_pipe, &usb4_pipe_ops, &usb4_pipe, 0644);
++MODULE_PARM_DESC(usb4_pipe,
++		 "Write 1 to power the USB4 dcpext pipe with the panel sequence");
++
+ static void dcp_typec_reconnect_work(struct work_struct *work)
+ {
+ 	struct apple_dcp *dcp =
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index 9c980bb..af7e8a1 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -646,19 +646,6 @@ static void boot_3(struct apple_dcp *dcp, void *out, void *cookie)
+ 
+ static void boot_2(struct apple_dcp *dcp, void *out, void *cookie)
+ {
+-	/*
+-	 * dcpext comes out of iBoot at run mode 2. With no panel timing,
+-	 * setup_video_limits steps that pipe 2 -> 0 and disables it, so
+-	 * the USB4 crossbar write clock never starts. The internal panel
+-	 * is not apple,dcpext and still takes this call.
+-	 */
+-	if (of_device_is_compatible(dcp->dev->of_node, "apple,dcpext")) {
+-		dev_info(dcp->dev,
+-			 "dcpext: skip setup_video_limits (keep run mode 2)\n");
+-		boot_3(dcp, NULL, NULL);
+-		return;
+-	}
+-
+ 	dcp_setup_video_limits(dcp, false, boot_3, NULL);
+ }
+ 
+@@ -818,6 +805,37 @@ static void dcp_on_set_parameter(struct apple_dcp *dcp, void *out, void *cookie)
+ 	dcp_set_parameter_dcp(dcp, false, &param, dcp_on_set_power_state, cookie);
+ }
+ 
++/*
++ * Panel power-on uses display-device handle 0 and then set_power_state.
++ * dcpext is not the main display, so iomfb_poweron() takes handle 2 and
++ * does not raise fDisplayPowerState. USB4 link training never sees a
++ * DPTX clock. This is the handle-0 sequence only: no modeset.
++ */
++void DCP_FW_NAME(iomfb_poweron_pipe)(struct apple_dcp *dcp)
++{
++	struct dcp_wait_cookie *cookie;
++	u32 handle = 0;
++	int ret;
++
++	dev_info(dcp->dev, "USB4 pipe power handle 0 starting\n");
++	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
++	if (!cookie)
++		return;
++
++	init_completion(&cookie->done);
++	kref_init(&cookie->refcount);
++	kref_get(&cookie->refcount);
++	dcp_set_display_device(dcp, false, &handle, dcp_on_set_power_state,
++			       cookie);
++	ret = wait_for_completion_timeout(&cookie->done, msecs_to_jiffies(10000));
++	if (ret == 0)
++		dev_warn(dcp->dev, "USB4 pipe power timed out\n");
++	else if (ret > 0)
++		dev_info(dcp->dev, "USB4 pipe power returned, %d ms remaining\n",
++			 jiffies_to_msecs(ret));
++	kref_put(&cookie->refcount, release_wait_cookie);
++}
++
+ void DCP_FW_NAME(iomfb_poweron)(struct apple_dcp *dcp)
+ {
+ 	struct dcp_wait_cookie *cookie;
+diff --git a/drivers/gpu/drm/apple/iomfb_template.h b/drivers/gpu/drm/apple/iomfb_template.h
+index ce9fb92..e426fa4 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.h
++++ b/drivers/gpu/drm/apple/iomfb_template.h
+@@ -153,6 +153,7 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
+ 			       struct drm_crtc_state *crtc_state);
+ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, struct drm_atomic_state *state);
+ void DCP_FW_NAME(iomfb_poweron)(struct apple_dcp *dcp);
++void DCP_FW_NAME(iomfb_poweron_pipe)(struct apple_dcp *dcp);
+ void DCP_FW_NAME(iomfb_poweroff)(struct apple_dcp *dcp);
+ void DCP_FW_NAME(iomfb_sleep)(struct apple_dcp *dcp);
+ void DCP_FW_NAME(iomfb_start)(struct apple_dcp *dcp);
+-- 
+2.55.0
+

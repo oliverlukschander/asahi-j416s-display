@@ -79,4 +79,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0083-drm-apple-reselect-USB4-dpin-after-nub-reset.patch` | pmgr 0x25 reset after request_display. Reselect dpin. Crossbar 0x050 dispext enable is in src/mux. |
 | `0084-drm-apple-USB4-DCPDPDevice-start-with-ATC-AUX.patch` | Second set_hpd starts DCPDPDevice. Enable ATC AUX first so the PHY can answer. |
 | `0085-drm-apple-USB4-hold-DCPDPDevice-set_hpd-8s.patch` | 0084 start timer is 5s; AFK aborted at 1s. No ATC AUX. Wait 8s. |
-| `0086-drm-apple-keep-dcpext-run-mode-for-USB4-clock.patch` | Skip `setup_video_limits` on dcpext so run mode stays 2 and the crossbar write clock can start. Internal panel unchanged. |
+| `0086-drm-apple-keep-dcpext-run-mode-for-USB4-clock.patch` | Skip `setup_video_limits` on dcpext. Failed: firmware still steps run mode 2 to 0. |
+| `0087-drm-apple-USB4-dcpext-pipe-power-trigger.patch` | `appledrm.usb4_pipe=1` runs the panel handle-0 power sequence on dcpext. Not called at boot. |
