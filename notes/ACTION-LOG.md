@@ -155,3 +155,10 @@ This boot, after the reset, `315c00000.dcp` still logs
 then `set_device_enabled 1 -> 0`. eDP-1 is on. No module was loaded
 and no register was written on this step. Disp-block reads and writes
 stay closed. `iomfb_poweron` stays closed.
+
+## 2026-09-21 22:05 no hardware
+
+The panel DCP reaches `nr_modes:6` and `set_run_mode 2 -> 4`, then
+`set_digital_out_mode(color:1 timing:2)` for 3456x2160. dcpext1 never
+gets a timing id, so that call cannot be made for it. No module was
+loaded and no register was written.
