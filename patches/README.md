@@ -24,3 +24,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0028-thunderbolt-run-Apple-DPTX-Discovery-before-AE-VE.patch` | DPTX Discovery before AUX enable; try CS13 bits 0,1,8,16,24,31. Closed: CS9 static. |
 | `0029-thunderbolt-scan-ACIO-MMIO-for-DP-IN-analog-AUX.patch` | Closed: ACIO window `readl` hung the machine (reboot loop with dock). |
 | `0030-thunderbolt-do-not-scan-ACIO-MMIO.patch` | Remove window/RC+/NHI scans. USB4 CS dumps only. |
+| `0031-drm-apple-USB4-DPTX-HPD-without-PHY-connect.patch` | One request_display+set_hpd on USB-C dpin DCP; no connect, no HPD loop. |
