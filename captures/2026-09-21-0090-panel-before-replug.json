@@ -1,0 +1,69 @@
+[
+  {
+    "id": 0,
+    "name": "eDP-1",
+    "description": "",
+    "make": "",
+    "model": "",
+    "serial": "",
+    "width": 3456,
+    "height": 2160,
+    "physicalWidth": 346,
+    "physicalHeight": 216,
+    "refreshRate": 120.0,
+    "x": 0,
+    "y": 0,
+    "activeWorkspace": {
+      "id": 1,
+      "name": "1"
+    },
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "reserved": [
+      0,
+      26,
+      0,
+      0
+    ],
+    "scale": 2,
+    "transform": 0,
+    "focused": true,
+    "dpmsStatus": true,
+    "vrr": false,
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE"
+    ],
+    "activelyTearing": false,
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "disabled": false,
+    "currentFormat": "XRGB8888",
+    "mirrorOf": "none",
+    "availableModes": [
+      "3456x2160@120.00Hz",
+      "3456x2160@60.00Hz",
+      "3456x2160@59.94Hz",
+      "3456x2160@50.00Hz",
+      "3456x2160@48.00Hz",
+      "3456x2160@47.95Hz"
+    ],
+    "colorManagementPreset": "srgb",
+    "sdrBrightness": 1,
+    "sdrSaturation": 1,
+    "sdrMinLuminance": 0.2,
+    "sdrMaxLuminance": 80,
+    "hardwareCursorsInUse": true
+  }
+]

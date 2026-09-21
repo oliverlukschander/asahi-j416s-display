@@ -296,3 +296,31 @@ or parameter write. Addresses: none directly accessed. Future SDDM starts
 wait for the DRM device that exposes the panel driven by DCP 0x389c00000.
 Only sysfs/file metadata are read by the check; no DRM ioctl or modeset.
 The check has passed six tests and a real-system read-only check.
+
+
+## 2026-09-21 0090 — controlled hub reconnect, no reboot
+
+Startup-check installation completed and systemctl cat sddm.service confirms
+ExecStartPre=/usr/local/libexec/j416s-wait-apple-drm. No desktop restart or
+reboot occurred. eDP-1 is active on the current 0090 boot; monitor JSON saved.
+No external Thunderbolt router is currently present.
+
+After this entry is committed and pushed: ask Oliver to physically reconnect
+the OWC hub to the SAME Mac socket used before (last recorded typec0).
+The Mac-side expected route is NHI 0x701f00000, ACIO 0x701ac0000, crossbar
+0x70304c000 to dcpext1 0x315c00000. Confirm the actual live port from dmesg
+after connection; do not blindly apply these addresses to any command.
+
+This is a physical reconnect handled by normal drivers. No manual tunnel
+creation, DP-alt-mode switch, parameter write, module load, direct MMIO,
+ioremap or reboot. The diagnostic 0090 path removes the second HPD request.
+The hub was physically absent, so normal connection-manager enumeration may
+create its usual tunnel; no separate tunnel-building experiment is requested.
+The internal display must remain on. If it blacks out, Oliver must unplug the
+hub immediately and testing stops. Keyboard function must be checked by Oliver.
+
+After reconnection, exact capture command:
+`/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-0090-replugged.txt`
+
+Also read existing dmesg for EDT/property/DPTX/USB4/DP-IN status messages.
+No direct register read is requested; use status values the drivers log.
