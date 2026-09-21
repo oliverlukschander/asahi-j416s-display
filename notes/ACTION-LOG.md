@@ -65,3 +65,19 @@ Result: it returned. 1065 words nonzero. The first words are
 `+000 71699e03`, `+004 d3c60930`, `+008 9600df50`, and so on through
 `+05c`. That is not a clock-enable block. Do not copy the panel into
 it. Do not map `0x389320000`. The 21:36 crash stays closed.
+
+## 2026-09-21 21:46 about to run
+
+Read the other 16 KB external block. Still no panel and no writes.
+
+Command, after this file is pushed:
+
+`insmod src/dispclk/apple-dispclk.ko read_ext2=1`
+
+What it does:
+
+1. `ioremap` dcpext1 disp-2 `0x315344000` size `0x4000`.
+2. Read every word. Print the first 24 non-zero words and the count.
+3. `iounmap`.
+
+No `0x389320000`. No `0x315320000`. No writes. No crossbar. No reboot.
