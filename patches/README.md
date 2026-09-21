@@ -67,3 +67,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0071-drm-apple-USB4-analog-DPIN-uses-CORE-1.patch` | 0x9000 (CORE=0) has no DPTX device. Bind CORE=1 (`0x9001`, dpin0). Fallback CORE=2. |
 | `0072-drm-apple-USB4-request_display-on-CORE-1.patch` | 0071 analog +0x18 0x17→0x09. request_display on 0x9001. |
 | `0073-drm-apple-USB4-GET_SUPPORTS_HPD-on-analog-DPIN.patch` | 0072 nub+ACTIVATE then 22/24. Advertise HPD on USB4 analog. |
+| `0074-drm-apple-USB4-set_hpd-after-request_display.patch` | 0073 no 22/24, analog 0x1017. set_hpd after the nub is up. |
