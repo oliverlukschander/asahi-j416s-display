@@ -1,7 +1,7 @@
 From ae9e970821ed8d3daf19598bc4e62a9f3a569441 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Sun, 20 Sep 2026 22:44:01 +0200
-Subject: [PATCH 3/8] drm/apple: delay USB4 DPTX connect until the DP tunnel
+Subject: [PATCH 3/9] drm/apple: delay USB4 DPTX connect until the DP tunnel
  exists
 
 Calling dcp_dptx_connect from the Type-C mux set path waits 2s under

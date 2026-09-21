@@ -1,7 +1,7 @@
 From 390ae8eb8f4bde90ef064f4f6fb17b476925c1d3 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 08:57:39 +0200
-Subject: [PATCH 8/8] drm/apple: USB4 DPTX target is apple,dptx-phy, not the
+Subject: [PATCH 8/9] drm/apple: USB4 DPTX target is apple,dptx-phy, not the
  ATC index
 
 Firmware DEVICE_NOT_STARTED on target 0:2 (Right ATC). USB4 pixels

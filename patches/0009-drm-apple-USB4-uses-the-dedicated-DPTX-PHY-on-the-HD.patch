@@ -1,0 +1,73 @@
+From a4ded44a58b86ecf6ebc5045f2b686567d90b7a2 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 09:02:45 +0200
+Subject: [PATCH 9/9] drm/apple: USB4 uses the dedicated DPTX PHY on the HDMI
+ hybrid DCP
+
+dcpext1 has no DPTX analog (phy 1 is ATC). dcpext0 has dp-phy
+(apple,dptx-phy = 3). Route that PHY onto USB4 DP IN via the
+typec dpin mux and put it in PHY_MODE_DP on ACTIVATE.
+---
+ drivers/gpu/drm/apple/dcp.c    | 8 ++++----
+ drivers/gpu/drm/apple/dptxep.c | 8 +++++---
+ 2 files changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index fd873cc..c9819b3 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -186,12 +186,12 @@ static unsigned int dcp_typec_route_score(struct apple_dcp_typec_route *route)
+ 	return drm_crtc_index(&dcp->crtc->base);
+ }
+ 
+-/* USB4 DP IN: prefer the USB-C-only dcpext over the HDMI-A hybrid. */
++/* USB4 DP IN: prefer the pipeline with a dedicated DPTX PHY (HDMI hybrid). */
+ static unsigned int dcp_typec_route_score_usb4(struct apple_dcp_typec_route *route)
+ {
+ 	unsigned int score = dcp_typec_route_score(route);
+ 
+-	if (route->dcp->fixed_connector_type != DRM_MODE_CONNECTOR_USB)
++	if (!route->dcp->fixed_phy)
+ 		score += 100;
+ 	return score;
+ }
+@@ -1321,8 +1321,8 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	/* USB4: ATC PHY is the USB4 router, not a DP PHY. Leave it alone. */
+-	dcp->dptxport[port].atcphy = usb4 ? NULL : dcp->phy;
++	/* USB4: drive the dedicated DPTX PHY (not the USB4 ATC). */
++	dcp->dptxport[port].atcphy = usb4 ? dcp->fixed_phy : dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+ 	if (ret) {
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 5e8a831..85a7f95 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -509,8 +509,9 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 	struct dptx_port *dptx = service->cookie;
+ 	const struct apple_dcp *dcp = service->ep->dcp;
+ 
+-	/* Standalone PHYs need DCP input selection here. Type-C owns ATC PHY mode. */
+-	if (!dcp->phy_managed_by_typec)
++	/* Standalone PHYs need DCP input selection. USB4 uses the DPTX PHY. */
++	if (dptx->atcphy &&
++	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+ 
+ 	memcpy(reply, data, min(reply_size, data_size));
+@@ -528,7 +529,8 @@ dptxport_call_deactivate(struct apple_epic_service *service,
+ 	struct dptx_port *dptx = service->cookie;
+ 	const struct apple_dcp *dcp = service->ep->dcp;
+ 
+-	if (!dcp->phy_managed_by_typec)
++	if (dptx->atcphy &&
++	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_INVALID, 0);
+ 
+ 	memcpy(reply, data, min(reply_size, data_size));
+-- 
+2.55.0
+
