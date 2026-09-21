@@ -1,0 +1,71 @@
+From ebe36824306e79ba59483c5af63e749a2d8fce1a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:33:41 +0200
+Subject: [PATCH] thunderbolt: write Apple VSE +0x02 only
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+0060 recovered NHI. 0059 showed +0x02–0x0a stick as 1; +0x0b hung
+config space. Write only +0x02=1 (next to cable_info) at DP tunnel-up.
+Do not touch +0x03–0x0b. Abort further CS dumps if that write times out.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index f0bf029..952967d 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -815,6 +815,33 @@ static void apple_dp_dump_vse(struct tb_switch *sw)
+ 		tb_sw_warn(sw, "Apple VSE cap=%d:%s\n", cap, buf);
+ }
+ 
++/* +0x0b hung NHI. +0x02 stuck as 1 in 0059 before that. Cable_info neighbor. */
++static int apple_dp_set_vse_02(struct tb_switch *sw)
++{
++	int cap, ret;
++	u32 orig = 0, val = 1;
++
++	cap = tb_switch_find_vse_cap(sw, TB_VSE_CAP_APPLE);
++	if (cap < 0)
++		return cap;
++	ret = tb_sw_read(sw, &orig, TB_CFG_SWITCH, cap + 2, 1);
++	if (ret)
++		return ret;
++	if (orig) {
++		tb_sw_warn(sw, "Apple VSE +0x02 already %08x\n", orig);
++		return 0;
++	}
++	ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, cap + 2, 1);
++	if (ret) {
++		tb_sw_warn(sw, "Apple VSE +0x02 write failed %d\n", ret);
++		return ret;
++	}
++	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, cap + 2, 1);
++	tb_sw_warn(sw, "Apple VSE +0x02 wrote 1 read %08x\n",
++		   ret ? 0xffffffff : val);
++	return ret;
++}
++
+ static void apple_dp_dump_analog(struct apple_cio *acio, const char *tag)
+ {
+ 	apple_dp_dump_rc_range(acio, APPLE_CIO_DPIN0_ANALOG,
+@@ -1026,6 +1053,12 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 
+ 	apple_dp_dump_rc(anhi->acio);
+ 	apple_dp_dump_vse(in->sw);
++	if (apple_dp_set_vse_02(in->sw)) {
++		dev_err(anhi->dev,
++			"Apple VSE +0x02 failed; skip further config-space dumps\n");
++		return 0;
++	}
++	apple_dp_dump_vse(in->sw);
+ 	dev_info(anhi->dev,
+ 		 "DP IN analog block 0x%x (port %u) dpin_aux=%d (0=hands-off)\n",
+ 		 anhi->analog_base, in->port, apple_dpin_aux);
+-- 
+2.55.0
+
