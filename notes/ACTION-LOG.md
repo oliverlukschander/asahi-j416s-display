@@ -458,3 +458,26 @@ sudo -n cp -a /boot/initramfs-linux-aurora.img /var/tmp/j416s-0092-before/initra
 ```
 
 Installation and reboot remain separate logged steps after physical unplug.
+
+## 2026-09-21 — 0092 installation, no reboot in this step
+
+Oliver reports hub unplugged; sysfs confirms no external Thunderbolt router.
+All three 0090 backup copies completed in /var/tmp/j416s-0092-before.
+The five other modules copied by the loader match installed files byte-for-
+byte by SHA256; only appledrm changes.
+
+After committing and pushing this entry, execute exactly:
+
+```
+sudo -n install -m 0644 /home/oliver/Development/asahi-j416s-display/config/0092-usb4-protocol-probe.conf /etc/modprobe.d/j416s-0092-protocol-probe.conf
+sudo -n env -u USB4_GROK_CONTINUE -u USB4_GROK_SESSION /home/oliver/Development/asahi-j416s-display/scripts/load-appledrm.sh --no-reboot
+```
+
+These install files and rebuild initramfs; they do not replace the live
+module or issue the probe. Firmware target after a later approved boot and
+reconnect is 0x8001 on dcpext1 0x315c00000, NHI 0x701f00000, ACIO
+0x701ac0000, crossbar 0x70304c000. Panel DCP 0x389c00000 is not manually
+mapped or written. No direct MMIO or new live hardware request in this step.
+Keep hub absent. Verify extracted initramfs module and config before the
+separately logged reboot. The config will be removed and initramfs rebuilt
+after boot, before the actual hub reconnect, to disarm subsequent boots.
