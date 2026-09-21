@@ -1,7 +1,7 @@
 From a4ded44a58b86ecf6ebc5045f2b686567d90b7a2 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 09:02:45 +0200
-Subject: [PATCH 09/14] drm/apple: USB4 uses the dedicated DPTX PHY on the HDMI
+Subject: [PATCH 09/15] drm/apple: USB4 uses the dedicated DPTX PHY on the HDMI
  hybrid DCP
 
 dcpext1 has no DPTX analog (phy 1 is ATC). dcpext0 has dp-phy
