@@ -1,0 +1,45 @@
+From 8fb643a0efad3beba000a25646e76a4bb9a59198 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:12:19 +0200
+Subject: [PATCH] drm/apple: do not mark USB4 link BAD on fake scanout
+
+Hyprland saw USB-3 1920x1080 but stayed at 0x0@60. dcp_hotplug set
+LINK_STATUS_BAD because valid_mode was 0, so userspace never
+committed the mode. Skip that on USB4.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c   | 2 ++
+ drivers/gpu/drm/apple/iomfb.c | 3 ++-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 5db7d50..906d8c4 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1618,6 +1618,8 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	}
+ 	dm->mode = *src;
+ 	drm_mode_destroy(dcp->connector->base.dev, src);
++	dm->mode.type |= DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
++	drm_mode_set_name(&dm->mode);
+ 	dm->color_mode_id = 1;
+ 	dm->timing_mode_id = 2;
+ 	dcp->modes = dm;
+diff --git a/drivers/gpu/drm/apple/iomfb.c b/drivers/gpu/drm/apple/iomfb.c
+index 3ec3335..1e33d52 100644
+--- a/drivers/gpu/drm/apple/iomfb.c
++++ b/drivers/gpu/drm/apple/iomfb.c
+@@ -293,7 +293,8 @@ void dcp_hotplug(struct work_struct *work)
+ 	 * display modes from atomic_flush, so userspace needs to trigger a
+ 	 * flush, or the CRTC gets no signal.
+ 	 */
+-	if (connector->base.state && !dcp->valid_mode && connector->connected) {
++	if (connector->base.state && !dcp->valid_mode && connector->connected &&
++	    !dcp_is_usb4_output(dcp)) {
+ 		drm_connector_set_link_status_property(&connector->base,
+ 						       DRM_MODE_LINK_STATUS_BAD);
+ 
+-- 
+2.55.0
+
