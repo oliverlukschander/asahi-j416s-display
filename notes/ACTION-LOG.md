@@ -414,3 +414,16 @@ sudo -n dmesg > /home/oliver/Development/asahi-j416s-display/captures/2026-09-21
 
 This action is prepared, not yet reported performed. Installed module is
 still 0090; 0091 remains an uninstalled build artifact.
+
+## 2026-09-21 — direct adapter success and user-reported disconnect
+
+The prepared direct USB-C test succeeded. Captures show eDP-1 and USB-3
+active together, VMM7100 on the right port and Keychron Q4 through the hub.
+The right DP route borrowed dcpext0 0x289c00000, using crossbar
+0xf0304c000 and target 0x8020. See the direct-usbc-baseline result note.
+
+Oliver then reported disconnecting the direct adapter. This records his
+reported physical action; it is not a claim of a new agent-issued command
+or a pre-action log for that spontaneous disconnect. No new MMIO, parameter,
+module, firmware command or reboot was issued. Keep the adapter disconnected
+and hub/keyboard attached while reviewing the evidence.
