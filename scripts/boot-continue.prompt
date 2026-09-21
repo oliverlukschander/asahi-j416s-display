@@ -1,0 +1,19 @@
+USB4 DisplayPort continue after unattended reboot on omarchy-m2.
+
+Read:
+- /home/oliver/Development/asahi-j416s-display/notes/last-boot-check.txt
+- /home/oliver/Development/asahi-j416s-display/notes/2026-09-21-status.md
+
+Workspace is /home/oliver/Development/asahi-j416s-display (not omalogimouse). Never edit ~/.config/omarchy/plugins/omalogimouse. Do not commit HERDR-PR-BRIEF.md.
+
+Analyze hyprctl monitors and the dmesg grep in last-boot-check.txt.
+
+If Hyprland sees the VMM7100 besides eDP-1 and DP IN DPRX=1 with SET_ACTIVE_LANE_COUNT lanes>0, delete notes/boot-continue.armed and stop. Success.
+
+Otherwise record the boot, pick the next safe experiment that is not in the closed list, patch, build, commit+push display repo (kernel on j416s-usb4-dpin, format-patch next number), then:
+
+sudo -n /home/oliver/Development/asahi-j416s-display/scripts/load-appledrm.sh
+
+That reboots. Passwordless sudo is installed. Keep eDP on. Do not phy_set_mode(DP) on USB4 ATC, do not assign lpdptxphy core+0x10, do not set_hpd after request_display, do not pulse analog MMIO, do not bind ATC=4, do not bind RemotePort unit 1 (DEACTIVATEs). Live policy: 0x9001 CORE=1 ATC=0 on unit 0, GET_SUPPORTS_HPD=1, set_hpd before request_display.
+
+If eDP is black, do not reboot again; write notes and stop.

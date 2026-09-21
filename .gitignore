@@ -3,3 +3,8 @@
 *.swo
 __pycache__/
 .DS_Store
+notes/load-status
+notes/last-boot-check.txt
+notes/boot-continue.armed
+notes/boot-continue.session
+notes/boot-continue.log

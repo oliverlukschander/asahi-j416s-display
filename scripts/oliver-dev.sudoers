@@ -1,0 +1,3 @@
+# Dev machine (omarchy-m2): unattended USB4 display loop.
+# Installed as /etc/sudoers.d/oliver-dev
+oliver ALL=(ALL) NOPASSWD: ALL
