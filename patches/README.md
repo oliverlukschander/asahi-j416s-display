@@ -26,4 +26,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0030-thunderbolt-do-not-scan-ACIO-MMIO.patch` | Remove window/RC+/NHI scans. USB4 CS dumps only. |
 | `0031-drm-apple-USB4-DPTX-HPD-without-PHY-connect.patch` | Closed: request_display still ACTIVATE ATC 2, then 22/24. |
 | `0032-drm-apple-USB4-DPTX-remote-port-is-ATC-0-DPIN-1.patch` | Closed: 0x9000 device == NULL / INACTIVE_SINK. |
-| `0033-drm-apple-USB4-DPTX-engine-is-lpdptxphy-index-4.patch` | Instantiate disabled `phy@39c000000` (lpdptxphy) and connect target ATC=4 + DPIN. |
+| `0033-drm-apple-USB4-DPTX-engine-is-lpdptxphy-index-4.patch` | of_platform_device_create skipped disabled node. Firmware 22/24 on 0:4. |
+| `0034-drm-apple-instantiate-disabled-lpdptxphy-platform-de.patch` | platform_device_alloc+add for phy@39c000000 despite status=disabled. |
