@@ -567,3 +567,16 @@ No claim that the probe has run or succeeded yet. A reset must not be
 followed by booting with the hub attached. 0090 backups and restore script
 remain available as documented in the preceding reboot entry.
 
+## 2026-09-21 — 0092 probe completed, external display still black
+
+Oliver confirms eDP and the hub keyboard work; external display stays black.
+The two prepared capture commands completed. Exactly one 0x8001 probe is
+logged. After accepted validate/connect/request_display and crossbar reselect,
+firmware reports APCALL 22 and 24 at about five seconds; HPD returns 0 but
+there are no external modes, no link-rate or active-lane callbacks, and
+DPRX remains 0. See notes/2026-09-21-0092-result.md.
+
+The final lanes=4 diagnostic is merely the cached maximum set by
+GET_MAX_LANE_COUNT, not active-lane training. No success is claimed.
+The one-attempt guard is consumed; future-boot opt-in was already removed.
+No additional hardware action was performed or scheduled after this result.
