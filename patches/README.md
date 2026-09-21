@@ -30,4 +30,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0034-drm-apple-instantiate-disabled-lpdptxphy-platform-de.patch` | PHY probed; ACTIVATE still 22/24 — atcphy was NULL. |
 | `0035-drm-apple-USB4-ACTIVATE-phy_set_mode-on-lpdptxphy.patch` | Trained HBR3 4-lane then modeset 3456x2234@120 on dcpext and blanked eDP. |
 | `0036-drm-apple-do-not-phy_set_mode-lpdptxphy-on-USB4.patch` | Unbind lpdptxphy atcphy. Do not complete USB4 linkcfg on SET_ACTIVE_LANE. |
-| `0037-drm-apple-USB4-train-lpdptxphy-without-DRM-hotplug.patch` | phy_set_mode lpdptxphy again. Ignore USB4 cb_hotplug. Wait on lanes, not DRM linkcfg. |
+| `0037-drm-apple-USB4-train-lpdptxphy-without-DRM-hotplug.patch` | Trained 4 lanes, hotplug ignored, eDP still blanked. phy_set_mode lpdptxphy is unsafe on this laptop. |
+| `0038-drm-apple-do-not-phy_set_mode-lpdptxphy.patch` | Unbind lpdptxphy atcphy again. Instantiating the device is OK; DP mode blanks eDP. |

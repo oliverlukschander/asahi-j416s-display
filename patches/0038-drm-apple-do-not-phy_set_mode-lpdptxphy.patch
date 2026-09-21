@@ -1,0 +1,32 @@
+From 3867b14d3ae0fb71f6efd3c8051dfdb49ad7e944 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 13:07:51 +0200
+Subject: [PATCH] drm/apple: do not phy_set_mode lpdptxphy
+
+Training HBR3/4 lanes with DRM hotplug suppressed still blanked
+eDP. phy_set_mode(DP) on phy@39c000000 is what blanks the panel
+on this laptop. Leave atcphy NULL for USB4.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 2514036..3b981d6 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1429,9 +1429,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].usb4_lane_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (usb4)
+-		dcp->dptxport[port].atcphy = usb4_lpdptx_phy;
+-	else
++	if (!usb4)
+ 		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+-- 
+2.55.0
+
