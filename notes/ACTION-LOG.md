@@ -269,3 +269,30 @@ for read_edt_data and DCP property logs, confirm eDP in Hyprland, then log and
 push a separate hub-replug action before requesting it. Stop/unplug if eDP
 blacks out. Do not interpret empty timings at disconnected boot as a fix or
 failure until the later discovery sequence has been observed.
+
+
+## 2026-09-21 0090 boot result — eDP recovery and startup mitigation
+
+Scheduled reboot ran as logged. Oliver reports needing a second boot to see
+the internal display. Failed boot: 1c91ba5e60974628a3259c4796f54d30;
+successful boot: 320edefca258477d9c882452d1cdb100. Hub stayed unplugged.
+The failed boot journal ends with an SMC-triggered forced shutdown.
+Both boots loaded 0090. See notes/2026-09-21-0090-boot-result.md and captures.
+
+New diagnostic result: both external read_edt_data callbacks request only
+initial-vbi-advance-lines; no timing-table request. The previous boot started
+Hyprland before the Apple DRM device registered. A startup gate is prepared.
+
+After this entry is committed and pushed, exact installation commands:
+
+```
+sudo -n install -D -m 0755 /home/oliver/Development/asahi-j416s-display/scripts/wait-apple-drm.py /usr/local/libexec/j416s-wait-apple-drm
+sudo -n install -D -m 0644 /home/oliver/Development/asahi-j416s-display/systemd/20-apple-drm-ready.conf /etc/systemd/system/sddm.service.d/20-apple-drm-ready.conf
+sudo -n systemctl daemon-reload
+```
+
+No reboot, SDDM restart, live module action, MMIO, ioremap, PHY operation,
+or parameter write. Addresses: none directly accessed. Future SDDM starts
+wait for the DRM device that exposes the panel driven by DCP 0x389c00000.
+Only sysfs/file metadata are read by the check; no DRM ioctl or modeset.
+The check has passed six tests and a real-system read-only check.
