@@ -1,0 +1,51 @@
+From b2ef0ec6a6794ac51bd527712eeeaf421561e256 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 14:36:27 +0200
+Subject: [PATCH] drm/apple: drop fake USB4 1080p; no request_display
+
+request_display powered the DPTX nub and ACTIVATE'd 0:4, then
+1080p still failed with fDisplayPowerState=0 and 22/24. echo 0
+disconnects the fake connector.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 5879288..4d59d52 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1603,6 +1603,15 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	ret = kstrtoint(val, 0, &v);
+ 	if (ret)
+ 		return ret;
++	if (v == 0) {
++		if (dcp && dcp->connector) {
++			WRITE_ONCE(dcp->connector->connected, false);
++			dcp->nr_modes = 0;
++			schedule_work(&dcp->connector->hotplug_wq);
++			dev_info(dcp->dev, "USB4: drop fake 1080p connector\n");
++		}
++		return 0;
++	}
+ 	if (v != 1)
+ 		return -EINVAL;
+ 	if (!dcp || !dcp->connector)
+@@ -1627,12 +1636,7 @@ static int usb4_scanout_set(const char *val, const struct kernel_param *kp)
+ 	dcp->nr_modes = 1;
+ 	WRITE_ONCE(dcp->connector->connected, true);
+ 	dev_info(dcp->dev,
+-		 "USB4: fake 1920x1080; request_display then modeset (no lpdptxphy)\n");
+-	if (dcp->dptxport[0].enabled && dcp->dptxport[0].service) {
+-		int r = dptxport_request_display(dcp->dptxport[0].service);
+-
+-		dev_info(dcp->dev, "USB4: request_display %d (no PHY assign)\n", r);
+-	}
++		 "USB4: fake 1920x1080 scanout (no request_display; 22/24 on 0:4)\n");
+ 	{
+ 		struct drm_crtc_state fake = { };
+ 		int mret;
+-- 
+2.55.0
+

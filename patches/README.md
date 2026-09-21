@@ -45,4 +45,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0049-drm-apple-USB4-kernel-iomfb_modeset-1080p-on-scanout.patch` | Firmware 80000104: setmode failed, fDisplayPowerState=0. |
 | `0050-drm-apple-USB4-iomfb-poweron-before-fake-1080p-modes.patch` | Poweron did not set fDisplayPowerState. Next reboot stuck on logo. |
 | `0051-drm-apple-do-not-iomfb_poweron-USB4-dcpext.patch` | Remove dcpext iomfb_poweron. |
-| `0052-drm-apple-USB4-request_display-then-1080p-modeset.patch` | usb4_scanout: request_display (no PHY) then iomfb_modeset. No poweron. |
+| `0052-drm-apple-USB4-request_display-then-1080p-modeset.patch` | request_display 0, ACTIVATE 0:4, still fDisplayPowerState=0, 22/24. |
+| `0053-drm-apple-USB4-drop-fake-1080p-no-request_display.patch` | echo 0 drops USB-3. Scanout no longer request_display. |
