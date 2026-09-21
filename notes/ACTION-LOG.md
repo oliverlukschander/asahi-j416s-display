@@ -340,3 +340,38 @@ Crossbar logged 0x000=4 and 0x800=0; semantics remain unverified for T602x.
 
 No further hardware action at this step. Continuing read-only protocol/source
 investigation rather than repeating the prohibited HPD or MMIO experiments.
+
+## 2026-09-21 — prepared HDMI baseline, awaiting Oliver's choice
+
+Oliver confirms the exact monitor/HDMI adapter/cable/OWC hub combination
+works perfectly in macOS. A question is pending about a temporary direct
+HDMI baseline. This entry does not claim it has been performed.
+
+If Oliver accepts, after this entry is committed and pushed, request this
+exact physical action: leave the OWC hub and keyboard attached to their
+current ports; disconnect the monitor HDMI cable from the VMM7100 adapter
+and connect that HDMI cable to the Mac's built-in HDMI socket. Leave the
+VMM7100 adapter itself in the hub. No reboot or driver reload.
+
+Addresses/controllers: normal HDMI hotplug is handled by dcpext0
+0x289c00000 (firmware target PHY 3 / internal DP-to-HDMI path). Current hub
+route is typec0, NHI 0x701f00000, ACIO 0x701ac0000, crossbar 0x70304c000,
+dcpext1 0x315c00000. Panel DCP is 0x389c00000. These identify normal driver
+paths, not addresses for manual mapping or MMIO. HDMI driver may perform
+its ordinary power/PHY/modeset operations in response to cable hotplug;
+no experimental module parameter or direct register operation is requested.
+No manual tunnel creation or DP-alt-mode switch on the hub port.
+
+Stop condition: if eDP blacks out, disconnect the newly attached HDMI cable,
+unplug the hub as previously instructed, and stop hardware testing.
+
+After Oliver reports connection, capture with these exact commands:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-hdmi-baseline.txt
+sudo -n dmesg > /home/oliver/Development/asahi-j416s-display/captures/2026-09-21-hdmi-baseline-kernel.log
+```
+
+The capture script queries DRM/USB/Thunderbolt sysfs and Hyprland, and reads
+existing kernel logs. It issues no direct MMIO, firmware request, or modeset.
+Installed kernel remains 0090; 0091 is built but not installed.

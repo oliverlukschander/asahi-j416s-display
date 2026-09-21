@@ -66,8 +66,9 @@ Today:
 - DPTX / crossbar: used for DP alt-mode toward the ATC PHY, **not** toward
   ACIO DP IN while the port is in USB4
 
-`dcpext0` (`289c00000.dcp`) is labelled HDMI-A. This chassis has no HDMI
-jack. `dcpext1` (`315c00000.dcp`) is USB-C. Boot logged
+`dcpext0` (`289c00000.dcp`) drives the MacBook Pro's built-in HDMI
+jack (the earlier claim that this chassis has no HDMI jack was wrong).
+`dcpext1` (`315c00000.dcp`) is used for USB-C. An earlier boot logged
 `typec-routes/route@0: failed to get display crossbar` on that DCP, then it
 still bound. Crossbar routing is the next place to look.
 
