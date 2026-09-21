@@ -1,7 +1,7 @@
 From dd9db430863e7b542cd91040f846f9fc144c5011 Mon Sep 17 00:00:00 2001
 From: Oliver Lukschander <oliver.lukschander@golf.at>
 Date: Mon, 21 Sep 2026 08:17:43 +0200
-Subject: [PATCH 5/5] drm/apple: use USB-C dcpext for USB4 DP IN and skip
+Subject: [PATCH 5/6] drm/apple: use USB-C dcpext for USB4 DP IN and skip
  Type-C HPD
 
 The HDMI-hybrid DCP armed USB4 then timed out asserting Type-C HPD

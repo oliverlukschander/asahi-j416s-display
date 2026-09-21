@@ -1,0 +1,136 @@
+From 1de65606dc3b9510590811fd3b78efc4148e54ee Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 08:33:11 +0200
+Subject: [PATCH 6/6] drm/apple: USB4 DP IN is not Type-C HPD
+
+Advertising Type-C HPD made DCP firmware wait on AFK 8,8, which
+times out while ATC2 is in USB4. Return supports_hpd=false for USB4,
+do not bind the ATC PHY, connect 200ms after arm, and log APCALLs
+including FORCE_HOTPLUG / INACTIVE_SINK.
+---
+ drivers/gpu/drm/apple/dcp-internal.h |  1 +
+ drivers/gpu/drm/apple/dcp.c          | 18 ++++++++++--------
+ drivers/gpu/drm/apple/dptxep.c       | 24 +++++++++++++++++++++++-
+ 3 files changed, 34 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index f5ffc2b..2d82ec5 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -46,6 +46,7 @@ struct apple_dcp_typec_route {
+ };
+ 
+ bool dcp_is_typec_output(struct apple_dcp *dcp);
++bool dcp_is_usb4_output(struct apple_dcp *dcp);
+ 
+ struct dcpav_service_epic;
+ 
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 187f535..641c4c3 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -51,7 +51,7 @@
+ #define APPLE_DCP_COPROC_CPU_CONTROL_RUN BIT(4)
+ 
+ #define DCP_BOOT_TIMEOUT msecs_to_jiffies(1000)
+-#define DPTX_USB4_CONNECT_DELAY msecs_to_jiffies(2500)
++#define DPTX_USB4_CONNECT_DELAY msecs_to_jiffies(200)
+ 
+ static bool show_notch;
+ 
+@@ -124,6 +124,11 @@ bool dcp_is_typec_output(struct apple_dcp *dcp)
+ 	       dcp->fixed_connector_type == DRM_MODE_CONNECTOR_USB;
+ }
+ 
++bool dcp_is_usb4_output(struct apple_dcp *dcp)
++{
++	return dcp->active_typec_route && dcp->active_typec_route->usb4_selected;
++}
++
+ static bool dcp_typec_route_is_dp(const struct typec_mux_state *state)
+ {
+ 	return state->alt && state->alt->svid == USB_TYPEC_DP_SID &&
+@@ -1309,8 +1314,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		goto out_unlock;
+ 
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+-	dcp->dptxport[port].atcphy = dcp->phy;
+-	usb4 = dcp->active_typec_route && dcp->active_typec_route->usb4_selected;
++	usb4 = dcp_is_usb4_output(dcp);
++	/* USB4: ATC PHY is the USB4 router, not a DP PHY. Leave it alone. */
++	dcp->dptxport[port].atcphy = usb4 ? NULL : dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+ 	if (ret) {
+@@ -1322,7 +1328,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 
+ 	ret = dptxport_connect(dcp->dptxport[port].service, 0,
+ 			       dcp->dptx_phy, dcp->dptx_die,
+-		       usb4 ? false : dcp_is_typec_output(dcp));
++		       dcp_is_typec_output(dcp));
+ 	if (ret) {
+ 		dev_err(dcp->dev,
+ 			"dcp_dptx_connect: failed to connect DPTX target %u:%u: %d\n",
+@@ -1338,10 +1344,6 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		goto out_release;
+ 	}
+ 	dcp->dptxport[port].connected = true;
+-	/*
+-	 * USB4 DP IN gets HPD from the tunneled DP OUT, not Type-C HPD.
+-	 * Asserting Type-C HPD here timed out (-110) on the HDMI-hybrid DCP.
+-	 */
+ 	if (dcp_is_typec_output(dcp) && !usb4) {
+ 		ret = dptxport_set_hpd(dcp->dptxport[port].service, true);
+ 		if (ret) {
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 525ba63..8f83d99 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -457,7 +457,12 @@ static int dptxport_call_get_supports_hpd(struct apple_epic_service *service,
+ 		return -EINVAL;
+ 
+ 	reply->retcode = cpu_to_le32(0);
+-	reply->supported = cpu_to_le32(dcp_is_typec_output(dcp));
++	/*
++	 * USB4 DP IN is not Type-C HPD. Advertising Type-C HPD makes
++	 * firmware wait on AFK 8,8 which times out while the ATC is USB4.
++	 */
++	reply->supported = cpu_to_le32(dcp_is_typec_output(dcp) &&
++				       !dcp_is_usb4_output(dcp));
+ 	return 0;
+ }
+ 
+@@ -530,6 +535,8 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ {
+ 	struct dptx_port *dptx = service->cookie;
+ 	trace_dptxport_apcall(dptx, idx, data_size);
++	dev_info(service->ep->dcp->dev, "DPTXPort: APCALL %u (%zu bytes)\n",
++		 idx, data_size);
+ 
+ 	switch (idx) {
+ 	case DPTX_APCALL_WILL_CHANGE_LINKG_CONFIG:
+@@ -582,6 +589,21 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 	case DPTX_APCALL_DEACTIVATE:
+ 		return dptxport_call_deactivate(service, data, data_size,
+ 						reply, reply_size);
++	case DPTX_APCALL_FORCE_HOTPLUG_DETECT:
++		dev_info(service->ep->dcp->dev,
++			 "DPTXPort: FORCE_HOTPLUG_DETECT\n");
++		complete(&dptx->linkcfg_completion);
++		memcpy(reply, data, min(reply_size, data_size));
++		if (reply_size >= 4)
++			memset(reply, 0, 4);
++		return 0;
++	case DPTX_APCALL_INACTIVE_SINK_DETECTED:
++		dev_info(service->ep->dcp->dev,
++			 "DPTXPort: INACTIVE_SINK_DETECTED\n");
++		memcpy(reply, data, min(reply_size, data_size));
++		if (reply_size >= 4)
++			memset(reply, 0, 4);
++		return 0;
+ 	default:
+ 		/* just try to ACK and hope for the best... */
+ 		dev_info(service->ep->dcp->dev, "DPTXPort: acking unhandled call %u\n",
+-- 
+2.55.0
+
