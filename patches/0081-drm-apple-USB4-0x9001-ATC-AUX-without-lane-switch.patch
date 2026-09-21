@@ -1,0 +1,63 @@
+From 4a530917752e90c98e73cffbf3527f918d4948dc Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 17:53:48 +0200
+Subject: [PATCH] drm/apple: USB4 0x9001 ATC AUX without lane switch
+
+0080 connect unk 0x101 did not start AUX (analog 0x16). Restore
+unk 0x100. Skip lpdptxphy so eDP stays. Enable the USB-C ATC DP
+AUX block without switching USB4 SS lanes so the CORE=1 nub has
+analog AUX. 0021 did that AUX on ATC 2 targets (device == NULL).
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 15 ++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.c |  4 ----
+ 2 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index a98ad86..0c136b2 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1437,10 +1437,23 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		/*
+ 		 * 0078 hub-from-init blanked eDP. Instantiating
+ 		 * phy-apple-dptx can write lpdptxphy core+0x10. Stay on
+-		 * 0x9001 unit 0 with no PHY object. No analog MMIO.
++		 * 0x9001 unit 0, connect unk 0x100. Enable the USB-C
++		 * ATC DP AUX block without lane switch so the CORE=1
++		 * nub has analog AUX. Do not phy_set_mode(DP) the SS
++		 * lanes (kills ACIO).
+ 		 */
+ 		dev_info(dcp->dev,
+ 			 "USB4: skip lpdptxphy instantiate (eDP stays on)\n");
++		if (dcp->phy) {
++			int aux;
++
++			dcp->dptxport[port].atcphy = dcp->phy;
++			aux = phy_set_mode_ext(dcp->phy, PHY_MODE_DP,
++					       dcp->index);
++			dev_info(dcp->dev,
++				 "USB4: ATC DP AUX without lane switch: %d\n",
++				 aux);
++		}
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+ 			u8 cores[2];
+ 			u8 atc = (usb4_atc >= 0) ? usb4_atc : 0;
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 93ba238..4a77e7d 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -139,10 +139,6 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 	int ret;
+ 	u32 target = dptxport_remote_target(service->ep->dcp, core, atc, die);
+ 
+-	/* 2022 USB4 tunnel traces used unk=0x101, not 0x100. */
+-	if (dcp_is_usb4_output(service->ep->dcp) && supports_hpd)
+-		unk_field |= 0x1;
+-
+ 	trace_dptxport_connect(dptx, core, atc, die);
+ 	dev_info(service->ep->dcp->dev,
+ 		 "DPTX connect target=0x%x unk=0x%x\n", target, unk_field);
+-- 
+2.55.0
+

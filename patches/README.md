@@ -74,3 +74,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0078-drm-apple-USB4-analog-DPIN-stays-on-unit-0.patch` | 0077 unit 1 DEACTIVATE. Stay on unit 0 (0073 ACTIVATE). |
 | `0079-drm-apple-USB4-skip-lpdptxphy-instantiate.patch` | 0078 hub-from-init blanked eDP. Do not probe phy-apple-dptx. |
 | `0080-drm-apple-USB4-DPIN-connect-unk-0x101.patch` | 0079 ACTIVATE no SET_LINK_RATE. Connect unk 0x101 (Sven traces). |
+| `0081-drm-apple-USB4-0x9001-ATC-AUX-without-lane-switch.patch` | Revert unk 0x100. Enable USB-C ATC DP AUX on 0x9001 skip path. |
