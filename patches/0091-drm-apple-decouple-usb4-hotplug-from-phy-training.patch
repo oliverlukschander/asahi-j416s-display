@@ -1,0 +1,50 @@
+From 65ac2fb0ba9aaefff62a5f091016691e9cfdeab3 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 22:37:40 +0200
+Subject: [PATCH] drm/apple: report USB4 firmware hotplug independently of PHY
+ training
+
+The experimental USB4 hotplug gate depended on usb4_force_dptx, which also enables the lpdptxphy assignment that blanked eDP. Historical tests reproduced that blanking with hotplug suppressed, so the notification gate does not prevent the underlying failure. Restore normal firmware callback processing without enabling the physical PHY path or synthesizing modes. Include the firmware mode count in callback diagnostics. This does not fix the currently missing external firmware callback or sink discovery.
+---
+ drivers/gpu/drm/apple/iomfb_template.c | 17 +++++++----------
+ 1 file changed, 7 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index f0d4e47..a09935f 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -1070,15 +1070,12 @@ static void dcpep_cb_hotplug(struct apple_dcp *dcp, u64 *connected)
+ 	if (dcp->main_display)
+ 		return;
+ 	/*
+-	 * USB4 DPTX training cloned 3456x2234@120 onto dcpext and blanked
+-	 * eDP. Keep the DRM connector disconnected until sink EDID is real.
++	 * Report firmware hotplug independently of the USB4 PHY experiment.
++	 * Reassigning lpdptxphy blanked eDP even with these callbacks ignored;
++	 * suppressing connector notifications does not protect the panel.
++	 * Mode probing still uses this DCP's firmware modes, and mode_valid
++	 * rejects modes absent from that list. Do not synthesize a mode here.
+ 	 */
+-	if (dcp_is_usb4_output(dcp) && !dcp_usb4_drm_allowed()) {
+-		dev_info(dcp->dev,
+-			 "cb_hotplug() ignored on USB4 connected:%llu\n",
+-			 *connected);
+-		return;
+-	}
+ 
+ 	if (dcp->during_modeset) {
+ 		/*
+@@ -1095,8 +1092,8 @@ static void dcpep_cb_hotplug(struct apple_dcp *dcp, u64 *connected)
+ 		return;
+ 	}
+ 
+-	dev_info(dcp->dev, "cb_hotplug() connected:%llu, valid_mode:%d\n",
+-		 *connected, dcp->valid_mode);
++	dev_info(dcp->dev, "cb_hotplug() connected:%llu, valid_mode:%d nr_modes:%u\n",
++		 *connected, dcp->valid_mode, dcp->nr_modes);
+ 
+ 	/* Hotplug invalidates mode. DRM doesn't always handle this. */
+ 	if (!(*connected)) {
+-- 
+2.55.0
+
