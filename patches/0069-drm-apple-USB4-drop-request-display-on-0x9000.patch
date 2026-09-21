@@ -1,0 +1,47 @@
+From 027289fe7ab5cdb749e143645c9fa60214b9825a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:06:49 +0200
+Subject: [PATCH] drm/apple: drop USB4 request_display on DPIN 0x9000
+
+validate/connect/set_hpd succeed. request_display returns 0 then
+firmware logs device == NULL and INACTIVE_SINK. AFK accepts the
+remote port; DPTXController has no device for ATC=0 DPIN=1.
+
+Keep validate/connect/set_hpd. Do not request_display.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index cf779da..0e4cf1c 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1433,7 +1433,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 * connect, request_display, or set_hpd.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+-			int v, c, h = -EINVAL, r = -EINVAL;
++			int v, c, h = -EINVAL;
+ 
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			v = dptxport_validate_connection(
+@@ -1452,13 +1452,8 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			if (!c)
+ 				h = dptxport_set_hpd(dcp->dptxport[port].service,
+ 						     true);
+-			dev_info(dcp->dev, "USB4: analog DPIN set_hpd: %d\n", h);
+-			if (!h)
+-				r = dptxport_request_display(
+-					dcp->dptxport[port].service);
+ 			mutex_unlock(&dcp->hpd_mutex);
+-			dev_info(dcp->dev,
+-				 "USB4: analog DPIN request_display: %d\n", r);
++			dev_info(dcp->dev, "USB4: analog DPIN set_hpd: %d\n", h);
+ 		}
+ 		return 0;
+ 	}
+-- 
+2.55.0
+
