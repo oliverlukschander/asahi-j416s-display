@@ -1,0 +1,76 @@
+From bb7621350a5851b46fa0d3977ea97d94582b67d1 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:52:31 +0200
+Subject: [PATCH] drm/apple: bind USB4 DPTX PHY for lpdptx AUX enable
+
+ACTIVATE with atcphy NULL made firmware report device == NULL.
+Bind the Type-C DP PHY so phy_set_mode can enable AUX while USB4
+lanes stay. Do not phy_configure DP lane analog on USB4.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    |  6 +++---
+ drivers/gpu/drm/apple/dptxep.c | 10 ++++++----
+ 2 files changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 26506dc..769b3fb 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1347,10 +1347,10 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+ 	/*
+-	 * USB4 AUX/lanes go through ACIO DP IN, not the HDMI analog PHY or
+-	 * the USB4-occupied ATC. Leave atcphy NULL so APCALLs stay logical.
++	 * USB4: bind the Type-C DP PHY so ACTIVATE can enable lpdptx AUX
++	 * without switching USB4 lanes (phy-apple-atc USB4 set_mode).
+ 	 */
+-	dcp->dptxport[port].atcphy = usb4 ? NULL : dcp->phy;
++	dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+ 	if (ret) {
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 37f907c..de1f33b 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -353,7 +353,7 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	}
+ 
+ 	if (dptx->phy_ops.dp.set_lanes) {
+-		if (dptx->atcphy) {
++		if (dptx->atcphy && !dcp_is_usb4_output(dcp)) {
+ 			ret = phy_configure(dptx->atcphy, &dptx->phy_ops);
+ 			if (ret)
+ 				return ret;
+@@ -465,13 +465,12 @@ static int dptxport_call_set_link_rate(struct apple_epic_service *service,
+ 		dptx->phy_ops.dp.link_rate = phy_link_rate;
+ 		dptx->phy_ops.dp.set_rate = 1;
+ 
+-		if (dptx->atcphy) {
++		if (dptx->atcphy && !dcp_is_usb4_output(service->ep->dcp)) {
+ 			ret = phy_configure(dptx->atcphy, &dptx->phy_ops);
+ 			if (ret)
+ 				return ret;
+ 		}
+ 
+-		//if (dptx->phy_ops.dp.set_rate)
+ 		dptx->link_rate = dptx->pending_link_rate = link_rate;
+ 
+ 	}
+@@ -536,7 +535,10 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 	struct dptx_port *dptx = service->cookie;
+ 	const struct apple_dcp *dcp = service->ep->dcp;
+ 
+-	/* Standalone PHYs need DCP input selection. USB4 uses the DPTX PHY. */
++	/*
++	 * Standalone PHYs need DCP input selection. USB4 keeps ATC lanes
++	 * in USB4 and only enables lpdptx AUX (phy-apple-atc set_mode).
++	 */
+ 	if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+-- 
+2.55.0
+

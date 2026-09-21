@@ -1,0 +1,74 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:50:00 +0200
+Subject: [PATCH] phy: apple: atc: enable DP AUX on USB4 without lane switch
+
+USB4 occupies the SS lanes. DCP firmware still needs a DPTX device
+on ACTIVATE. Bring up lpdptx AUX / DP PMA clocks only; do not
+reconfigure the PHY to APPLE_ATCPHY_MODE_DP.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+
+--- a/drivers/phy/apple/atc.c
++++ b/drivers/phy/apple/atc.c
+@@ -2037,9 +2037,36 @@
+ 
+ static int atcphy_dpphy_set_mode(struct phy *phy, enum phy_mode mode, int submode)
+ {
+-	/* Nothing to do here since the setup already happened in mux_set */
+-	if (mode == PHY_MODE_DP && submode == 0)
++	struct apple_atcphy *atcphy = phy_get_drvdata(phy);
++
++	/*
++	 * USB4/TBT occupy the SS lanes. Do not switch them to DP (that
++	 * yields DEVICE_NOT_STARTED and kills ACIO). Bring up lpdptx AUX
++	 * and the DP PMA clocks so DCP firmware has a DPTX device, while
++	 * the display crossbar dpin path carries video into DP IN.
++	 */
++	if (mode == PHY_MODE_DP) {
++		guard(mutex)(&atcphy->lock);
++		if (atcphy->mode == APPLE_ATCPHY_MODE_USB4 ||
++		    atcphy->mode == APPLE_ATCPHY_MODE_TBT) {
++			dev_info(atcphy->dev,
++				 "USB4: enable DP AUX without lane switch (submode=%d)\n",
++				 submode);
++			atcphy_enable_dp_aux(atcphy);
++			return 0;
++		}
++		/* DP alt-mode: mux_set already configured the PHY. */
+ 		return 0;
++	}
++
++	if (mode == PHY_MODE_INVALID) {
++		guard(mutex)(&atcphy->lock);
++		if (atcphy->mode == APPLE_ATCPHY_MODE_USB4 ||
++		    atcphy->mode == APPLE_ATCPHY_MODE_TBT)
++			atcphy_disable_dp_aux(atcphy);
++		return 0;
++	}
++
+ 	return -EINVAL;
+ }
+ 
+@@ -2051,7 +2078,10 @@
+ 
+ 	if (mode != PHY_MODE_DP)
+ 		return -EINVAL;
+-	if (submode != 0)
++	/* DCP passes dcp->index as submode; alt-mode uses 0. */
++	if (submode != 0 &&
++	    atcphy->mode != APPLE_ATCPHY_MODE_USB4 &&
++	    atcphy->mode != APPLE_ATCPHY_MODE_TBT)
+ 		return -EINVAL;
+ 
+ 	switch (atcphy->mode) {
+@@ -2059,6 +2089,8 @@
+ 		opts->lanes = 2;
+ 		break;
+ 	case APPLE_ATCPHY_MODE_DP:
++	case APPLE_ATCPHY_MODE_USB4:
++	case APPLE_ATCPHY_MODE_TBT:
+ 		opts->lanes = 4;
+ 		break;
+ 	default:

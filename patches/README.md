@@ -14,3 +14,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0004-drm-apple-auto-arm-USB4-DP-IN-on-the-NHI-that-has-a-.patch` | If the Type-C mux never delivers USB4 to DCP, arm DP IN on the typecN whose NHI has the hub. `usb4_arm=0..2` forces a port. |
 | `0019-drm-apple-drive-USB4-DP-IN-instead-of-HDMI-PHY-3.patch` | Prefer USB-C dcpext; DPIN in remote-port bits 13:12; no HDMI PHY 3, no ATC PHY, no HPD kick. |
 | `0020-mux-apple-t602x-program-DPIN0-DPIN1.patch` | T602x crossbar actually selects DPIN0/DPIN1 analog (`ATC_DPIN0`) instead of always writing DPPHY bits. Out-of-tree: `src/mux`. |
+| `0021-phy-apple-atc-enable-DP-AUX-on-USB4-without-lane-switch.patch` | USB4 ACTIVATE enables `lpdptx` AUX without switching SS lanes to DP. Out-of-tree: `src/phy`. |
+| `0022-drm-apple-bind-USB4-DPTX-PHY-for-lpdptx-AUX.patch` | Bind Type-C DP PHY on USB4 so ACTIVATE can enable AUX. Skip ATC DP lane `phy_configure`. |

@@ -8,9 +8,11 @@ VER="$(uname -r)"
 KO="$ROOT/src/appledrm/appledrm.ko"
 TBKO="$ROOT/src/thunderbolt/thunderbolt.ko"
 MUXKO="$ROOT/src/mux/mux-apple-display-crossbar.ko"
+PHYKO="$ROOT/src/phy/phy-apple-atc.ko"
 INTREE="/lib/modules/$VER/kernel/drivers/gpu/drm/apple/appledrm.ko"
 TBINTREE="/lib/modules/$VER/kernel/drivers/thunderbolt/thunderbolt.ko"
 MUXINTREE="/lib/modules/$VER/kernel/drivers/mux/mux-apple-display-crossbar.ko"
+PHYINTREE="/lib/modules/$VER/kernel/drivers/phy/apple/phy-apple-atc.ko"
 DST="/lib/modules/$VER/updates"
 STATUS="$ROOT/notes/load-status"
 
@@ -42,6 +44,14 @@ if [[ -f $MUXKO ]]; then
   install -d "$(dirname "$MUXINTREE")"
   install -m 0644 "$MUXKO" "$MUXINTREE"
   install -m 0644 "$MUXKO" "$DST/mux-apple-display-crossbar.ko"
+fi
+if [[ -f $PHYKO ]]; then
+  if [[ -f $PHYINTREE && ! -f ${PHYINTREE}.stock ]]; then
+    cp -a "$PHYINTREE" "${PHYINTREE}.stock"
+  fi
+  install -d "$(dirname "$PHYINTREE")"
+  install -m 0644 "$PHYKO" "$PHYINTREE"
+  install -m 0644 "$PHYKO" "$DST/phy-apple-atc.ko"
 fi
 depmod -a "$VER"
 
