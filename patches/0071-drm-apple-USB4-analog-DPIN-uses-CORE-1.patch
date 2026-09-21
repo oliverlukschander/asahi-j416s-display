@@ -1,0 +1,119 @@
+From b60849bbf0fcce1b3dd02647f762713db8c5fd2a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 16:22:42 +0200
+Subject: [PATCH] drm/apple: USB4 analog DPIN uses CORE=1
+
+0070 target 0x9000 (CORE=0 ATC=0 DPIN=1) is an AFK remote port with
+no DPTXController device. 2022 DCP traces of USB4 tunneling used
+CORE=1 and CORE=2 as ATCPHY_INPUT. Bind dpin0 with CORE=1 (target
+0x9001). If validate fails, try CORE=2. Still no request_display.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 62 +++++++++++++++++++++++-----------
+ drivers/gpu/drm/apple/dptxep.c |  2 +-
+ 2 files changed, 44 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index fb3b24f..a0e808f 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -78,6 +78,16 @@ module_param_named(usb4_atc, usb4_atc, int, 0644);
+ MODULE_PARM_DESC(usb4_atc,
+ 		 "DPTX ATC/phy index for USB4 (-1=typec route, 2=Right ATC, 3=HDMI analog)");
+ 
++/*
++ * USB4 DP IN remote-port CORE. 0070 used CORE=0 (target 0x9000), which is an
++ * AFK paper port with no DPTXController device. 2022 DCP traces of USB4
++ * tunneling used CORE=1 and CORE=2 as ATCPHY_INPUT (dpin0 / dpin1).
++ */
++static int usb4_core = 1;
++module_param_named(usb4_core, usb4_core, int, 0644);
++MODULE_PARM_DESC(usb4_core,
++		 "USB4 DPTX remote-port CORE (1=dpin0, 2=dpin1)");
++
+ /* -1 = auto (arm the typecN whose NHI has a Thunderbolt device). 0..2 force. */
+ static int usb4_arm = -1;
+ static int dcp_usb4_arm_typec(int typec_index);
+@@ -1428,32 +1438,46 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		dev_info(dcp->dev,
+ 			 "USB4: skip DPTX connect (echo 1 > usb4_dptx_train after lid close)\n");
+ 		/*
+-		 * Analog PHY is up (+0x18=0x17). Ask firmware if a DPIN
+-		 * remote port exists with ATC=0 (no lpdptxphy). Do not
+-		 * connect, request_display, or set_hpd.
++		 * Analog PHY is up. Bind DPIN with ATC=0 and USB4 CORE
++		 * (default 1 = dpin0). 0x9000 (CORE=0) had no DPTX device.
++		 * No request_display.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+-			int v, c, h = -EINVAL;
++			u8 cores[2];
++			int n = 0, i, v = -EINVAL, c = -EINVAL, h = -EINVAL;
+ 
++			cores[n++] = (usb4_core == 2) ? 2 : 1;
++			cores[n++] = (cores[0] == 1) ? 2 : 1;
+ 			mutex_lock(&dcp->hpd_mutex);
+-			v = dptxport_validate_connection(
+-				dcp->dptxport[port].service, 0, 0,
+-				dcp->dptx_die);
+-			dev_info(dcp->dev,
+-				 "USB4: analog DPIN validate atc=0: %d\n", v);
+-			c = -EINVAL;
+-			if (!v)
++			for (i = 0; i < n; i++) {
++				u8 core = cores[i];
++
++				v = dptxport_validate_connection(
++					dcp->dptxport[port].service, core, 0,
++					dcp->dptx_die);
++				dev_info(dcp->dev,
++					 "USB4: analog DPIN validate core=%u atc=0: %d\n",
++					 core, v);
++				if (v)
++					continue;
+ 				c = dptxport_connect(dcp->dptxport[port].service,
+-						     0, 0, dcp->dptx_die,
+-						     true);
+-			dev_info(dcp->dev,
+-				 "USB4: analog DPIN connect atc=0 HPD: %d\n",
+-				 c);
+-			if (!c)
+-				h = dptxport_set_hpd(dcp->dptxport[port].service,
++						     core, 0, dcp->dptx_die,
+ 						     true);
++				dev_info(dcp->dev,
++					 "USB4: analog DPIN connect core=%u atc=0 HPD: %d\n",
++					 core, c);
++				if (!c)
++					h = dptxport_set_hpd(
++						dcp->dptxport[port].service,
++						true);
++				dev_info(dcp->dev,
++					 "USB4: analog DPIN set_hpd: %d\n", h);
++				break;
++			}
+ 			mutex_unlock(&dcp->hpd_mutex);
+-			dev_info(dcp->dev, "USB4: analog DPIN set_hpd: %d\n", h);
++			if (v)
++				dev_info(dcp->dev,
++					 "USB4: analog DPIN CORE 1 and 2 validate failed\n");
+ 		}
+ 		return 0;
+ 	}
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 292e900..c8690ea 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -91,7 +91,7 @@ static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
+ 	if (dcp_is_usb4_output(dcp)) {
+ 		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
+ 
+-		/* atc is lpdptxphy (4). DPIN selects USB-C dpin analog. */
++		/* CORE 1/2 = USB4 dpin0/dpin1. DPIN selects analog. ATC=0. */
+ 		target = FIELD_PREP(DCPDPTX_REMOTE_PORT_CORE, core) |
+ 			 FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, atc) |
+ 			 FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+-- 
+2.55.0
+
