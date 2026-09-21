@@ -45,3 +45,18 @@ What it does:
 4. `iounmap`. No write. No panel map. No crossbar map.
 
 If the machine resets during this command, this was the action.
+
+Result: it returned. `dcpext1 disp-1 nonzero words 1065`. eDP stayed on.
+Reading this block is safe. The crash was the panel map or the write.
+
+## 2026-09-21 21:44 about to run
+
+Same block, still read-only. Print the first 24 non-zero words.
+
+Commands, after this file is pushed:
+
+`rmmod apple_dispclk`
+`insmod src/dispclk/apple-dispclk.ko read_ext=1`
+
+What it does: `ioremap 0x315320000` size `0x4000`, `readl`, `iounmap`.
+No panel. No writes. No crossbar.

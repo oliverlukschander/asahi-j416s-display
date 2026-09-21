@@ -22,7 +22,7 @@ MODULE_PARM_DESC(read_ext, "1 = read dcpext1 disp-1 only, no panel, no writes");
 static int __init dispclk_init(void)
 {
 	void __iomem *ext;
-	int i, nonzero = 0;
+	int i, nonzero = 0, logged = 0;
 
 	if (apply) {
 		pr_err("dispclk: refusing apply=1 (crashed 2026-09-21)\n");
@@ -38,8 +38,15 @@ static int __init dispclk_init(void)
 	if (!ext)
 		return -ENOMEM;
 	for (i = 0; i < DISP_SIZE; i += 4) {
-		if (readl(ext + i))
-			nonzero++;
+		u32 v = readl(ext + i);
+
+		if (!v)
+			continue;
+		nonzero++;
+		if (logged < 24) {
+			pr_info("dispclk: +%03x %08x\n", i, v);
+			logged++;
+		}
 	}
 	iounmap(ext);
 	pr_info("dispclk: dcpext1 disp-1 nonzero words %d\n", nonzero);
