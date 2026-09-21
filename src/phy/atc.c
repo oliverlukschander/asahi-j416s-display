@@ -1340,6 +1340,34 @@ static void atcphy_configure_lanes(struct apple_atcphy *atcphy, enum atcphy_mode
 	}
 }
 
+/*
+ * USB4 DPTX pixel clocks only. The SS lanes stay in USB4. The lpdptx
+ * AUX block is not this transmitter: powering it drops DP IN analog
+ * status and DCPDPDevice still times out.
+ */
+static void atcphy_enable_usb4_dptx_clock(struct apple_atcphy *atcphy)
+{
+	if (atcphy->hw->gen == ATCPHY_GENERATION_T8122)
+		return;
+
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0,
+		   DPTXPHY_PMA_LANE_RESET_N);
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0,
+		   DPTXPHY_PMA_LANE_RESET_N_OV);
+	core_mask32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPRX_PCLK_SELECT,
+		    FIELD_PREP(DPRX_PCLK_SELECT, 1));
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPRX_PCLK_ENABLE);
+	core_mask32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK1_SELECT,
+		    FIELD_PREP(DPTX_PCLK1_SELECT, 1));
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK1_ENABLE);
+	core_mask32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK2_SELECT,
+		    FIELD_PREP(DPTX_PCLK2_SELECT, 1));
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK2_ENABLE);
+	core_set32(atcphy, ACIOPHY_PLL_COMMON_CTRL,
+		   ACIOPHY_PLL_WAIT_FOR_CMN_READY_BEFORE_RESET_EXIT);
+	dev_info(atcphy->dev, "USB4 DPTX clocks on (no lane switch, no AUX)\n");
+}
+
 static void atcphy_enable_dp_aux(struct apple_atcphy *atcphy)
 {
 	/* FIXME */
@@ -2050,9 +2078,9 @@ static int atcphy_dpphy_set_mode(struct phy *phy, enum phy_mode mode, int submod
 		if (atcphy->mode == APPLE_ATCPHY_MODE_USB4 ||
 		    atcphy->mode == APPLE_ATCPHY_MODE_TBT) {
 			dev_info(atcphy->dev,
-				 "USB4: enable DP AUX without lane switch (submode=%d)\n",
+				 "USB4: DPTX pixel clocks, lanes stay USB4 (submode=%d)\n",
 				 submode);
-			atcphy_enable_dp_aux(atcphy);
+			atcphy_enable_usb4_dptx_clock(atcphy);
 			return 0;
 		}
 		/* DP alt-mode: mux_set already configured the PHY. */
