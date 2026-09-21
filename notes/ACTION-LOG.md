@@ -28,3 +28,20 @@ parameter does the same copy.
 Suspect: the read of the live panel block, or the write into dcpext1
 disp-1. The crossbar read alone has been done before from the mux driver
 without this instant reset.
+
+## 2026-09-21 21:43 about to run
+
+Not the copy. Read the idle external block only.
+
+Command, after this file is pushed:
+
+`insmod src/dispclk/apple-dispclk.ko read_ext=1`
+
+What it does:
+
+1. Refuse `apply=1`.
+2. `ioremap` dcpext1 disp-1 `0x315320000` size `0x4000`.
+3. Read every word. Count how many are non-zero.
+4. `iounmap`. No write. No panel map. No crossbar map.
+
+If the machine resets during this command, this was the action.
