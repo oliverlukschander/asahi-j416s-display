@@ -1,0 +1,152 @@
+From f65cb887cf51fbd09b1e807e5fea18db61b650a4 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 13:46:25 +0200
+Subject: [PATCH] drm/apple: USB4 DPTX train via sysfs after lid close
+
+Plug-in stays safe (no core+0x10 write). Writing 1 to
+usb4_dptx_train assigns lpdptxphy to dcpext, trains, and allows
+DRM hotplug. That blanks eDP; use with the lid closed.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp-internal.h   |  1 +
+ drivers/gpu/drm/apple/dcp.c            | 46 ++++++++++++++++++++++++--
+ drivers/gpu/drm/apple/dptxep.c         |  6 ++--
+ drivers/gpu/drm/apple/iomfb_template.c |  2 +-
+ 4 files changed, 49 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index 8f7f7f0..b0b6013 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -47,6 +47,7 @@ struct apple_dcp_typec_route {
+ 
+ bool dcp_is_typec_output(struct apple_dcp *dcp);
+ bool dcp_is_usb4_output(struct apple_dcp *dcp);
++bool dcp_usb4_drm_allowed(void);
+ 
+ struct dcpav_service_epic;
+ 
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index b0c9ba9..73c19ff 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -99,6 +99,14 @@ MODULE_PARM_DESC(usb4_arm,
+ module_param(show_notch, bool, 0644);
+ MODULE_PARM_DESC(show_notch, "Use the full display height and shows the notch");
+ 
++static struct apple_dcp *usb4_armed_dcp;
++static bool usb4_force_dptx;
++
++bool dcp_usb4_drm_allowed(void)
++{
++	return usb4_force_dptx;
++}
++
+ bool hdmi_audio;
+ module_param(hdmi_audio, bool, 0644);
+ MODULE_PARM_DESC(hdmi_audio, "Enable unstable HDMI audio support");
+@@ -658,6 +666,7 @@ static int dcp_usb4_arm_typec(int typec_index)
+ 		cancel_delayed_work(&dcp->typec_reconnect_wq);
+ 		mod_delayed_work(system_freezable_wq, &dcp->typec_reconnect_wq,
+ 				 DPTX_USB4_CONNECT_DELAY);
++		usb4_armed_dcp = dcp;
+ 		dev_info(dcp->dev,
+ 			 "USB4 DP IN armed typec%u; DPTX HPD in %u ms (no PHY connect)\n",
+ 			 typec_index, jiffies_to_msecs(DPTX_USB4_CONNECT_DELAY));
+@@ -1412,12 +1421,14 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 dcp->active_typec_route ? "borrowed" : "fixed",
+ 		 dcp->connector_type, dcp->dptxport[port].connected);
+ 
+-	if (dcp_is_usb4_output(dcp)) {
++	if (dcp_is_usb4_output(dcp) && !usb4_force_dptx) {
+ 		dcp_usb4_enable_lpdptxphy(dcp);
+ 		dev_info(dcp->dev,
+-			 "USB4: skip DPTX connect (lpdptxphy DCP assign blanks eDP)\n");
++			 "USB4: skip DPTX connect (echo 1 > usb4_dptx_train after lid close)\n");
+ 		return 0;
+ 	}
++	if (dcp_is_usb4_output(dcp))
++		dcp_usb4_enable_lpdptxphy(dcp);
+ 
+ 	mutex_lock(&dcp->hpd_mutex);
+ 	if (!dcp->dptxport[port].enabled) {
+@@ -1433,7 +1444,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].usb4_lane_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (!usb4)
++	if (usb4)
++		dcp->dptxport[port].atcphy = usb4_lpdptx_phy;
++	else
+ 		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+@@ -1524,6 +1537,33 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	return ret;
+ }
+ 
++static int usb4_dptx_train_set(const char *val, const struct kernel_param *kp)
++{
++	int v, ret;
++
++	ret = kstrtoint(val, 0, &v);
++	if (ret)
++		return ret;
++	if (v != 1)
++		return -EINVAL;
++	if (!usb4_armed_dcp)
++		return -ENODEV;
++
++	usb4_force_dptx = true;
++	dev_info(usb4_armed_dcp->dev,
++		 "USB4: user DPTX train (lpdptxphy assign; blanks eDP)\n");
++	ret = dcp_dptx_connect(usb4_armed_dcp, 0);
++	return ret ? ret : 0;
++}
++
++static const struct kernel_param_ops usb4_dptx_train_ops = {
++	.set = usb4_dptx_train_set,
++	.get = param_get_bool,
++};
++module_param_cb(usb4_dptx_train, &usb4_dptx_train_ops, &usb4_force_dptx, 0644);
++MODULE_PARM_DESC(usb4_dptx_train,
++		 "Write 1 after closing the lid to train USB4 DPTX (blanks eDP)");
++
+ static void dcp_typec_reconnect_work(struct work_struct *work)
+ {
+ 	struct apple_dcp *dcp =
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 9a6b535..292e900 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -372,9 +372,11 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	if (lane_count > 0) {
+ 		dev_info(dcp->dev, "USB4/DPTX: SET_ACTIVE_LANE_COUNT %llu\n",
+ 			 lane_count);
+-		if (dcp_is_usb4_output(dcp))
++		if (dcp_is_usb4_output(dcp)) {
+ 			complete(&dptx->usb4_lane_completion);
+-		else
++			if (dcp_usb4_drm_allowed())
++				complete(&dptx->linkcfg_completion);
++		} else
+ 			complete(&dptx->linkcfg_completion);
+ 	}
+ 
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index 3e0bfd1..a386ded 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -1029,7 +1029,7 @@ static void dcpep_cb_hotplug(struct apple_dcp *dcp, u64 *connected)
+ 	 * USB4 DPTX training cloned 3456x2234@120 onto dcpext and blanked
+ 	 * eDP. Keep the DRM connector disconnected until sink EDID is real.
+ 	 */
+-	if (dcp_is_usb4_output(dcp)) {
++	if (dcp_is_usb4_output(dcp) && !dcp_usb4_drm_allowed()) {
+ 		dev_info(dcp->dev,
+ 			 "cb_hotplug() ignored on USB4 connected:%llu\n",
+ 			 *connected);
+-- 
+2.55.0
+
