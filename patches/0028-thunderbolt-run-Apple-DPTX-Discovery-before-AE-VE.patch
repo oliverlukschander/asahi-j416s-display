@@ -1,0 +1,171 @@
+From 82fdf9d73c4cd50a7b2505ba7ac3acc2bf74f8e0 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 11:49:55 +0200
+Subject: [PATCH] thunderbolt: run Apple DPTX Discovery before AE/VE
+
+USB4 CM Guide 5.4.1.4 requires DPTX Discovery Mode before AUX enable.
+Bit 0 of CS13 was writable after AE=1 and CS9 never moved. Probe CS13
+bits 0,1,8,16,24,31 while AE is still 0, 100 ms each, keep a bit that
+changes CS9.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c  | 61 +++++++++++++++++++++++++-----------
+ drivers/thunderbolt/nhi.h    |  4 +++
+ drivers/thunderbolt/tunnel.c | 12 +++++++
+ 3 files changed, 58 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 8dd9487..0a85131 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -730,37 +730,51 @@ static void apple_dp_dump_rc(struct apple_cio *acio)
+ 
+ static int apple_dp_dptx_discover(struct tb_port *in)
+ {
++	static const u32 try_bits[] = {
++		BIT(0), BIT(1), BIT(8), BIT(16), BIT(24), BIT(31),
++	};
+ 	struct tb_switch *sw = in->sw;
+-	u32 cs6 = 0, cs13 = 0, new13;
++	u32 cs0 = 0, cs6 = 0, cs9 = 0, orig9 = 0, cs13 = 0;
++	unsigned int i;
+ 	int ret;
+ 
++	tb_port_read(in, &cs0, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_0, 1);
+ 	ret = tb_sw_read(sw, &cs6, TB_CFG_SWITCH, ROUTER_CS_6, 1);
+ 	if (ret)
+ 		tb_port_warn(in, "ROUTER_CS_6 read failed: %d\n", ret);
+ 	else
+-		tb_port_warn(in, "ROUTER_CS_6=%08x (DPTX discovery support in USB4 2.0)\n",
+-			     cs6);
++		tb_port_warn(in, "ROUTER_CS_6=%08x AE=%u VE=%u (discover before AE)\n",
++			     cs6, !!(cs0 & ADP_DP_CS_0_AE),
++			     !!(cs0 & ADP_DP_CS_0_VE));
+ 
+-	ret = tb_port_read(in, &cs13, TB_CFG_PORT,
+-			   in->cap_adap + ADP_DP_CS_13, 1);
++	ret = tb_port_read(in, &orig9, TB_CFG_PORT,
++			   in->cap_adap + ADP_DP_CS_9, 1);
+ 	if (ret)
+ 		return ret;
+ 
+-	new13 = cs13 | ADP_DP_CS_13_DPTX_DISCOVERY_MODE;
+-	if (new13 == cs13) {
+-		tb_port_warn(in, "DPTX discovery already on CS13=%08x\n", cs13);
+-		return 0;
++	for (i = 0; i < ARRAY_SIZE(try_bits); i++) {
++		cs13 = try_bits[i];
++		ret = tb_port_write(in, &cs13, TB_CFG_PORT,
++				    in->cap_adap + ADP_DP_CS_13, 1);
++		if (ret) {
++			tb_port_warn(in, "DPTX discovery CS13=%08x write failed: %d\n",
++				     cs13, ret);
++			continue;
++		}
++		fsleep(100000);
++		tb_port_read(in, &cs9, TB_CFG_PORT,
++			     in->cap_adap + ADP_DP_CS_9, 1);
++		tb_port_read(in, &cs13, TB_CFG_PORT,
++			     in->cap_adap + ADP_DP_CS_13, 1);
++		tb_port_warn(in,
++			     "DPTX discovery try CS13=%08x stuck=%08x CS9 %08x -> %08x\n",
++			     try_bits[i], cs13, orig9, cs9);
++		if (cs9 != orig9)
++			return 0;
+ 	}
+ 
+-	ret = tb_port_write(in, &new13, TB_CFG_PORT,
+-			    in->cap_adap + ADP_DP_CS_13, 1);
+-	if (ret) {
+-		tb_port_warn(in, "DPTX discovery CS13 write failed: %d (was %08x)\n",
+-			     ret, cs13);
+-		return ret;
+-	}
+-
+-	tb_port_warn(in, "DPTX discovery mode CS13 %08x -> %08x\n", cs13, new13);
++	cs13 = ADP_DP_CS_13_DPTX_DISCOVERY_MODE;
++	tb_port_write(in, &cs13, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_13, 1);
+ 	return 0;
+ }
+ 
+@@ -817,6 +831,15 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 	mutex_unlock(&anhi->tb->lock);
+ }
+ 
++static int apple_nhi_dp_tunnel_pre_activate(struct tb_nhi *nhi,
++					    struct tb_port *in,
++					    struct tb_port *out)
++{
++	if (tb_port_is_dpin(in))
++		return apple_dp_dptx_discover(in);
++	return 0;
++}
++
+ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 					     struct tb_port *in,
+ 					     struct tb_port *out)
+@@ -841,7 +864,6 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	if (tb_port_is_dpin(in)) {
+ 		apple_dp_dump_hop(in, 8);
+ 		apple_dp_dump_hop(in, 9);
+-		apple_dp_dptx_discover(in);
+ 	}
+ 	if (out && tb_port_is_dpout(out))
+ 		apple_dp_dump_adapter(out, "hub DP OUT");
+@@ -880,6 +902,7 @@ static const struct tb_nhi_ops apple_nhi_ops = {
+ 	.pci_tunnel_pre_activate = apple_nhi_pci_tunnel_pre_activate,
+ 	.pci_tunnel_post_activate = apple_nhi_pci_tunnel_post_activate,
+ 	.pci_tunnel_deactivate = apple_nhi_pci_tunnel_deactivate,
++	.dp_tunnel_pre_activate = apple_nhi_dp_tunnel_pre_activate,
+ 	.dp_tunnel_post_activate = apple_nhi_dp_tunnel_post_activate,
+ 	.dp_tunnel_deactivate = apple_nhi_dp_tunnel_deactivate,
+ };
+diff --git a/drivers/thunderbolt/nhi.h b/drivers/thunderbolt/nhi.h
+index 2be94be..9bbb5ef 100644
+--- a/drivers/thunderbolt/nhi.h
++++ b/drivers/thunderbolt/nhi.h
+@@ -82,6 +82,8 @@ struct tb_nhi_ring_layout {
+  *			   been allocated but before its paths and adapters are enabled
+  * @pci_tunnel_post_activate: NHI specific hook run after a PCIe tunnel's
+  *			    paths and adapters have been enabled
++ * @dp_tunnel_pre_activate: NHI specific hook run after DP hops are programmed
++ *			    and before VE/AE. USB4 DPTX Discovery belongs here.
+  * @dp_tunnel_post_activate: NHI specific hook run after a DP tunnel's
+  *			     adapters have VE/AE enabled
+  * @dp_tunnel_deactivate: NHI specific hook run when a DP tunnel is torn down
+@@ -105,6 +107,8 @@ struct tb_nhi_ops {
+ 	int (*pci_tunnel_pre_activate)(struct tb_nhi *nhi);
+ 	int (*pci_tunnel_post_activate)(struct tb_nhi *nhi);
+ 	int (*pci_tunnel_deactivate)(struct tb_nhi *nhi);
++	int (*dp_tunnel_pre_activate)(struct tb_nhi *nhi, struct tb_port *in,
++				      struct tb_port *out);
+ 	int (*dp_tunnel_post_activate)(struct tb_nhi *nhi, struct tb_port *in,
+ 				       struct tb_port *out);
+ 	void (*dp_tunnel_deactivate)(struct tb_nhi *nhi, struct tb_port *in,
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index 8b3f4ed..664ca58 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -1200,6 +1200,18 @@ static int tb_dp_activate(struct tb_tunnel *tunnel, bool active)
+ 			paths[TB_DP_VIDEO_PATH_OUT]->hops[last].next_hop_index,
+ 			paths[TB_DP_AUX_PATH_IN]->hops[0].in_hop_index,
+ 			paths[TB_DP_AUX_PATH_OUT]->hops[last].next_hop_index);
++
++		if (tb_nhi_is_apple(tunnel->tb->nhi)) {
++			const struct tb_nhi_ops *ops = tunnel->tb->nhi->ops;
++
++			if (ops && ops->dp_tunnel_pre_activate) {
++				ret = ops->dp_tunnel_pre_activate(
++					tunnel->tb->nhi, tunnel->src_port,
++					tunnel->dst_port);
++				if (ret)
++					return ret;
++			}
++		}
+ 	} else {
+ 		tb_dp_dprx_stop(tunnel);
+ 		tb_dp_port_hpd_clear(tunnel->src_port);
+-- 
+2.55.0
+
