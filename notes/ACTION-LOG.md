@@ -324,3 +324,19 @@ After reconnection, exact capture command:
 
 Also read existing dmesg for EDT/property/DPTX/USB4/DP-IN status messages.
 No direct register read is requested; use status values the drivers log.
+
+## 2026-09-21 0090 reconnect result — eDP and keyboard work; no external display
+
+Oliver confirms the integrated display stays on and the external hub keyboard
+works. External monitor remains black. Capture script completed as logged.
+Live route is confirmed typec0 / 701f00000.nhi / 70304c000.mux.
+Tunnel 0:5 <-> 1:19 remains VE=1 AE=1 HPD=1 DPRX=0.
+No SET_LINK_RATE, no SET_ACTIVE_LANE_COUNT, no external TimingElements.
+request_display accepts target 0x9001 and calls GET_SUPPORTS_HPD,
+GET_MAX_LANE_COUNT and ACTIVATE. With the second HPD removed, this capture
+has no DCPDPDevice start or subsequent five-second device timeout.
+That absence is not a fix: discovery has not started/progressed to timings.
+Crossbar logged 0x000=4 and 0x800=0; semantics remain unverified for T602x.
+
+No further hardware action at this step. Continuing read-only protocol/source
+investigation rather than repeating the prohibited HPD or MMIO experiments.
