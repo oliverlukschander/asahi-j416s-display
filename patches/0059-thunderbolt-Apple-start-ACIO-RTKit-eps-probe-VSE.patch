@@ -1,0 +1,92 @@
+From 990a3792a1cd76d0aae805b3b64b12548a0cc423 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:25:22 +0200
+Subject: [PATCH] thunderbolt: start ACIO RTKit client endpoints and probe
+ Apple VSE
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+No RTKit client messages on 0058: client endpoints were never started.
+Apple VSE has zeros at +0x02–0x0b and 0xfff masks at +0x0c/+0x0d.
+
+Start RTKit endpoints 0x10–0x1f after M3 boot. At DP tunnel-up, write 1
+to each zero VSE word, log the readback, restore except +0x02 if it
+sticks (next to cable_info).
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 43 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 0f8e6df..e21a02b 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -809,6 +809,40 @@ static void apple_dp_dump_vse(struct tb_switch *sw)
+ 		tb_sw_warn(sw, "Apple VSE cap=%d:%s\n", cap, buf);
+ }
+ 
++static void apple_dp_probe_vse(struct tb_switch *sw)
++{
++	int cap, i, ret;
++	u32 orig, val;
++
++	cap = tb_switch_find_vse_cap(sw, TB_VSE_CAP_APPLE);
++	if (cap < 0)
++		return;
++
++	/* Words 2–11 are zero on this host. See which bits stick. */
++	for (i = 2; i <= 11; i++) {
++		ret = tb_sw_read(sw, &orig, TB_CFG_SWITCH, cap + i, 1);
++		if (ret || orig)
++			continue;
++		val = 1;
++		ret = tb_sw_write(sw, &val, TB_CFG_SWITCH, cap + i, 1);
++		if (ret) {
++			tb_sw_warn(sw, "Apple VSE +0x%02x write 1 failed %d\n",
++				   i, ret);
++			continue;
++		}
++		ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, cap + i, 1);
++		tb_sw_warn(sw, "Apple VSE +0x%02x wrote 1 read %08x\n", i,
++			   ret ? 0xffffffff : val);
++		if (!ret && val == 1) {
++			/* Neighbor of cable_info: leave enable bit. */
++			if (i == 2)
++				continue;
++		}
++		val = orig;
++		tb_sw_write(sw, &val, TB_CFG_SWITCH, cap + i, 1);
++	}
++}
++
+ static void apple_dp_dump_analog(struct apple_cio *acio, const char *tag)
+ {
+ 	apple_dp_dump_rc_range(acio, APPLE_CIO_DPIN0_ANALOG,
+@@ -1020,6 +1054,8 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 
+ 	apple_dp_dump_rc(anhi->acio);
+ 	apple_dp_dump_vse(in->sw);
++	apple_dp_probe_vse(in->sw);
++	apple_dp_dump_vse(in->sw);
+ 	dev_info(anhi->dev,
+ 		 "DP IN analog block 0x%x (port %u) dpin_aux=%d (0=hands-off)\n",
+ 		 anhi->analog_base, in->port, apple_dpin_aux);
+@@ -1469,6 +1505,13 @@ static int apple_cio_start(struct apple_cio *acio)
+ 		goto err_free_rtkit;
+ 	}
+ 
++	for (i = 0x10; i <= 0x1f; i++) {
++		int ep_ret = apple_rtkit_start_ep(acio->rtk, i);
++
++		if (!ep_ret)
++			dev_info(acio->dev, "ACIO RTKit started ep %u\n", i);
++	}
++
+ 	ret = readl_poll_timeout(acio->rc_base + APPLE_CIO_M3_STAT, state,
+ 				 state & APPLE_CIO_M3_STAT_STATE, 100, 500000);
+ 	if (ret < 0) {
+-- 
+2.55.0
+
