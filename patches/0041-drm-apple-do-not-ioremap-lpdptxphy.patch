@@ -1,0 +1,74 @@
+From 60754b05538d5d3e61446dc191062ebc41f810eb Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 13:27:29 +0200
+Subject: [PATCH] drm/apple: do not ioremap lpdptxphy
+
+0040 ioremap'd phy@39c000000 while phy-apple-dptx already mapped
+it, then wrote core+0x10. That hung the SoC. Skip DPTX connect.
+Do not poke lpdptxphy MMIO from appledrm.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 39 +++----------------------------------
+ 1 file changed, 3 insertions(+), 36 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index c8b2ce5..d33fdde 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1396,41 +1396,6 @@ static void dcp_usb4_enable_lpdptxphy(struct apple_dcp *dcp)
+ 		dev_warn(dcp->dev, "USB4: lpdptxphy bound but phy_get failed\n");
+ }
+ 
+-/*
+- * Full phy_set_mode(DP) runs dptx_phy_activate() analog bring-up and
+- * blanks eDP. Firmware looks up the DPTX object by DCP index at
+- * core+0x10. Assign that index only; analog stays on the display
+- * crossbar dpin mux.
+- */
+-static void dcp_usb4_assign_lpdptxphy(struct apple_dcp *dcp)
+-{
+-	struct device_node *np;
+-	struct resource res;
+-	void __iomem *core;
+-	u32 old, now;
+-
+-	np = of_find_compatible_node(NULL, NULL, "apple,t6020-dptx-phy");
+-	if (!np)
+-		return;
+-	if (of_address_to_resource(np, 0, &res)) {
+-		of_node_put(np);
+-		return;
+-	}
+-	of_node_put(np);
+-
+-	core = ioremap(res.start, resource_size(&res));
+-	if (!core) {
+-		dev_warn(dcp->dev, "USB4: ioremap lpdptxphy core failed\n");
+-		return;
+-	}
+-	old = readl(core + 0x10);
+-	writel(dcp->index, core + 0x10);
+-	now = readl(core + 0x10);
+-	dev_info(dcp->dev, "USB4: lpdptxphy core+0x10 %u -> %u (assign only)\n",
+-		 old, now);
+-	iounmap(core);
+-}
+-
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ {
+ 	bool usb4 = false;
+@@ -1449,7 +1414,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 
+ 	if (dcp_is_usb4_output(dcp)) {
+ 		dcp_usb4_enable_lpdptxphy(dcp);
+-		dcp_usb4_assign_lpdptxphy(dcp);
++		dev_info(dcp->dev,
++			 "USB4: skip DPTX connect (no lpdptxphy MMIO poke)\n");
++		return 0;
+ 	}
+ 
+ 	mutex_lock(&dcp->hpd_mutex);
+-- 
+2.55.0
+
