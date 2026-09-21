@@ -1,0 +1,97 @@
+From f5004e5d08b76594a5f8096340d5c1f3883308c1 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 09:29:58 +0200
+Subject: [PATCH 14/14] drm/apple: OR 0x1000 into USB4 DPTX target; cycle ATC
+ on fault
+
+ATC 2 is DEVICE_NOT_STARTED; HDMI PHY 3 is INACTIVE_SINK. Try remote
+port bit 12 (DPIN guess) and cycle phy 2,3,0,1,4 across retries.
+---
+ drivers/gpu/drm/apple/dcp.c    | 18 +++++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.c | 16 ++++++++++++++++
+ 2 files changed, 33 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 700c4bf..f4818c1 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1302,7 +1302,7 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ 
+ #define DPTX_CONNECT_TIMEOUT msecs_to_jiffies(2000)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+-#define DPTX_RECONNECT_RETRIES 3
++#define DPTX_RECONNECT_RETRIES 6
+ 
+ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ {
+@@ -1425,6 +1425,22 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 		return;
+ 	}
+ 
++	if (dcp_is_usb4_output(dcp) && dcp->typec_reconnect_tries == 1) {
++		static const int atc_cycle[] = { 2, 3, 0, 1, 4 };
++		int n = ARRAY_SIZE(atc_cycle);
++		int i, next = atc_cycle[0];
++
++		for (i = 0; i < n; i++) {
++			if (atc_cycle[i] == usb4_atc) {
++				next = atc_cycle[(i + 1) % n];
++				break;
++			}
++		}
++		usb4_atc = next;
++		dcp->dptx_phy = next;
++		dev_info(dcp->dev, "USB4: cycle DPTX atc to %d\n", next);
++	}
++
+ 	if (dcp_is_usb4_output(dcp) &&
+ 	    (dcp->typec_reconnect_tries == 0 || dcp->typec_reconnect_tries == 2) &&
+ 	    dcp->active_typec_route && dcp->active_typec_route->xbar &&
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 8361974..bef071f 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -3,9 +3,16 @@
+ 
+ #include <linux/bitfield.h>
+ #include <linux/completion.h>
++#include <linux/module.h>
+ #include <linux/phy/phy.h>
+ #include <linux/delay.h>
+ 
++/* Extra bits OR'd into DPTX remote-port target for USB4 (bit 12 = guess for DPIN). */
++static unsigned int usb4_target_or = 0x1000;
++module_param(usb4_target_or, uint, 0644);
++MODULE_PARM_DESC(usb4_target_or,
++		 "OR into USB4 DPTX remote-port target (default 0x1000)");
++
+ #include "afk.h"
+ #include "dcp.h"
+ #include "dptxep.h"
+@@ -84,7 +91,13 @@ int dptxport_validate_connection(struct apple_epic_service *service, u8 core,
+ 		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 		     DCPDPTX_REMOTE_PORT_CONNECTED;
+ 
++	if (dcp_is_usb4_output(service->ep->dcp))
++		target |= usb4_target_or;
++
+ 	trace_dptxport_validate_connection(dptx, core, atc, die);
++	dev_info(service->ep->dcp->dev,
++		 "DPTX validate target=0x%x core=%u atc=%u die=%u or=0x%x\n",
++		 target, core, atc, die, usb4_target_or);
+ 
+ 	cmd.target = cpu_to_le32(target);
+ 	cmd.unk = cpu_to_le32(0x100);
+@@ -113,6 +126,9 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 		     DCPDPTX_REMOTE_PORT_CONNECTED;
+ 
++	if (dcp_is_usb4_output(service->ep->dcp))
++		target |= usb4_target_or;
++
+ 	trace_dptxport_connect(dptx, core, atc, die);
+ 
+ 	cmd.target = cpu_to_le32(target);
+-- 
+2.55.0
+
