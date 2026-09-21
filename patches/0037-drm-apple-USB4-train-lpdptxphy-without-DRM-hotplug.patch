@@ -1,0 +1,128 @@
+From 1d54ebbc762d3327c1051bfe8d3f78303d279909 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 12:58:58 +0200
+Subject: [PATCH] drm/apple: USB4 train lpdptxphy without DRM hotplug
+
+phy_set_mode on lpdptxphy trained HBR3/4 lanes then KMS cloned
+3456x2234@120 onto dcpext and blanked eDP. Train again, complete a
+USB4-only lane completion, ignore iomfb hotplug on USB4 so eDP
+stays the DRM connector.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c            | 24 +++++++++++++++++++++---
+ drivers/gpu/drm/apple/dptxep.c         | 11 +++++------
+ drivers/gpu/drm/apple/dptxep.h         |  1 +
+ drivers/gpu/drm/apple/iomfb_template.c | 10 ++++++++++
+ 4 files changed, 37 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 27bdad3..2514036 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1426,9 +1426,12 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		goto out_unlock;
+ 
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
++	reinit_completion(&dcp->dptxport[port].usb4_lane_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	if (!usb4)
++	if (usb4)
++		dcp->dptxport[port].atcphy = usb4_lpdptx_phy;
++	else
+ 		dcp->dptxport[port].atcphy = dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+@@ -1469,9 +1472,24 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	}
+ 
+ 	mutex_unlock(&dcp->hpd_mutex);
++	if (usb4) {
++		ret = wait_for_completion_timeout(
++			&dcp->dptxport[port].usb4_lane_completion,
++			msecs_to_jiffies(8000));
++		if (!ret && dcp->dptxport[port].lane_count == 0) {
++			dev_err(dcp->dev,
++				"dcp_dptx_connect: USB4 DPTX train timeout\n");
++			ret = -ETIMEDOUT;
++			goto out_disconnect;
++		}
++		dev_info(dcp->dev,
++			 "USB4: DPTX trained %u lanes, DRM hotplug suppressed\n",
++			 dcp->dptxport[port].lane_count);
++		return 0;
++	}
++
+ 	ret = wait_for_completion_timeout(&dcp->dptxport[port].linkcfg_completion,
+-				    usb4 ? msecs_to_jiffies(8000) :
+-					   DPTX_CONNECT_TIMEOUT);
++					  DPTX_CONNECT_TIMEOUT);
+ 	if (!ret) {
+ 		dev_err(dcp->dev,
+ 			"dcp_dptx_connect: timed out waiting for port %u link configuration\n",
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 233248e..b304d80 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -373,12 +373,9 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	if (lane_count > 0) {
+ 		dev_info(dcp->dev, "USB4/DPTX: SET_ACTIVE_LANE_COUNT %llu\n",
+ 			 lane_count);
+-		/*
+-		 * Completing linkcfg on USB4 made KMS modeset 3456x2234@120
+-		 * onto dcpext and blanked eDP. Train, but do not mark the
+-		 * DRM connector connected until the sink EDID is real.
+-		 */
+-		if (!dcp_is_usb4_output(dcp))
++		if (dcp_is_usb4_output(dcp))
++			complete(&dptx->usb4_lane_completion);
++		else
+ 			complete(&dptx->linkcfg_completion);
+ 	}
+ 
+@@ -735,6 +732,8 @@ int dptxep_init(struct apple_dcp *dcp)
+ 	init_completion(&dcp->dptxport[1].enable_completion);
+ 	init_completion(&dcp->dptxport[0].linkcfg_completion);
+ 	init_completion(&dcp->dptxport[1].linkcfg_completion);
++	init_completion(&dcp->dptxport[0].usb4_lane_completion);
++	init_completion(&dcp->dptxport[1].usb4_lane_completion);
+ 
+ 	dcp->dptxep = afk_init(dcp, DPTX_ENDPOINT, dptxep_ops);
+ 	if (IS_ERR(dcp->dptxep))
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index 78d3a75..895a7bc 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -53,6 +53,7 @@ struct dptx_port {
+ 	bool usb4_inactive_sink;
+ 	struct completion enable_completion;
+ 	struct completion linkcfg_completion;
++	struct completion usb4_lane_completion;
+ 	u32 unit;
+ 	struct apple_epic_service *service;
+ 	union phy_configure_opts phy_ops;
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index c0b533c..3e0bfd1 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -1025,6 +1025,16 @@ static void dcpep_cb_hotplug(struct apple_dcp *dcp, u64 *connected)
+ 	 */
+ 	if (dcp->main_display)
+ 		return;
++	/*
++	 * USB4 DPTX training cloned 3456x2234@120 onto dcpext and blanked
++	 * eDP. Keep the DRM connector disconnected until sink EDID is real.
++	 */
++	if (dcp_is_usb4_output(dcp)) {
++		dev_info(dcp->dev,
++			 "cb_hotplug() ignored on USB4 connected:%llu\n",
++			 *connected);
++		return;
++	}
+ 
+ 	if (dcp->during_modeset) {
+ 		/*
+-- 
+2.55.0
+
