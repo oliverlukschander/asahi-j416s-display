@@ -1,0 +1,45 @@
+From ae465a1e4c7960308833cfdbc575bfeb127e0035 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:53:37 +0200
+Subject: [PATCH] drm/apple: USB4 validate DPIN remote-port with ATC=0
+
+Skip DPTX connect and lpdptxphy assign still. After analog PHY is
+live, call validate_connection(core=0, atc=0) so the USB4 target is
+CONNECTED|DPIN=1 with no PHY index 4. Do not connect, set_hpd, or
+request_display.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 4d59d52..e94a0bd 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1427,6 +1427,22 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		dcp_usb4_enable_lpdptxphy(dcp);
+ 		dev_info(dcp->dev,
+ 			 "USB4: skip DPTX connect (echo 1 > usb4_dptx_train after lid close)\n");
++		/*
++		 * Analog PHY is up (+0x18=0x17). Ask firmware if a DPIN
++		 * remote port exists with ATC=0 (no lpdptxphy). Do not
++		 * connect, request_display, or set_hpd.
++		 */
++		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
++			int v;
++
++			mutex_lock(&dcp->hpd_mutex);
++			v = dptxport_validate_connection(
++				dcp->dptxport[port].service, 0, 0,
++				dcp->dptx_die);
++			mutex_unlock(&dcp->hpd_mutex);
++			dev_info(dcp->dev,
++				 "USB4: analog DPIN validate atc=0: %d\n", v);
++		}
+ 		return 0;
+ 	}
+ 	if (dcp_is_usb4_output(dcp))
+-- 
+2.55.0
+
