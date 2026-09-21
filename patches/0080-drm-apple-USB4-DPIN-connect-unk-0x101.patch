@@ -1,0 +1,34 @@
+From 776069c815df3e4e58c5d0da2d4b04504140efcc Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 17:34:07 +0200
+Subject: [PATCH] drm/apple: USB4 DPIN connect unk 0x101
+
+0079 ACTIVATEd 0x9001 with no SET_LINK_RATE. 2022 USB4 tunnel
+traces used connectTo unk 0x101. Send SUPPORTS_HPD|1.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dptxep.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 4b9f2fa..93ba238 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -139,7 +139,13 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 	int ret;
+ 	u32 target = dptxport_remote_target(service->ep->dcp, core, atc, die);
+ 
++	/* 2022 USB4 tunnel traces used unk=0x101, not 0x100. */
++	if (dcp_is_usb4_output(service->ep->dcp) && supports_hpd)
++		unk_field |= 0x1;
++
+ 	trace_dptxport_connect(dptx, core, atc, die);
++	dev_info(service->ep->dcp->dev,
++		 "DPTX connect target=0x%x unk=0x%x\n", target, unk_field);
+ 
+ 	cmd.target = cpu_to_le32(target);
+ 	cmd.unk = cpu_to_le32(unk_field);
+-- 
+2.55.0
+
