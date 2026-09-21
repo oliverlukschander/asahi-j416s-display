@@ -14,6 +14,10 @@ separate DP AUX block (`lpdptx`) from the SS lanes. This change:
 - SET_LINK_RATE / SET_ACTIVE_LANE_COUNT do not `phy_configure` the ATC
   DP lane analog.
 
+Boot result: `notes/2026-09-21-usb4-lpdptx-aux-boot.md`. AUX ran on ACTIVATE;
+firmware still `device == NULL` for target `0x9020`. Follow-up: AUX at mux
+arm, target `0x8020` (no DPIN field).
+
 Success after `sudo ./scripts/load-appledrm.sh`:
 
 - `phy-apple-atc f03000000.phy: USB4: enable DP AUX without lane switch`

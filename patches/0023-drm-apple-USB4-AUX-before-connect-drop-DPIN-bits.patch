@@ -1,0 +1,79 @@
+From 355129540df763ee4c18979156cdbe35c0bf118b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:57:44 +0200
+Subject: [PATCH] drm/apple: enable USB4 DP AUX before connect; drop DPIN
+ target bits
+
+Firmware looks up the DPTX device at validate/connect. Enabling lpdptx
+on ACTIVATE was too late, and DPIN bits 13:12 selected a missing
+device (device == NULL). Arm AUX when the dpin mux is selected and
+use ATC-only remote-port 0x8020.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 17 +++++++++++++++++
+ drivers/gpu/drm/apple/dptxep.c | 12 ++++++------
+ 2 files changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 769b3fb..8ffafb2 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -284,6 +284,20 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	dcp->active_typec_route = route;
+ 	route->selected = true;
+ 
++	/*
++	 * Firmware looks up the DPTX device at validate/connect, before
++	 * ACTIVATE. Enable lpdptx AUX now so ATC 2 exists as a DPTX object.
++	 * phy-apple-atc does not switch USB4 lanes.
++	 */
++	if (usb4 && route->phy) {
++		ret = phy_set_mode_ext(route->phy, PHY_MODE_DP, dcp->index);
++		if (ret)
++			dev_warn(dcp->dev,
++				 "USB4: early DP AUX enable failed: %d\n", ret);
++		else
++			dev_info(dcp->dev, "USB4: DP AUX enabled before DPTX connect\n");
++	}
++
+ 	dev_info(dcp->dev, "allocated Type-C DPTX PHY %u (%s)\n",
+ 		 dcp->dptx_phy, usb4 ? "USB4 DP IN" : "DP alt-mode");
+ 	return 0;
+@@ -294,6 +308,9 @@ static int dcp_typec_route_deactivate(struct apple_dcp_typec_route *route)
+ 	struct apple_dcp *dcp = route->dcp;
+ 	int ret;
+ 
++	if (route->usb4_selected && route->phy)
++		phy_set_mode_ext(route->phy, PHY_MODE_INVALID, 0);
++
+ 	ret = mux_control_deselect(dcp_typec_route_mux(route));
+ 	if (ret)
+ 		return ret;
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index de1f33b..801a412 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -88,13 +88,13 @@ static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
+ 		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+ 		     DCPDPTX_REMOTE_PORT_CONNECTED;
+ 
+-	if (dcp_is_usb4_output(dcp)) {
+-		/* dpin0=1, dpin1=2 in bits 13:12 ({die,atc,dpin,core}). */
+-		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
+-
+-		target |= FIELD_PREP(DCPDPTX_REMOTE_PORT_DPIN, dpin);
++	/*
++	 * DPIN bits 13:12 made firmware look up a device that does not
++	 * exist (device == NULL). Use ATC index only; extra bits via
++	 * usb4_target_or.
++	 */
++	if (dcp_is_usb4_output(dcp))
+ 		target |= usb4_target_or;
+-	}
+ 	return target;
+ }
+ 
+-- 
+2.55.0
+
