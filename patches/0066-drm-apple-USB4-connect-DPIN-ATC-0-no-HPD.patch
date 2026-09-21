@@ -1,0 +1,47 @@
+From 5afc45c1090d8f738cae5ffb2512dc8827e37640 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:57:14 +0200
+Subject: [PATCH] drm/apple: USB4 connect DPIN ATC=0 without HPD
+
+Validate of target 0x9000 returned 0. Connect the same remote port
+with supports_hpd=false. Do not request_display, set_hpd, or assign
+lpdptxphy.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index e94a0bd..f13f372 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1433,15 +1433,23 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 * connect, request_display, or set_hpd.
+ 		 */
+ 		if (dcp->dptxport[port].enabled && dcp->dptxport[port].service) {
+-			int v;
++			int v, c;
+ 
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			v = dptxport_validate_connection(
+ 				dcp->dptxport[port].service, 0, 0,
+ 				dcp->dptx_die);
+-			mutex_unlock(&dcp->hpd_mutex);
+ 			dev_info(dcp->dev,
+ 				 "USB4: analog DPIN validate atc=0: %d\n", v);
++			c = -EINVAL;
++			if (!v)
++				c = dptxport_connect(dcp->dptxport[port].service,
++						     0, 0, dcp->dptx_die,
++						     false);
++			mutex_unlock(&dcp->hpd_mutex);
++			dev_info(dcp->dev,
++				 "USB4: analog DPIN connect atc=0 no-HPD: %d\n",
++				 c);
+ 		}
+ 		return 0;
+ 	}
+-- 
+2.55.0
+

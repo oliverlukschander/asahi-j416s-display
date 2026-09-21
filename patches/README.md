@@ -59,3 +59,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0063-thunderbolt-do-not-write-DP-IN-hop-credits.patch` | Closed: hop 9 credits write -110, NHI dead, eDP black. Dump hops only. |
 | `0064-thunderbolt-Apple-DP-IN-dump-only-ACIO.patch` | Remove VSE +0x02 write and RTKit start_ep. Dump-only ACIO. |
 | `0065-drm-apple-USB4-validate-DPIN-ATC-0-no-connect.patch` | Skip connect still. Validate DPIN target ATC=0 only. |
+| `0066-drm-apple-USB4-connect-DPIN-ATC-0-no-HPD.patch` | Validate 0x9000 succeeded. Connect atc=0, no HPD/request_display. |
