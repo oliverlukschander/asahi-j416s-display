@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Install patched appledrm and reboot into Aurora. Do not rmmod the live
-# display driver — that blacks the panel. Requires root.
+# Install patched appledrm into the module tree AND the Aurora initramfs.
+# appledrm is loaded from initramfs, so updates/ alone is ignored.
+# Do not rmmod the live display driver — that blacks the panel.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VER="$(uname -r)"
 KO="$ROOT/src/appledrm/appledrm.ko"
+INTREE="/lib/modules/$VER/kernel/drivers/gpu/drm/apple/appledrm.ko"
 DST="/lib/modules/$VER/updates"
 STATUS="$ROOT/notes/load-status"
 
@@ -16,13 +18,19 @@ echo RUNNING >"$STATUS"
   exit 1
 }
 
-install -d "$DST"
-cp -a --backup=numbered /lib/modules/$VER/kernel/drivers/gpu/drm/apple/appledrm.ko \
-  "$DST/appledrm.ko.stock" 2>/dev/null || true
+install -d "$DST" "$(dirname "$INTREE")"
+if [[ -f $INTREE && ! -f ${INTREE}.stock ]]; then
+  cp -a "$INTREE" "${INTREE}.stock"
+fi
+install -m 0644 "$KO" "$INTREE"
 install -m 0644 "$KO" "$DST/appledrm.ko"
 depmod -a "$VER"
+
+echo "Rebuilding Aurora initramfs so the patched appledrm is what boots"
+mkinitcpio -p linux-aurora
+
 echo OK >"$STATUS"
-echo "Installed $DST/appledrm.ko — reboot to load it (do not rmmod appledrm)."
+echo "Installed into $INTREE and initramfs-linux-aurora.img"
 echo "Rebooting in 3s. GRUB default is Aurora."
 sync
 sleep 3
