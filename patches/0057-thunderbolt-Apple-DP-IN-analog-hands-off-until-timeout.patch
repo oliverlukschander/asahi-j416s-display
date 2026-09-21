@@ -1,0 +1,118 @@
+From 8d789a7b8548d07e73a303c8d23d5a4e1a695647 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 15:15:14 +0200
+Subject: [PATCH] thunderbolt: leave Apple DP IN analog PHY alone until timeout
+
+Analog +0x00 / +0x18 / +0x20 writes do not stick. +0x18 is first-read
+status 0x1017; dumping it at tunnel-up consumes it.
+
+Default dpin_aux=0: no analog MMIO at activate, dump analog only after
+DPRX timeout. dpin_aux=1 keeps the old pulse/fill path.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c | 49 +++++++++++++++++--------------------
+ 1 file changed, 23 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 88aa0c6..fa66de3 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -661,15 +661,14 @@ static int apple_nhi_pci_tunnel_post_activate(struct tb_nhi *nhi)
+ #define APPLE_CIO_DPIN_ANALOG_HOLE_VAL	0x40
+ 
+ /*
+- * 0 = dump analog only
+- * 1 = dump, pulse +0x00 bit 0, fill +0x20 if zero (default)
++ * Analog MMIO writes are closed: +0x00 / +0x18 / +0x20 do not stick
++ * (0054–0056). +0x18 is first-read status 0x1017 (read-to-clear).
+  *
+- * +0x18 is status (0055: write 0x1f readback 0x80000000). Do not write it.
+- * +0x00 reads 0x80000000 on both adapters; that can still be a write-1
+- * start with status overlay on read (PCIe-C Intr2AXI pattern).
+- * +0x20 is 0 on active dpin0 and programmed on idle dpin1.
++ * 0 = do not touch analog at tunnel-up; dump it only after DPRX timeout
++ *     (default). Tests whether consuming +0x18 aborted a handshake.
++ * 1 = old pulse +0x00 / fill +0x20 (rollback)
+  */
+-static int apple_dpin_aux = 1;
++static int apple_dpin_aux;
+ static struct apple_nhi *apple_dpin_anhi;
+ 
+ static int apple_dpin_aux_set(const char *val, const struct kernel_param *kp);
+@@ -679,7 +678,7 @@ static const struct kernel_param_ops apple_dpin_aux_ops = {
+ };
+ module_param_cb(dpin_aux, &apple_dpin_aux_ops, &apple_dpin_aux, 0644);
+ MODULE_PARM_DESC(dpin_aux,
+-		 "Apple DP IN analog: 0=dump, 1=pulse +0x00 and fill +0x20");
++		 "Apple DP IN analog: 0=hands-off until timeout, 1=pulse +0x00");
+ 
+ static void apple_dp_dump_hop(struct tb_port *port, unsigned int hopid)
+ {
+@@ -773,8 +772,12 @@ static void apple_dp_dump_rc_range(struct apple_cio *acio, u32 base, u32 len,
+ static void apple_dp_dump_rc(struct apple_cio *acio)
+ {
+ 	apple_dp_dump_rc_range(acio, 0, 0x100, "ctrl", true);
++}
++
++static void apple_dp_dump_analog(struct apple_cio *acio, const char *tag)
++{
+ 	apple_dp_dump_rc_range(acio, APPLE_CIO_DPIN0_ANALOG,
+-			      APPLE_CIO_DPIN_ANALOG_SIZE, "dpin0 analog", false);
++			      APPLE_CIO_DPIN_ANALOG_SIZE, tag, false);
+ 	apple_dp_dump_rc_range(acio, APPLE_CIO_DPIN1_ANALOG,
+ 			      APPLE_CIO_DPIN_ANALOG_SIZE, "dpin1 analog", false);
+ }
+@@ -930,21 +933,15 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 	if (dprx)
+ 		tb_port_warn(port, "DP IN DPRX_DONE=1 (ACIO AUX completed)\n");
+ 
+-	if (anhi->acio && anhi->acio->rc_base && anhi->analog_base) {
+-		u32 fsm = readl(anhi->acio->rc_base + anhi->analog_base +
+-				APPLE_CIO_DPIN_ANALOG_FSM);
+-
+-		if (fsm != anhi->analog_fsm) {
+-			tb_port_warn(port, "DP IN analog +0x18 %08x -> %08x\n",
+-				     anhi->analog_fsm, fsm);
+-			anhi->analog_fsm = fsm;
+-		}
+-	}
+-
+ 	anhi->dp_aux_polls++;
+-	if (!dprx && anhi->dp_aux_polls < APPLE_DP_AUX_POLL_MAX)
++	if (!dprx && anhi->dp_aux_polls < APPLE_DP_AUX_POLL_MAX) {
+ 		mod_delayed_work(system_wq, &anhi->dp_aux_work,
+ 				 msecs_to_jiffies(APPLE_DP_AUX_POLL_MS));
++	} else if (anhi->acio) {
++		apple_dp_dump_analog(anhi->acio,
++				     dprx ? "dpin0 analog DPRX done" :
++					    "dpin0 analog at timeout");
++	}
+ 
+ out_unlock:
+ 	mutex_unlock(&anhi->tb->lock);
+@@ -987,16 +984,16 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	WRITE_ONCE(apple_dpin_anhi, anhi);
+ 
+ 	apple_dp_dump_rc(anhi->acio);
+-	dev_info(anhi->dev, "DP IN analog block 0x%x (port %u) dpin_aux=%d\n",
++	dev_info(anhi->dev,
++		 "DP IN analog block 0x%x (port %u) dpin_aux=%d (0=hands-off)\n",
+ 		 anhi->analog_base, in->port, apple_dpin_aux);
+ 	if (apple_dpin_aux >= 1) {
+ 		if (tb_port_is_dpin(in))
+ 			apple_dp_set_dpme(in);
+ 		apple_dp_start_analog(anhi);
+-		if (anhi->acio && anhi->acio->rc_base)
+-			anhi->analog_fsm = readl(anhi->acio->rc_base +
+-						 anhi->analog_base +
+-						 APPLE_CIO_DPIN_ANALOG_FSM);
++	} else {
++		dev_info(anhi->dev,
++			 "DP IN analog: leaving PHY alone until DPRX timeout\n");
+ 	}
+ 	apple_dp_dump_host_adapters(anhi);
+ 	if (tb_port_is_dpin(in)) {
+-- 
+2.55.0
+
