@@ -20,3 +20,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0024-drm-apple-USB4-DPTX-engine-PHY3-destination-dpin0.patch` | USB4 uses HDMI PHY 3 as DPTX engine; USB-C dpin0 analog; DPIN bits in remote-port. Closed: trains empty HDMI jack. |
 | `0025-thunderbolt-Apple-DP-IN-analog-AUX-after-tunnel-up.patch` | After DP VE/AE, dump host DP IN CS/hops/ACIO RC and poll CS on change. Out-of-tree also builds `thunderbolt_apple.ko`. |
 | `0026-drm-apple-USB4-DP-IN-is-ACIO-AUX-stop-PHY-3.patch` | USB4 selects USB-C dpin mux only. No DPTX PHY 3, no ATC `phy_set_mode(DP)`. |
+| `0027-thunderbolt-enable-USB4-DPTX-Discovery-on-Apple-DP-I.patch` | Set ADP_DP_CS_13 DPTX Discovery Mode on host DP IN; dump CS11–16 and ROUTER_CS_6. |

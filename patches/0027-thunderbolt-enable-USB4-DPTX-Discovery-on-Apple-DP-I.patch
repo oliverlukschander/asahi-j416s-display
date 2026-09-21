@@ -1,0 +1,170 @@
+From 8d07973de9a4279751e170fbbb0be332bb0279d2 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 11:43:11 +0200
+Subject: [PATCH] thunderbolt: enable USB4 DPTX Discovery on Apple DP IN
+
+USB4 CM Guide 5.4.1.4: after DP IN HPD, set ADP_DP_CS_13 DPTX
+Discovery Mode so the adapter reports which GPU DPTX is wired to
+it (CS9 Success/Failure). Linux only ACKed the notification.
+
+Dump ROUTER_CS_6 and CS11-16, set discovery bit 0, poll CS9/CS13
+on change, and log DPTX discovery notifications.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/thunderbolt/apple.c   | 56 ++++++++++++++++++++++++++++++-----
+ drivers/thunderbolt/tb.c      |  2 ++
+ drivers/thunderbolt/tb_regs.h |  6 ++++
+ 3 files changed, 57 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 32c66ea..8dd9487 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -247,7 +247,7 @@ struct apple_nhi {
+ 	struct delayed_work dp_aux_work;
+ 	u8 dp_in_port;
+ 	u8 dp_out_port;
+-	u32 dp_in_cs[9];
++	u32 dp_in_cs[14];
+ 	bool dp_aux_armed;
+ 	unsigned int dp_aux_polls;
+ };
+@@ -682,6 +682,10 @@ static void apple_dp_dump_adapter(struct tb_port *port, const char *tag)
+ 		     !!(w[2] & ADP_DP_CS_2_HPD),
+ 		     !!(w[7] & DP_COMMON_CAP_DPRX_DONE),
+ 		     !!(cs4 & ADP_CS_4_LCK));
++	tb_port_warn(port,
++		     "%s CS11=%08x CS12=%08x CS13=%08x CS14=%08x CS15=%08x CS16=%08x disc=%u\n",
++		     tag, w[11], w[12], w[13], w[14], w[15], w[16],
++		     !!(w[13] & ADP_DP_CS_13_DPTX_DISCOVERY_MODE));
+ }
+ 
+ static void apple_dp_dump_host_adapters(struct apple_nhi *anhi)
+@@ -724,13 +728,49 @@ static void apple_dp_dump_rc(struct apple_cio *acio)
+ 		dev_info(acio->dev, "ACIO RC:%s\n", buf);
+ }
+ 
++static int apple_dp_dptx_discover(struct tb_port *in)
++{
++	struct tb_switch *sw = in->sw;
++	u32 cs6 = 0, cs13 = 0, new13;
++	int ret;
++
++	ret = tb_sw_read(sw, &cs6, TB_CFG_SWITCH, ROUTER_CS_6, 1);
++	if (ret)
++		tb_port_warn(in, "ROUTER_CS_6 read failed: %d\n", ret);
++	else
++		tb_port_warn(in, "ROUTER_CS_6=%08x (DPTX discovery support in USB4 2.0)\n",
++			     cs6);
++
++	ret = tb_port_read(in, &cs13, TB_CFG_PORT,
++			   in->cap_adap + ADP_DP_CS_13, 1);
++	if (ret)
++		return ret;
++
++	new13 = cs13 | ADP_DP_CS_13_DPTX_DISCOVERY_MODE;
++	if (new13 == cs13) {
++		tb_port_warn(in, "DPTX discovery already on CS13=%08x\n", cs13);
++		return 0;
++	}
++
++	ret = tb_port_write(in, &new13, TB_CFG_PORT,
++			    in->cap_adap + ADP_DP_CS_13, 1);
++	if (ret) {
++		tb_port_warn(in, "DPTX discovery CS13 write failed: %d (was %08x)\n",
++			     ret, cs13);
++		return ret;
++	}
++
++	tb_port_warn(in, "DPTX discovery mode CS13 %08x -> %08x\n", cs13, new13);
++	return 0;
++}
++
+ static void apple_dp_aux_work(struct work_struct *work)
+ {
+ 	struct apple_nhi *anhi =
+ 		container_of(to_delayed_work(work), struct apple_nhi,
+ 			     dp_aux_work);
+ 	struct tb_port *port;
+-	u32 cs[9];
++	u32 cs[14];
+ 	int i, ret;
+ 	bool changed = false, dprx = false;
+ 
+@@ -745,7 +785,7 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 	if (!tb_port_is_dpin(port))
+ 		goto out_unlock;
+ 
+-	for (i = 0; i <= 8; i++) {
++	for (i = 0; i <= 13; i++) {
+ 		ret = tb_port_read(port, &cs[i], TB_CFG_PORT,
+ 				   port->cap_adap + i, 1);
+ 		if (ret)
+@@ -756,12 +796,13 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 	if (changed) {
+ 		memcpy(anhi->dp_in_cs, cs, sizeof(cs));
+ 		tb_port_warn(port,
+-			     "DP IN CS changed CS0=%08x CS2=%08x LOCAL=%08x REMOTE=%08x COMMON=%08x VE=%u AE=%u HPD=%u DPRX=%u\n",
+-			     cs[0], cs[2], cs[4], cs[5], cs[7],
++			     "DP IN CS changed CS0=%08x CS2=%08x CS9=%08x CS13=%08x COMMON=%08x VE=%u AE=%u HPD=%u DPRX=%u disc=%u\n",
++			     cs[0], cs[2], cs[9], cs[13], cs[7],
+ 			     !!(cs[0] & ADP_DP_CS_0_VE),
+ 			     !!(cs[0] & ADP_DP_CS_0_AE),
+ 			     !!(cs[2] & ADP_DP_CS_2_HPD),
+-			     !!(cs[7] & DP_COMMON_CAP_DPRX_DONE));
++			     !!(cs[7] & DP_COMMON_CAP_DPRX_DONE),
++			     !!(cs[13] & ADP_DP_CS_13_DPTX_DISCOVERY_MODE));
+ 	}
+ 	dprx = !!(cs[7] & DP_COMMON_CAP_DPRX_DONE);
+ 	if (dprx)
+@@ -800,6 +841,7 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	if (tb_port_is_dpin(in)) {
+ 		apple_dp_dump_hop(in, 8);
+ 		apple_dp_dump_hop(in, 9);
++		apple_dp_dptx_discover(in);
+ 	}
+ 	if (out && tb_port_is_dpout(out))
+ 		apple_dp_dump_adapter(out, "hub DP OUT");
+@@ -808,7 +850,7 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	anhi->dp_out_port = out ? out->port : 0;
+ 	anhi->dp_aux_polls = 0;
+ 	anhi->dp_aux_armed = true;
+-	for (i = 0; i <= 8; i++) {
++	for (i = 0; i <= 13; i++) {
+ 		if (tb_port_read(in, &anhi->dp_in_cs[i], TB_CFG_PORT,
+ 				 in->cap_adap + i, 1))
+ 			anhi->dp_in_cs[i] = 0xffffffff;
+diff --git a/drivers/thunderbolt/tb.c b/drivers/thunderbolt/tb.c
+index 33334b1..90273e8 100644
+--- a/drivers/thunderbolt/tb.c
++++ b/drivers/thunderbolt/tb.c
+@@ -2890,6 +2890,8 @@ static void tb_handle_notification(struct tb *tb, u64 route,
+ 	case TB_CFG_ERROR_PCIE_WAKE:
+ 	case TB_CFG_ERROR_DP_CON_CHANGE:
+ 	case TB_CFG_ERROR_DPTX_DISCOVERY:
++		tb_info(tb, "DPTX discovery notification route=%llx port=%u\n",
++			route, error->port);
+ 		if (tb_cfg_ack_notification(tb->ctl, route, error))
+ 			tb_warn(tb, "could not ack notification on %llx\n",
+ 				route);
+diff --git a/drivers/thunderbolt/tb_regs.h b/drivers/thunderbolt/tb_regs.h
+index dc569ac..f90cf21 100644
+--- a/drivers/thunderbolt/tb_regs.h
++++ b/drivers/thunderbolt/tb_regs.h
+@@ -470,6 +470,12 @@ struct tb_regs_port_header {
+ #define ADP_DP_CS_8				0x08
+ #define ADP_DP_CS_8_DPME			BIT(30)
+ #define ADP_DP_CS_8_DR				BIT(31)
++#define ADP_DP_CS_9				0x09
++#define ADP_DP_CS_13				0x0d
++/* USB4 CM Guide 5.4.1.4: DPTX Discovery Mode. Bit position not in that
++ * guide; bit 0 is the enable-style field used on other DP CS words.
++ */
++#define ADP_DP_CS_13_DPTX_DISCOVERY_MODE	BIT(0)
+ 
+ /* PCIe adapter registers */
+ #define ADP_PCIE_CS_0				0x00
+-- 
+2.55.0
+
