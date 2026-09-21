@@ -7,8 +7,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VER="$(uname -r)"
 KO="$ROOT/src/appledrm/appledrm.ko"
 TBKO="$ROOT/src/thunderbolt/thunderbolt.ko"
+MUXKO="$ROOT/src/mux/mux-apple-display-crossbar.ko"
 INTREE="/lib/modules/$VER/kernel/drivers/gpu/drm/apple/appledrm.ko"
 TBINTREE="/lib/modules/$VER/kernel/drivers/thunderbolt/thunderbolt.ko"
+MUXINTREE="/lib/modules/$VER/kernel/drivers/mux/mux-apple-display-crossbar.ko"
 DST="/lib/modules/$VER/updates"
 STATUS="$ROOT/notes/load-status"
 
@@ -32,6 +34,14 @@ if [[ -f $TBKO ]]; then
   fi
   install -m 0644 "$TBKO" "$TBINTREE"
   install -m 0644 "$TBKO" "$DST/thunderbolt.ko"
+fi
+if [[ -f $MUXKO ]]; then
+  if [[ -f $MUXINTREE && ! -f ${MUXINTREE}.stock ]]; then
+    cp -a "$MUXINTREE" "${MUXINTREE}.stock"
+  fi
+  install -d "$(dirname "$MUXINTREE")"
+  install -m 0644 "$MUXKO" "$MUXINTREE"
+  install -m 0644 "$MUXKO" "$DST/mux-apple-display-crossbar.ko"
 fi
 depmod -a "$VER"
 

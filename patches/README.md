@@ -12,3 +12,5 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 
 `dpin0` vs `dpin1` is still a guess. If the tunnel still dies after this is running, try cell `2` in the DT mux-controls.
 | `0004-drm-apple-auto-arm-USB4-DP-IN-on-the-NHI-that-has-a-.patch` | If the Type-C mux never delivers USB4 to DCP, arm DP IN on the typecN whose NHI has the hub. `usb4_arm=0..2` forces a port. |
+| `0019-drm-apple-drive-USB4-DP-IN-instead-of-HDMI-PHY-3.patch` | Prefer USB-C dcpext; DPIN in remote-port bits 13:12; no HDMI PHY 3, no ATC PHY, no HPD kick. |
+| `0020-mux-apple-t602x-program-DPIN0-DPIN1.patch` | T602x crossbar actually selects DPIN0/DPIN1 analog (`ATC_DPIN0`) instead of always writing DPPHY bits. Out-of-tree: `src/mux`. |

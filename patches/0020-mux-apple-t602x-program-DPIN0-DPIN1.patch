@@ -1,0 +1,228 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:32:00 +0200
+Subject: [PATCH] mux: apple: program T602x DPIN0/DPIN1 analog select
+
+Stock apple_dpxbar_set_t602x() ignored mux index and always wrote
+DPPHY select bits plus ATC_DPPHY. Selecting dpin0 did not route
+analog onto ACIO DP IN. Use the t8103 MUX_CTRL field layout at
+T602X_REG_030 and ATC_DPIN0/ATC_DPIN1, and dump 0x000-0x070.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+
+--- a/drivers/mux/apple-display-crossbar.c
++++ b/drivers/mux/apple-display-crossbar.c
+@@ -5,8 +5,15 @@
+  * Copyright (C) Asahi Linux Contributors
+  *
+  * Author: Sven Peter <sven@svenpeter.dev>
++ *
++ * T602x DPIN0/DPIN1: the stock t602x set() only programs DPPHY select
++ * bits (state<<20 | state<<8) and ATC bit 8. Mux index is ignored, so
++ * "Switched dpin0" never routes analog onto ACIO DP IN. Use the same
++ * CROSSBAR_MUX_CTRL field layout as t8103/t6000 at T602X_REG_030, and
++ * ATC_DPIN0/ATC_DPIN1 instead of the hardcoded 0x100 DPPHY bit.
+  */
+ 
++#include <linux/bitfield.h>
+ #include <linux/bitmap.h>
+ #include <linux/delay.h>
+ #include <linux/err.h>
+@@ -19,7 +26,7 @@
+ #include <linux/platform_device.h>
+ 
+ /*
+- * T602x register interface is cleary different so most of the names below are
++ * T602x register interface is clearly different so most of the names below are
+  * probably wrong.
+  */
+ 
+@@ -118,6 +125,73 @@
+ 	dpxbar_mask32(xbar, reg, clear, 0);
+ }
+ 
++static u32 t602x_atc_bit(unsigned int index)
++{
++	switch (index) {
++	case MUX_DPIN0:
++		return ATC_DPIN0;
++	case MUX_DPIN1:
++		return ATC_DPIN1;
++	case MUX_DPPHY:
++	default:
++		return ATC_DPPHY;
++	}
++}
++
++static u32 t602x_mux_mask(unsigned int index)
++{
++	switch (index) {
++	case MUX_DPIN0:
++		return CROSSBAR_MUX_CTRL_DPIN0_SELECT0 |
++		       CROSSBAR_MUX_CTRL_DPIN0_SELECT1;
++	case MUX_DPIN1:
++		return CROSSBAR_MUX_CTRL_DPIN1_SELECT0 |
++		       CROSSBAR_MUX_CTRL_DPIN1_SELECT1;
++	case MUX_DPPHY:
++	default:
++		return CROSSBAR_MUX_CTRL_DPPHY_SELECT0 |
++		       CROSSBAR_MUX_CTRL_DPPHY_SELECT1;
++	}
++}
++
++static u32 t602x_mux_set(unsigned int index, unsigned int mux_state)
++{
++	switch (index) {
++	case MUX_DPIN0:
++		return FIELD_PREP(CROSSBAR_MUX_CTRL_DPIN0_SELECT0, mux_state) |
++		       FIELD_PREP(CROSSBAR_MUX_CTRL_DPIN0_SELECT1, mux_state);
++	case MUX_DPIN1:
++		return FIELD_PREP(CROSSBAR_MUX_CTRL_DPIN1_SELECT0, mux_state) |
++		       FIELD_PREP(CROSSBAR_MUX_CTRL_DPIN1_SELECT1, mux_state);
++	case MUX_DPPHY:
++	default:
++		return FIELD_PREP(CROSSBAR_MUX_CTRL_DPPHY_SELECT0, mux_state) |
++		       FIELD_PREP(CROSSBAR_MUX_CTRL_DPPHY_SELECT1, mux_state);
++	}
++}
++
++static void t602x_dump(struct apple_dpxbar *xbar, const char *tag)
++{
++	static const u32 offs[] = {
++		0x000, 0x004, 0x008, 0x00c, 0x014, 0x018, 0x01c, 0x024,
++		0x028, 0x02c, 0x030, 0x034, 0x040, 0x044, 0x048, 0x04c,
++		0x050, 0x060, 0x070,
++	};
++	char buf[320];
++	int n = 0;
++	unsigned int i;
++
++	for (i = 0; i < ARRAY_SIZE(offs); i++) {
++		u32 val = readl(xbar->regs + offs[i]);
++
++		n += scnprintf(buf + n, sizeof(buf) - n, " %03x=%08x",
++			       offs[i], val);
++		if (n >= (int)sizeof(buf) - 20)
++			break;
++	}
++	dev_info(xbar->dev, "t602x %s:%s\n", tag, buf);
++}
++
+ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ {
+ 	struct apple_dpxbar *dpxbar = mux_chip_priv(mux->chip);
+@@ -126,15 +200,14 @@
+ 	unsigned int mux_state;
+ 	unsigned int dispext_bit;
+ 	unsigned int dispext_bit_en;
++	u32 atc_bit, mux_mask, mux_val;
+ 	bool enable;
+ 	int ret = 0;
+ 
++	if (index >= MUX_MAX)
++		return -EINVAL;
++
+ 	if (state == MUX_IDLE_DISCONNECT) {
+-		/*
+-		 * Technically this will select dispext0,0 in the mux control
+-		 * register. Practically that doesn't matter since everything
+-		 * else is disabled.
+-		 */
+ 		mux_state = 0;
+ 		enable = false;
+ 	} else if (state >= 0 && state < 9) {
+@@ -146,6 +219,10 @@
+ 		return -EINVAL;
+ 	}
+ 
++	atc_bit = t602x_atc_bit(index);
++	mux_mask = t602x_mux_mask(index);
++	mux_val = t602x_mux_set(index, mux_state);
++
+ 	spin_lock_irqsave(&dpxbar->lock, flags);
+ 
+ 	/* ensure the selected dispext isn't already used in this crossbar */
+@@ -168,40 +245,42 @@
+ 		dpxbar_clear32(dpxbar, T602X_FIFO_WR_DPTX_CLK_EN, prev_dispext_bit);
+ 		dpxbar_clear32(dpxbar, T602X_REG_00C, prev_dispext_bit_en);
+ 
+-		dpxbar_clear32(dpxbar, T602X_REG_01C, 0x100);
++		dpxbar_clear32(dpxbar, T602X_REG_01C, atc_bit);
+ 
+ 		dpxbar_clear32(dpxbar, T602X_FIFO_WR_UNK_EN, prev_dispext_bit);
+ 		dpxbar_clear32(dpxbar, T602X_REG_018, prev_dispext_bit_en);
+ 
+-		dpxbar_clear32(dpxbar, T602X_FIFO_RD_N_CLK_EN, 0x100);
++		dpxbar_clear32(dpxbar, T602X_FIFO_RD_N_CLK_EN, atc_bit);
+ 
+ 		dpxbar_set32(dpxbar, T602X_FIFO_WR_N_CLK_EN, prev_dispext_bit);
+ 		dpxbar_set32(dpxbar, T602X_REG_014, 0x4);
+ 
+-		dpxbar_set32(dpxbar, FIFO_RD_PCLK1_EN, 0x100);
++		dpxbar_set32(dpxbar, FIFO_RD_PCLK1_EN, atc_bit);
++
++		dpxbar_clear32(dpxbar, T602X_REG_034, atc_bit);
++		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, 0);
+ 
+ 		dpxbar->selected_dispext[index] = -1;
+ 	}
+ 
+ 	if (enable) {
+-		dpxbar_set32(dpxbar, T602X_REG_030, state << 20);
+-		dpxbar_set32(dpxbar, T602X_REG_030, state << 8);
++		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, mux_val);
+ 		udelay(10);
+ 
+ 		dpxbar_clear32(dpxbar, T602X_FIFO_WR_N_CLK_EN, dispext_bit);
+ 		dpxbar_clear32(dpxbar, T602X_REG_014, 0x4);
+ 
+-		dpxbar_clear32(dpxbar, T602X_FIFO_RD_PCLK2_EN, 0x100);
++		dpxbar_clear32(dpxbar, T602X_FIFO_RD_PCLK2_EN, atc_bit);
+ 
+ 		dpxbar_set32(dpxbar, T602X_FIFO_WR_UNK_EN, dispext_bit);
+ 		dpxbar_set32(dpxbar, T602X_REG_018, dispext_bit_en);
+ 
+-		dpxbar_set32(dpxbar, T602X_FIFO_RD_N_CLK_EN, 0x100);
++		dpxbar_set32(dpxbar, T602X_FIFO_RD_N_CLK_EN, atc_bit);
+ 		dpxbar_set32(dpxbar, T602X_FIFO_WR_DPTX_CLK_EN, dispext_bit);
+ 		dpxbar_set32(dpxbar, T602X_REG_00C, dispext_bit);
+ 
+-		dpxbar_set32(dpxbar, T602X_REG_01C, 0x100);
+-		dpxbar_set32(dpxbar, T602X_REG_034, 0x100);
++		dpxbar_set32(dpxbar, T602X_REG_01C, atc_bit);
++		dpxbar_set32(dpxbar, T602X_REG_034, atc_bit);
+ 
+ 		dpxbar_set32(dpxbar, T602X_FIFO_RD_UNK_EN, dispext_bit);
+ 
+@@ -211,13 +290,16 @@
+ 	spin_unlock_irqrestore(&dpxbar->lock, flags);
+ 
+ 	if (enable)
+-		dev_info(dpxbar->dev, "Switched %s to dispext%u,%u\n",
++		dev_info(dpxbar->dev,
++			 "Switched %s to dispext%u,%u (t602x atc=0x%x mux=0x%x)\n",
+ 			 apple_dpxbar_names[index], mux_state >> 1,
+-			 mux_state & 1);
++			 mux_state & 1, atc_bit, mux_val);
+ 	else
+ 		dev_info(dpxbar->dev, "Switched %s to disconnected state\n",
+ 			 apple_dpxbar_names[index]);
+ 
++	t602x_dump(dpxbar, enable ? apple_dpxbar_names[index] : "idle");
++
+ 	return ret;
+ }
+ 
+@@ -235,11 +317,6 @@
+ 	u32 mux_mask, mux_set;
+ 
+ 	if (state == MUX_IDLE_DISCONNECT) {
+-		/*
+-		 * Technically this will select dispext0,0 in the mux control
+-		 * register. Practically that doesn't matter since everything
+-		 * else is disabled.
+-		 */
+ 		mux_state = 0;
+ 		enable = false;
+ 	} else if (state >= 0 && state < 9) {

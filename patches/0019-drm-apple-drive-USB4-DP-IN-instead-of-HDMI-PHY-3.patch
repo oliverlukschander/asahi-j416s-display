@@ -1,0 +1,291 @@
+From 9a32c038085fe68e1fe51bb49781900ec467e045 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Mon, 21 Sep 2026 10:32:31 +0200
+Subject: [PATCH] drm/apple: drive USB4 DP IN instead of HDMI PHY 3
+
+Prefer the USB-C dcpext for USB4 so DPTX does not train the empty HDMI
+jack. Encode DPIN in remote-port bits 13:12. Leave atcphy NULL so
+APCALLs stay logical. Drop INACTIVE_SINK HPD kicks and dpin/target-OR
+cycling.
+
+T602x crossbar DPIN analog programming lives in asahi-j416s-display
+src/mux: stock apple_dpxbar_set_t602x() only wrote DPPHY select bits.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/gpu/drm/apple/dcp.c    | 84 ++++++++++------------------------
+ drivers/gpu/drm/apple/dptxep.c | 48 +++++++++----------
+ drivers/gpu/drm/apple/dptxep.h |  2 +
+ 3 files changed, 49 insertions(+), 85 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index c937deb..26506dc 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -60,16 +60,19 @@ static bool show_notch;
+  * USB4 tunnels need a DP IN, not the ATC PHY. Default dpin0; override with
+  * appledrm.usb4_dpin=2 if DPRX still fails.
+  */
+-static int usb4_dpin_index = 1;
++int usb4_dpin_index = 1;
+ module_param_named(usb4_dpin, usb4_dpin_index, int, 0644);
+ MODULE_PARM_DESC(usb4_dpin,
+ 		 "Display crossbar mux index for USB4 DP IN (1=dpin0, 2=dpin1)");
+ 
+-/* -1 = Type-C ATC index. 3 = HDMI DPTX PHY. 2 = Right ATC. */
+-static int usb4_atc = 3;
++/*
++ * -1 = Type-C route ATC index (Right USB-C = 2). Do not use 3: that is the
++ * HDMI analog PHY, which trains the empty HDMI jack.
++ */
++static int usb4_atc = -1;
+ module_param_named(usb4_atc, usb4_atc, int, 0644);
+ MODULE_PARM_DESC(usb4_atc,
+-		 "DPTX ATC/phy index for USB4 (-1=typec route, 2=Right ATC)");
++		 "DPTX ATC/phy index for USB4 (-1=typec route, 2=Right ATC, 3=HDMI analog)");
+ 
+ /* -1 = auto (arm the typecN whose NHI has a Thunderbolt device). 0..2 force. */
+ static int usb4_arm = -1;
+@@ -192,12 +195,15 @@ static unsigned int dcp_typec_route_score(struct apple_dcp_typec_route *route)
+ 	return drm_crtc_index(&dcp->crtc->base);
+ }
+ 
+-/* USB4 DP IN: prefer the pipeline with a dedicated DPTX PHY (HDMI hybrid). */
++/*
++ * USB4 DP IN: prefer the USB-C dcpext. The HDMI hybrid's dedicated DPTX PHY 3
++ * trains the empty HDMI jack even when the USB-C crossbar dpin mux is selected.
++ */
+ static unsigned int dcp_typec_route_score_usb4(struct apple_dcp_typec_route *route)
+ {
+ 	unsigned int score = dcp_typec_route_score(route);
+ 
+-	if (!route->dcp->fixed_phy)
++	if (route->dcp->fixed_phy)
+ 		score += 100;
+ 	return score;
+ }
+@@ -247,15 +253,12 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 
+ 	dcp->phy = route->phy;
+ 	/*
+-	 * USB4 DP IN is the DCP's own DPTX (apple,dptx-phy), routed onto
+-	 * the USB4 DP IN adapter by the crossbar. The Type-C ATC index
+-	 * (typec-dptx-phys) is DP alt-mode only — targeting it while the
+-	 * ATC is in USB4 makes firmware report DEVICE_NOT_STARTED.
++	 * USB4 pixels leave the DCP as digital DPTX; the crossbar must
++	 * switch dpin0/dpin1 onto ACIO DP IN. Firmware remote-port ATC is
++	 * the Type-C port index. HDMI PHY 3 is the empty analog jack.
+ 	 */
+ 	if (usb4 && usb4_atc >= 0)
+ 		dcp->dptx_phy = usb4_atc;
+-	else if (usb4)
+-		dcp->dptx_phy = dcp->fixed_dptx_phy;
+ 	else
+ 		dcp->dptx_phy = route->dptx_phy;
+ 	dcp->connector_type = DRM_MODE_CONNECTOR_USB;
+@@ -282,7 +285,7 @@ static int dcp_typec_route_activate(struct apple_dcp_typec_route *route,
+ 	route->selected = true;
+ 
+ 	dev_info(dcp->dev, "allocated Type-C DPTX PHY %u (%s)\n",
+-		 route->dptx_phy, usb4 ? "USB4 DP IN" : "DP alt-mode");
++		 dcp->dptx_phy, usb4 ? "USB4 DP IN" : "DP alt-mode");
+ 	return 0;
+ }
+ 
+@@ -683,8 +686,7 @@ static void dcp_usb4_auto_arm_work(struct work_struct *work)
+ 	}
+ 	if (*hpd && *idx >= 0) {
+ 		typec = *idx;
+-		usb4_atc = 3;
+-		pr_info("appledrm: DP IN HPD=1 typec%u, DPTX phy 3 (not ATC)\n",
++		pr_info("appledrm: DP IN HPD=1 typec%u, DPTX ATC from Type-C route (not HDMI phy 3)\n",
+ 			typec);
+ 		__symbol_put("tb_apple_dp_in_hpd");
+ 		__symbol_put("tb_apple_dp_typec_index");
+@@ -1344,8 +1346,11 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dcp->dptxport[port].linkcfg_completion);
+ 	dcp->dptxport[port].usb4_inactive_sink = false;
+ 	usb4 = dcp_is_usb4_output(dcp);
+-	/* USB4: drive the dedicated DPTX PHY (not the USB4 ATC). */
+-	dcp->dptxport[port].atcphy = usb4 ? dcp->fixed_phy : dcp->phy;
++	/*
++	 * USB4 AUX/lanes go through ACIO DP IN, not the HDMI analog PHY or
++	 * the USB4-occupied ATC. Leave atcphy NULL so APCALLs stay logical.
++	 */
++	dcp->dptxport[port].atcphy = usb4 ? NULL : dcp->phy;
+ 	ret = dptxport_validate_connection(dcp->dptxport[port].service, 0,
+ 					   dcp->dptx_phy, dcp->dptx_die);
+ 	if (ret) {
+@@ -1357,7 +1362,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 
+ 	ret = dptxport_connect(dcp->dptxport[port].service, 0,
+ 			       dcp->dptx_phy, dcp->dptx_die,
+-		       dcp_is_typec_output(dcp));
++		       dcp_is_typec_output(dcp) && !usb4);
+ 	if (ret) {
+ 		dev_err(dcp->dev,
+ 			"dcp_dptx_connect: failed to connect DPTX target %u:%u: %d\n",
+@@ -1436,49 +1441,6 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 		return;
+ 	}
+ 
+-	if (dcp_is_usb4_output(dcp) && dcp->typec_reconnect_tries == 1) {
+-		static const unsigned int or_cycle[] = {
+-			0, 0x1000, 0x2000, 0x4000, 0x200, 0x100, 0x1,
+-		};
+-		int n = ARRAY_SIZE(or_cycle);
+-		int i, next = 0;
+-
+-		for (i = 0; i < n; i++) {
+-			if (or_cycle[i] == usb4_target_or) {
+-				next = (i + 1) % n;
+-				break;
+-			}
+-		}
+-		usb4_target_or = or_cycle[next];
+-		dev_info(dcp->dev, "USB4: cycle target OR to 0x%x\n",
+-			 usb4_target_or);
+-	}
+-
+-	if (dcp_is_usb4_output(dcp) &&
+-	    (dcp->typec_reconnect_tries == 0 || dcp->typec_reconnect_tries == 2) &&
+-	    dcp->active_typec_route && dcp->active_typec_route->xbar &&
+-	    dcp->active_typec_route->xbar->chip) {
+-		struct apple_dcp_typec_route *route = dcp->active_typec_route;
+-		struct mux_chip *chip = route->xbar->chip;
+-		int next = (usb4_dpin_index == 1) ? 2 : 1;
+-
+-		if (next < (int)chip->controllers) {
+-			mux_control_deselect(dcp_typec_route_mux(route));
+-			route->usb4_xbar = &chip->mux[next];
+-			route->usb4_xbar_borrowed = true;
+-			usb4_dpin_index = next;
+-			if (mux_control_select(route->usb4_xbar,
+-					       route->mux_index))
+-				dev_err(dcp->dev,
+-					"USB4: failed to select mux %d\n",
+-					next);
+-			else
+-				dev_info(dcp->dev,
+-					 "USB4: flipped to crossbar mux %d\n",
+-					 next);
+-		}
+-	}
+-
+ 	if (++dcp->typec_reconnect_tries < DPTX_RECONNECT_RETRIES) {
+ 		mod_delayed_work(system_freezable_wq, &dcp->typec_reconnect_wq,
+ 				 DPTX_RECONNECT_DELAY);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index dc45fc3..37f907c 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -11,7 +11,7 @@
+ unsigned int usb4_target_or;
+ module_param(usb4_target_or, uint, 0644);
+ MODULE_PARM_DESC(usb4_target_or,
+-		 "OR into USB4 DPTX remote-port target (default 0x1000)");
++		 "OR into USB4 DPTX remote-port target after DPIN field");
+ 
+ #include "afk.h"
+ #include "dcp.h"
+@@ -80,19 +80,31 @@ struct dptxport_apcall_set_tiled {
+ 	__le32 retcode;
+ };
+ 
++static u32 dptxport_remote_target(struct apple_dcp *dcp, u8 core, u8 atc,
++				  u8 die)
++{
++	u32 target = FIELD_PREP(DCPDPTX_REMOTE_PORT_CORE, core) |
++		     FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, atc) |
++		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
++		     DCPDPTX_REMOTE_PORT_CONNECTED;
++
++	if (dcp_is_usb4_output(dcp)) {
++		/* dpin0=1, dpin1=2 in bits 13:12 ({die,atc,dpin,core}). */
++		unsigned int dpin = (usb4_dpin_index == 2) ? 2 : 1;
++
++		target |= FIELD_PREP(DCPDPTX_REMOTE_PORT_DPIN, dpin);
++		target |= usb4_target_or;
++	}
++	return target;
++}
++
+ int dptxport_validate_connection(struct apple_epic_service *service, u8 core,
+ 				 u8 atc, u8 die)
+ {
+ 	struct dptx_port *dptx = service->cookie;
+ 	struct dcpdptx_connection_cmd cmd, resp;
+ 	int ret;
+-	u32 target = FIELD_PREP(DCPDPTX_REMOTE_PORT_CORE, core) |
+-		     FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, atc) |
+-		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+-		     DCPDPTX_REMOTE_PORT_CONNECTED;
+-
+-	if (dcp_is_usb4_output(service->ep->dcp))
+-		target |= usb4_target_or;
++	u32 target = dptxport_remote_target(service->ep->dcp, core, atc, die);
+ 
+ 	trace_dptxport_validate_connection(dptx, core, atc, die);
+ 	dev_info(service->ep->dcp->dev,
+@@ -121,13 +133,7 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 	struct dcpdptx_connection_cmd cmd, resp;
+ 	u32 unk_field = supports_hpd ? DCPDPTX_REMOTE_PORT_SUPPORTS_HPD : 0;
+ 	int ret;
+-	u32 target = FIELD_PREP(DCPDPTX_REMOTE_PORT_CORE, core) |
+-		     FIELD_PREP(DCPDPTX_REMOTE_PORT_ATC, atc) |
+-		     FIELD_PREP(DCPDPTX_REMOTE_PORT_DIE, die) |
+-		     DCPDPTX_REMOTE_PORT_CONNECTED;
+-
+-	if (dcp_is_usb4_output(service->ep->dcp))
+-		target |= usb4_target_or;
++	u32 target = dptxport_remote_target(service->ep->dcp, core, atc, die);
+ 
+ 	trace_dptxport_connect(dptx, core, atc, die);
+ 
+@@ -335,9 +341,9 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	case 0 ... 2:
+ 	case 4:
+ 		dptx->phy_ops.dp.lanes = lane_count;
+-		// Use dptx phy index > 3 as indication for dptx-phy or
+-		// lpdptx-phy and configure the number of lanes for those
+-		dptx->phy_ops.dp.set_lanes = (dcp->dptx_phy > 3);
++		/* USB4 DP IN has no ATC PHY; still accept the lane count. */
++		dptx->phy_ops.dp.set_lanes =
++			dcp_is_usb4_output(dcp) || (dcp->dptx_phy > 3);
+ 		break;
+ 	default:
+ 		dev_err(dcp->dev, "set_active_lane_count: invalid lane count:%llu\n", lane_count);
+@@ -646,12 +652,6 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 		 */
+ 		dev_info(service->ep->dcp->dev,
+ 			 "DPTXPort: INACTIVE_SINK_DETECTED (keep waiting for lanes)\n");
+-		if (!service->ep->dcp->usb4_hpd_kicked) {
+-			service->ep->dcp->usb4_hpd_kicked = true;
+-			mod_delayed_work(system_freezable_wq,
+-					 &service->ep->dcp->usb4_hpd_wq,
+-					 msecs_to_jiffies(50));
+-		}
+ 		memcpy(reply, data, min(reply_size, data_size));
+ 		if (reply_size >= 4)
+ 			memset(reply, 0, 4);
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index 295034d..78d3a75 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -35,6 +35,7 @@ enum dptx_apcall {
+ #define DCPDPTX_REMOTE_PORT_CORE GENMASK(3, 0)
+ #define DCPDPTX_REMOTE_PORT_ATC GENMASK(7, 4)
+ #define DCPDPTX_REMOTE_PORT_DIE GENMASK(11, 8)
++#define DCPDPTX_REMOTE_PORT_DPIN GENMASK(13, 12)
+ #define DCPDPTX_REMOTE_PORT_CONNECTED BIT(15)
+ #define DCPDPTX_REMOTE_PORT_SUPPORTS_HPD BIT(8)
+ 
+@@ -71,4 +72,5 @@ int dptxport_release_display(struct apple_epic_service *service);
+ int dptxport_set_hpd(struct apple_epic_service *service, bool hpd);
+ 
+ extern unsigned int usb4_target_or;
++extern int usb4_dpin_index;
+ #endif
+-- 
+2.55.0
+
