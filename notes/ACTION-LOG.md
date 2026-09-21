@@ -125,3 +125,8 @@ What it does:
 3. `iounmap`.
 
 No panel. No disp-1. No disp-2. No writes. No crossbar. No reboot.
+
+Result: it returned. All 1024 words in the first 4 KB are nonzero,
+starting `+000 caf9b40c`. Same kind of data as disp-1, not a clock
+enable. eDP stayed on. Do not write disp-0. Do not map the panel's
+disp-0 or disp-1.
