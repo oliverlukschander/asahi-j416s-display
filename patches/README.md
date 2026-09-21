@@ -47,3 +47,4 @@ USB4-before-DP and m1n1 aliases stay in the USB4 repo / [aurora-silicon/linux#6]
 | `0051-drm-apple-do-not-iomfb_poweron-USB4-dcpext.patch` | Remove dcpext iomfb_poweron. |
 | `0052-drm-apple-USB4-request_display-then-1080p-modeset.patch` | request_display 0, ACTIVATE 0:4, still fDisplayPowerState=0, 22/24. |
 | `0053-drm-apple-USB4-drop-fake-1080p-no-request_display.patch` | echo 0 drops USB-3. Scanout no longer request_display. |
+| `0054-thunderbolt-Apple-DP-IN-analog-PHY-in-ACIO-RC.patch` | Dump/reapply RC `0x4000`/`0x8000` DP IN analog (mapped). Set CS8 DPME. `dpin_aux=2` pulses start. |
