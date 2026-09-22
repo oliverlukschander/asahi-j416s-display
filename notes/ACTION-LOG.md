@@ -2066,3 +2066,26 @@ Once desktop returns verify boot/drivers/eDP, then separately log/push
 and disarm future test boots before separately logging right-port hub
 connection. Keep hub unplugged until that verification. If eDP does not
 return, stop the test and do not connect hub.
+
+## 2026-09-22 — Agent-executed0101 reboot after user go-ahead
+
+Oliver says "lets go" following installed0101 reboot instruction. Recheck
+passes: correct kernel/machine, hub and external display absent, candidate
+hashes match. Current boot db25bd04-ac78-4144-96ad-344a8b49757d. After
+committing and pushing this entry execute exactly:
+
+```
+sudo -n systemctl reboot
+```
+
+This supersedes the prior user-run reboot instruction with agent execution.
+Same verified0101 image and nine-file backup. Both external connections
+remain unplugged. Normal driver-owned resource scope: ATC2 core0xf03000000
+size0x4c000,lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. No tunnel clock callback
+or new clock programming expected while unplugged; no manual MMIO, live
+module unload, panel mapping or39c000000 assignment. Keep hub disconnected
+after boot until verification and separately logged future-boot disarm.
+If eDP does not return, stop the test; do not connect hub.
