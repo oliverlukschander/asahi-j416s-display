@@ -1749,3 +1749,37 @@ reads if cable-powered owner remains available. No manual register write
 or mapping. If eDP blacks out, stop with hub unplugged. No reboot or
 hub reconnection. Verify unplug before separately proceeding to direct
 adapter reference;0099 retains a separate direct snapshot allowance.
+
+## 2026-09-22 — Hub absence verified; proceed to actual direct reference
+
+User confirms unplugged. manage-0099.py check confirms hub absent and
+matching candidates; Hyprland shows only eDP-1 active3456x2160@120.
+DPIN0 crossbar disconnected381.124177s; DEACTIVATE returned-ENODEV after
+cable loss. No after-frame-dpphy has run. No reboot/reload required.
+
+After commit/push request exactly: remove the small USB-C-to-HDMI adapter
+from the OWC hub, keep its HDMI monitor cable attached, and plug that
+adapter directly into the Mac RIGHT USB-C port once. Leave OWC hub
+unplugged. If laptop display goes black, unplug adapter immediately and
+stop. No shell command initiates physical connection; no hub retry.
+
+Same direct-path action and guards as prior0099 direct-connection entry:
+dcpext1 0x315c00000, right crossbar0xf0304c000 size0x4000, source2/DPPHY.
+Normal existing ATC2 PHY resources:0xf03000000 size0x4c000,0xf03050000
+size0x8000,0xf00000000 size0x4000,0xf02a90000 size0x4000,0xf02a84000
+size0x4000. ACIO0xf01ac0000/NHI0xf01f00000 have no external router.
+No manual PHY/MMIO, no forbidden panel mapping or39c000000 assignment,
+no native DPIN handshake for direct mode. Existing normal DP operations
+plus one after-frame snapshot through existing crossbar mapping only.
+Snapshot offsets:000,004,008,00c,014,018,01c,024,028,02c,030,034,040,044,
+048,04c,050,060,070,800,020,820,81c. No new mapping/register writes.
+
+Capture after connection with distinct filenames preserving prior evidence:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0099-actual-direct.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0099-actual-direct-kernel.log
+modetest -M apple -e
+```
+
+Confirm actual topology and visible output before labeling known-good.
