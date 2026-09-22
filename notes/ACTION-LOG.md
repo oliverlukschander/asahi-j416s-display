@@ -1783,3 +1783,13 @@ modetest -M apple -e
 ```
 
 Confirm actual topology and visible output before labeling known-good.
+
+## 2026-09-22 —0099 direct picture confirmed; comparison preserved
+
+Logged actual-direct capture commands completed. Oliver confirms picture.
+Direct after-frame crossbar+800=4 vs hub0, same dcpext1/right port/source2
+and video timing. Details and native tunnel-rate lead preserved in
+notes/2026-09-22-0099-working-direct.md. Raw logs/disassembly private.
+No live hardware operation after the previously logged diagnostic snapshot.
+No candidate0100, parameter write, new mapping, hotplug or reboot scheduled.
+Direct adapter remains connected; future boots disarmed.
