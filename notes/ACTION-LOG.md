@@ -1929,3 +1929,57 @@ ATC2 core0xf03000000 size0x4c000, crossbar0xf0304c000 size0x4000,
 dcpext1 0x315c00000, DPIN0 0xf01e50000 size0x4000, NHI0xf01f00000,
 ACIO0xf01ac0000; clock offsets/masks unchanged from0100 notes. Hub and
 direct adapter stay unplugged. A separate pushed entry will precede hotplug.
+
+## 2026-09-22 —0100 future boots disarmed; one right-port hub test
+
+Disarm completed and initramfs verified without0100 options. Image SHA256
+48dcece31ad466e13e8a3faba0ac4c4929dbe5d2ccd59ce10a9085cbae21e7ca.
+Current boot db25bd04-ac78-4144-96ad-344a8b49757d retains loaded Y flags.
+eDP is active; boot journal shows normal panel mode setup and no tunnel
+clock callback while unplugged. No hub/direct adapter currently attached.
+
+After this entry is committed and pushed, request exactly: attach the
+USB-C-to-HDMI adapter and its monitor cable to a downstream USB-C port
+on the OWC hub, then connect the hub host cable to the Mac RIGHT USB-C
+port once. Do not connect the display adapter directly to the Mac. Leave
+the laptop display enabled. Report visible external picture and laptop
+state; report keyboard behavior if a keyboard is attached. No shell
+command initiates this physical hotplug. If eDP goes black, unplug the
+hub immediately and stop. Do not reboot or repeatedly reconnect.
+
+This first0100 test invokes the normal USB4 tunnel path; no manual tunnel
+creation or DP-alt-mode forcing. Right ATC2 existing core0xf03000000
+size0x4c000: new clock writes at offsets/masks 008/0003ffff,
+1b0/00000fff,7000/0000207c,2224/00000003,2080/ffffffff,
+2084/0fffffff,2088/007fffff,2208/001f0000,2220/00000080,
+2214/00000001,2200/00000054,2000/1ffffff9; status reads a74/7044.
+The owner checks machine/resource/mode and existing clock clients;
+only one programming attempt this boot; command/lock timeouts restore
+saved owned fields. Cleanup uses the same addresses, no second mapping.
+Normal existing ATC resources also include lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000. No added lane mux or AUX writes.
+
+DCP source dcpext1 0x315c00000; crossbar0xf0304c000 size0x4000,
+source2 to DPIN0. Existing crossbar controls+000,+004,+008,+00c,+014,
++018,+01c,+024,+028,+02c,+030,+034,+050,+070 and0099 snapshot offsets
+000,004,008,00c,014,018,01c,024,028,02c,030,034,040,044,048,04c,
+050,060,070,800,020,820,81c remain unchanged. Existing native DPIN0
+resource0xf01e50000 size0x4000 uses CONTROL+0xc request bit0 and HPD+0,
+ACK+0x10 reads. NHI0xf01f00000/ACIO0xf01ac0000 owned by normal USB4
+drivers. No forbidden ACIO RC analog writes, no panel disp mapping,
+no39c000000 assignment, /dev/mem, or live module unload.
+
+After connection capture exactly (read-only OS interfaces; private outputs):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0100-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0100-right-kernel.log
+modetest -M apple -e
+```
+
+Verify actual right-port topology, tunnel-clock result, link rate/lanes,
+DPRX and completed-frame crossbar+800. Success requires Oliver's actual
+visible-picture confirmation plus eDP remaining on; keyboard remains
+unverified unless attached and checked. Software detection alone is not
+success. No further hardware experiment is covered by this entry.
