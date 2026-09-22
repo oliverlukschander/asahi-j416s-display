@@ -2823,3 +2823,12 @@ modetest -M apple -e
 Confirm right port and pre-clock gates off, then PLL/nativeup result,034/800,
 lanes/DPRX and actual picture. If sequence stalls, capture and stop without
 retrying gates or changing registers. No visible success assumed.
+
+## 2026-09-22 —0105 connection captured, visible outcome pending
+
+Previously logged capture commands completed. Right-port deferred selection
+verified with gates0 before PLL, then PLL/nativeup result0,4lanes,DPRX1,
+mode/framecomplete,800=4. Crossbar034 still0. eDP and BenQ both enabled in
+Hyprland. User physical picture confirmation pending; do not claim success
+or failure yet. See notes/2026-09-22-0105-result.md. Future boots disarmed.
+No additional hardware action, parameter write or reboot requested.
