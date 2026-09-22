@@ -2390,3 +2390,31 @@ size0x4000,NHI0xf01f00000,ACIO0xf01ac0000.0103 new crossbar bring-up
 uses offsets004,014,024,008,018,028,000,00c,01c,034,02c and status
 804,810,81c as documented; no such operation during install. Keep both
 external connections unplugged. Reboot logged separately after verification.
+
+## 2026-09-22 —0103 installed/verified; unplugged reboot instruction
+
+Installer completed; nine-file backup /var/tmp/j416s-0103-before verified.
+Initramfs modules/options verified. Armed image SHA256
+04f0572d3348a7d394e3588b06d07b7d6aea2e3bc56a44f332d24a15677e53f6.
+Post-install check passes; hub and external display absent. Current boot
+741e4261-fa77-45f1-a1c6-07d98348fe65 remains on0102; no live reload.
+
+After this entry is committed and pushed instruct Oliver to run:
+
+```
+systemctl reboot
+```
+
+No agent-executed reboot this turn. Keep hub and direct adapter unplugged.
+Normal resource scope: ATC2 core0xf03000000 size0x4c000,
+lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. No tunnel clock callback
+or new post-clock bring-up expected while unplugged. No manual MMIO,
+forbidden panel mapping,39c000000 assignment or driver unload.
+
+After desktop returns verify new boot, loaded build IDs and eDP. Log/push
+future-boot disarm before executing it; then separately log/push one
+right-port hub test. Keep hub unplugged until verification. If eDP does
+not return, stop the test and do not connect hub.
