@@ -1848,3 +1848,39 @@ DPIN0 0xf01e50000 size0x4000, NHI0xf01f00000, ACIO0xf01ac0000 remain
 owned by their existing drivers. No additional mappings from installation.
 All external display cables remain unplugged. Reboot requires its own
 subsequent committed/pushed action entry after install verification.
+
+## 2026-09-22 —0100 installed and verified; unplugged reboot instruction
+
+Installation completed successfully; nine-file backup verified at
+/var/tmp/j416s-0100-before. Initramfs module/options verification passed.
+Armed image SHA256:
+1833c12191f86165a54a6447954869635d9e78774a7aca81df3d6d0d6c0f6adb.
+Pre-reboot boot ID e7238bcd-c22b-4d8b-ab00-dd5542cf0061. Post-install
+manage-0100.py check passes; hub and external display remain absent.
+
+After this entry is committed and pushed, instruct Oliver to reboot with
+BOTH hub and direct adapter left unplugged. Exact user-run command:
+
+```
+systemctl reboot
+```
+
+No automated reboot is executed in this turn. Normal boot loads0100
+appledrm and ATC with usb4_tunnel_clock=1, appledrm native/protocol flags,
+and thunderbolt_apple dpin_native=1. With no hub/display connected, the
+new clock helper must perform no clock programming. No live unload/reload
+or manual MMIO. Ordinary driver-owned resources include right ATC core
+0xf03000000 size0x4c000, lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000, usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000; crossbar0xf0304c000 size0x4000;
+dcpext1 0x315c00000, NHI0xf01f00000, ACIO0xf01ac0000 and
+DPIN0 0xf01e50000 size0x4000. The new optional clock register offsets
+and masks are fully listed in0100 notes and the prior installation entry;
+no tunnel-rate request is expected while unplugged. No forbidden manual
+panel or39c000000 assignment/mapping.
+
+After desktop returns, keep both external connections unplugged. Verify
+new boot ID, eDP and loaded0100 flags; log/commit/push future-boot disarm
+before executing it. Only then separately log/commit/push one right-port
+hub connection. If the integrated display does not return, stop the test;
+do not connect the hub. No hub hotplug is authorized by this entry.
