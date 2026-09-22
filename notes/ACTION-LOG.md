@@ -1234,3 +1234,25 @@ verification, removes candidate options, depmods/syncs; no reboot/reload.
 After return verify eDP, correct loaded modules/options and no hub activity,
 then separately log/push/execute manage-0096.py disarm before right hotplug.
 This records a planned reboot, not a successful boot or display fix.
+
+## 2026-09-22 — 0096 boot verified; disarm future boots
+
+Oliver reports back after reboot. Boot c614801c-b80f-439e-8e64-34a519647cd0
+has eDP enabled and panel modeset completed at11.801s, all three loaded
+experiment flags Y, hub absent, candidate hashes matching. Loaded crossbar
+.note.gnu.build-id bytes exactly match the0096 candidate ELF section.
+No native DPIN/protocol-probe activity appears. srcversion is unavailable,
+so it was not used to identify the loaded module.
+
+After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0096.py disarm
+```
+
+Removes /etc/modprobe.d/j416s-0096-native-dpin.conf, rebuilds image with
+mkinitcpio -p linux-aurora, verifies candidate image hashes and options absent,
+syncs. Loaded flags remain Y for this boot only. No MMIO, mapping, live
+parameter write, reload or reboot. Right path addresses unchanged and not
+accessed: xbar0xf0304c000, ACIO0xf01ac0000, NHI0xf01f00000,
+dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff.
