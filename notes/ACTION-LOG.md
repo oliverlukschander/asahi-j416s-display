@@ -1587,3 +1587,23 @@ modetest -M apple -e
 Raw logs remain private/untracked. Inspect after-frame snapshot and result,
 frame completion, link rate/lanes/DPRX and eDP. Physical picture must be
 confirmed by Oliver; frame completions alone do not prove signal output.
+
+## 2026-09-22 —0098 result captured; end this connection test
+
+Logged captures completed. Oliver reports no picture. External frame2
+completes; successful one-shot snapshot at287.511925s reads right crossbar
++0x800=0, +0x000=4. eDP active, external DRM mode active; no keyboard
+test. Offline audit and selected evidence in notes/2026-09-22-0098-result.md.
+No new kernel patch, MMIO or parameter change made after capture.
+
+After commit/push request exactly: unplug the hub from RIGHT USB-C and
+leave it disconnected; do not reconnect the adapter or reboot yet.
+Physical action, no shell command initiates unplug. Existing0098 normal
+disconnect uses typec2, NHI0xf01f00000, ACIO0xf01ac0000, dcpext1
+0x315c00000, crossbar0xf0304c000 size0x4000; existing teardown controls
++000,+004,+008,+00c,+014,+018,+01c,+024,+028,+02c,+030,+034,+050,+070
+and existing status reads. DPIN0 at0xf01e50000..0xf01e53fff requests
+CONTROL+0xc bit0=1 and uses existing HPD+0/ACK+0x10 reads. No manual
+MMIO, new mapping or panel access. If eDP blacks out, leave unplugged
+and stop. Future boots already disarmed. Any subsequent direct-USB-C
+test or changed diagnostic must be reviewed and logged separately.
