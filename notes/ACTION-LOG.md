@@ -1525,3 +1525,23 @@ Restores all seven verified originals from /var/tmp/j416s-0098-before,
 removes config, depmods and syncs; no live reload/reboot. After boot verify
 loaded build IDs, eDP and flags, then log/push/execute disarm before hotplug.
 This entry records reboot intent, not successful boot or visible output.
+
+## 2026-09-22 — Verify0098 boot and disarm future boots
+
+Boot4ab4e6cc-59df-4dd9-86ca-5eede410542e: hub absent, all candidate
+hashes match; loaded ELF build-ID notes for appledrm, crossbar and
+thunderbolt match candidate files. Three live native experiment flags Y.
+Hyprland eDP-1 active3456x2160@120, DPMS on, disabled=false.
+
+After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0098.py disarm
+```
+
+Remove /etc/modprobe.d/j416s-0098-native-dpin.conf, rebuild initramfs,
+verify candidate hashes and removed options, sync. Current loaded flags
+remain enabled for one test. No live reload, parameter write, MMIO,
+mapping or reboot. Right addresses unchanged and not accessed by disarm:
+xbar0xf0304c000, NHI0xf01f00000, ACIO0xf01ac0000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
