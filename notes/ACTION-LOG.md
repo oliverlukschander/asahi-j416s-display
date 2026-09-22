@@ -3542,3 +3542,28 @@ Confirm right port, pre-clock gates off, PLL/nativeup result,034/800,
 lanes/DPRX, counter readback, and actual picture - the last decided only
 by Oliver's visual confirmation. If sequence stalls, capture and stop
 without retrying gates or changing registers.
+
+## 2026-09-22 -0109 connection captured; CONNECTED bit confirmed clean; unplug confirmed
+
+Previously logged capture commands completed. Sequence reproduces
+0105-0108 exactly, plus the new handshake line: "native DPIN0: active=1
+handshake=0" - the CONNECTED-bit writes on HPD/CONTROL ran and returned
+success (no -EIO/-ENOLINK/-ETIMEDOUT). User confirms "connected, nothing
+happened" - same no-signal outcome as0102-0108. eDP stayed connected
+throughout. DP-IN packet counter again nonzero (0x5d34).
+
+This rules out the CONNECTED-bit hypothesis - the one fully-confirmed,
+unconditional native register write found so far - as a sole explanation.
+Combined with0106-0108, four separate, independently-verified, non-
+speculative hypotheses at the USB4/tunnel/DPIN0 level are now ruled out
+with hard evidence each time. Full analysis in
+notes/2026-09-22-0109-result.md. Remaining leads: the two runtime-
+dependent DPIN0 fields (+0x14,+0x1c) whose exact values this project
+cannot determine from the static kernelcache alone (plan in
+notes/2026-09-22-0109-dpin0-connected-bit.md); or causes outside Linux
+driver observation/control entirely.
+
+Oliver confirmed the hub is unplugged from the right port; sysfs shows no
+thunderbolt devices, eDP remained connected before and after. No further
+hardware action performed this boot (one-attempt guard). No speculative
+register write or reboot performed.
