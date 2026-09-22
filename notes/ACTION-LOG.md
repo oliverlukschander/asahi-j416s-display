@@ -2089,3 +2089,24 @@ or new clock programming expected while unplugged; no manual MMIO, live
 module unload, panel mapping or39c000000 assignment. Keep hub disconnected
 after boot until verification and separately logged future-boot disarm.
 If eDP does not return, stop the test; do not connect hub.
+
+## 2026-09-22 —0101 boot verification and future-boot disarm
+
+New boot0ec84f1a-b57c-455e-9155-bb440f5c0d24. Candidate hash/machine/kernel
+check passes, hub and external DRM absent. eDP active3456x2160@120.
+All five expected loaded flags report Y. Journal shows normal panel setup
+and no USB4 tunnel clock invocation while unplugged.
+
+After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0101.py disarm
+```
+
+Remove0101 modprobe options, rebuild and verify initramfs without them.
+Current loaded flags remain unchanged. No MMIO, mapping, live parameter
+write, module reload or reboot; no hardware address accessed by disarm.
+Later test scope remains right ATC core0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,DPIN0 0xf01e50000
+size0x4000,NHI0xf01f00000,ACIO0xf01ac0000. Keep external cables unplugged
+until disarm verification and a separately committed/pushed hotplug entry.
