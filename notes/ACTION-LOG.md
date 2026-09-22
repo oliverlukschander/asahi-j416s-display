@@ -3312,3 +3312,38 @@ lanes/DPRX, counter/bandwidth readback, and actual picture - the last of
 these decided only by Oliver's visual confirmation, not by any register or
 log line. If sequence stalls, capture and stop without retrying gates or
 changing registers.
+
+## 2026-09-22 -0108 connection captured; bandwidth grant confirmed; unplug confirmed
+
+Previously logged capture commands completed. Sequence reproduces
+0105-0107 exactly. User confirms "connected... external monitor still idle
+/ standby" - same outcome as0102-0107. eDP stayed connected throughout.
+
+Host DP IN adapter STAT (DP_STATUS,bits31:24=allocated bandwidth) read
+0x24000000 at101.115s, before DPRX_DONE - nonzero, where every prior
+capture (0104,0107) showed STAT=00000000. This is exactly the field
+dp_bw_grant's usb4_dp_port_allocate_bandwidth() writes; it changed exactly
+as designed, confirming real nonzero bandwidth was granted for the first
+time in this investigation. DP-IN packet counter also nonzero (0x3740).
+Hub DP OUT's own local STAT=04000000 unchanged (expected - this patch only
+ever writes the DP IN side's field). Full analysis in
+notes/2026-09-22-0108-result.md.
+
+This rules out the zero-bandwidth-allocation hypothesis as the (sole)
+explanation. Combined with0106/0107, three separate independently-verified
+USB4/tunnel-level hypotheses (crossbar not emitting;tunnel not carrying
+traffic to the hub;zero allocated bandwidth) are now ruled out with hard
+evidence each time. Remaining likely causes are outside Linux driver
+observation/control (hub firmware,physical DP-alt-mode link training) or
+require native macOS comparison.
+
+Oliver confirmed the hub is unplugged from the right port; sysfs shows no
+thunderbolt devices, eDP remained connected before and after. No further
+hardware action performed this boot (one-attempt guard). No speculative
+register write or reboot performed.
+
+Oliver chose to compare against real macOS on this Mac next (boot into
+macOS, plug the same hub+adapter+monitor, capture IORegistry/log telemetry)
+rather than continue guessing at further Linux-side USB4/tunnel theories.
+That is a separate investigation track requiring its own preflight and
+action entries before any macOS-side capture or reboot.
