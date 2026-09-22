@@ -33,7 +33,24 @@ struct mux_control { void *chip; unsigned int index; };
 #define mux_chip_priv(chip) (chip)
 #define mux_control_get_index(mux) ((mux)->index)
 static u32 readl(void *p) { return *(u32 *)p; }
-static void writel(u32 v, void *p) { *(u32 *)p = v; }
+static u32 *watched;
+static unsigned writes;
+static void writel(u32 v, void *p) {
+ if (watched) {
+  unsigned off=(u32 *)p-watched;
+  const unsigned allowed[]={0x004,0x014,0x024,0x008,0x018,0x028,
+                            0x000,0x00c,0x01c,0x034,0x02c};
+  bool ok=false;
+  for(unsigned i=0;i<sizeof(allowed)/sizeof(allowed[0]);i++)
+   if(off*4==allowed[i]) ok=true;
+  assert(ok); /* no selector rewrite, old +050/+070 writes or other port */
+  if(off*4==0x000 || off*4==0x00c) assert(v & 4);
+  if(off*4==0x004 || off*4==0x014) assert(!(v & 4));
+  if(off*4==0x024) assert(!(v & 1));
+  writes++;
+ }
+ *(u32 *)p = v;
+}
 '''
 tests = r'''
 int main(void) {
@@ -56,6 +73,35 @@ int main(void) {
    assert(x.selected_dispext[MUX_DPIN0]==-1);
   }
  }
+ for(unsigned fail=0;fail<4;fail++) {
+  u32 regs[0x1000/4], before[0x1000/4];
+  for(unsigned i=0;i<0x1000/4;i++) regs[i]=0xa5a50000U ^ i;
+  regs[0/4]|=4; regs[0xc/4]|=4;
+  regs[0x804/4]&=~4U; regs[0x810/4]&=~4U; regs[0x81c/4]&=~1U;
+  if(fail==1) regs[0x804/4]|=4;
+  if(fail==2) regs[0x810/4]|=4;
+  if(fail==3) regs[0x81c/4]|=1;
+  for(unsigned i=0;i<0x1000/4;i++) before[i]=regs[i];
+  struct apple_dpxbar x={.regs=regs,.selected_dispext={-1,2,-1}};
+  watched=regs;writes=0;
+  assert(t602x_right_dpin0_bring_up(&x)==(fail ? -ETIMEDOUT : 0));
+  assert(writes==(fail ? 3U : 11U));
+  const unsigned offsets[]={4,0x14,0x24,8,0x18,0x28,0,0xc,0x1c,0x34,0x2c};
+  const u32 masks[]={4,4,1,4,0x30,3,4,4,1,1,4};
+  for(unsigned i=0;i<0x1000/4;i++) {
+   u32 mask=0;
+   for(unsigned j=0;j<(fail ? 3U : 11U);j++) if(i*4==offsets[j]) mask=masks[j];
+   assert(((regs[i]^before[i])&~mask)==0);
+  }
+  assert(x.selected_dispext[MUX_DPIN0]==2);
+  if(!fail) {
+   assert((regs[0x18/4]&0x30)==0x10);
+   assert((regs[0x28/4]&3)==1);
+   assert(regs[0x1c/4]&1);
+  }
+  watched=NULL;
+ }
+ puts("PASS: native bring-up keeps source clock active; no mux rewrite/reset assertion; all3 reset failures; unrelated fields preserved");
  puts("PASS: 27 actual DPIN0 select/disconnect cycles; source gate clears, reset restores, +0x20 untouched");
 }
 '''

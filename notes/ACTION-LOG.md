@@ -2324,3 +2324,41 @@ monitor goal remains unmet. Corrected0102-clock-success notes accordingly.
 No further live register access, hotplug, reboot or parameter change.
 Current connection preserved, future boots remain disarmed. Investigate
 remaining video delivery offline; do not treat Hyprland detection as picture.
+
+## 2026-09-22 — No-signal confirmed;0103 built; request hub removal
+
+Oliver confirms no signal/standby.0102 intermediate clock/frame success
+is not monitor success. Built/RAM-tested0103 native post-clock bring-up
+without disconnecting selected crossbar; see0103-native-link-up notes.
+Not installed. No live register experiments performed. Future boots disarmed.
+
+After commit/push request exactly: unplug OWC hub from Mac RIGHT USB-C,
+leave direct adapter disconnected from Mac, report when unplugged. No shell
+command initiates physical removal. Unlike0100/0101, current0102 successfully
+programmed the clock, so this unplug exercises its existing saved-state
+cleanup for the first time. ATC owner stops PCLK1/PLL outputs and restores
+saved fields through existing core0xf03000000 size0x4c000:
+008/3ffff,1b0/fff,7000/207c,2224/3,2080/ffffffff,2084/0fffffff,
+2088/007fffff,2208/001f0000,2220/80,2214/1,2200/54,2000/1ffffff9.
+Mode transition performs restoration before existing power-off; if already
+restored, later DCP cleanup performs no register access. No live manual MMIO.
+
+Normal teardown also owns lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000,crossbar0xf0304c000 size0x4000,
+dcpext1 0x315c00000,NHI0xf01f00000/ACIO0xf01ac0000. Existing crossbar
+controls+000,+004,+008,+00c,+014,+018,+01c,+024,+028,+02c,+030,+034,
++050,+070;DPIN0 0xf01e50000 size0x4000 CONTROL+0xc requestbit0,
+HPD+0/ACK+0x10 reads if powered owner remains available. No new mapping,
+forbidden panel/39c000000 assignment, /dev/mem or module unload.
+If eDP goes black, stop with hub unplugged. Do not reboot or reconnect.
+
+After unplug verify with:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0103.py check
+sudo -n journalctl -k -b --no-pager -o short-monotonic
+hyprctl monitors
+```
+
+Install/reboot/next hotplug each require their own committed/pushed entry.

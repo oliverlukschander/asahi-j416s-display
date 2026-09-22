@@ -1,0 +1,184 @@
+From 662a17e276d26591bb69b48dfab2cf2d4e936c70 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 11:23:41 +0200
+Subject: [PATCH] drm/apple: bring up USB4 crossbar without post-clock
+ disconnect
+
+For the bounded right-port tunnel-clock experiment, replace the DID_CHANGE crossbar reselect with native clock1 bring-up on the existing selection. Check reset-release status and preserve the active source clock and route. Keep ACTIVATE and other ports unchanged; retain one-attempt guards.
+---
+ drivers/gpu/drm/apple/dptxep.c       | 35 ++++++++++++-----
+ drivers/mux/apple-display-crossbar.c | 58 ++++++++++++++++++++++++++++
+ 2 files changed, 84 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 82656f4..e26f1bf 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -458,7 +458,7 @@ dptxport_call_will_change_link_config(struct apple_epic_service *service)
+ 	return 0;
+ }
+ 
+-static int dptxport_native_dpin(struct apple_epic_service *service, bool active);
++static int dptxport_native_dpin(struct apple_epic_service *service, bool active, bool bring_up);
+ 
+ static int
+ dptxport_call_did_change_link_config(struct apple_epic_service *service)
+@@ -471,14 +471,14 @@ dptxport_call_did_change_link_config(struct apple_epic_service *service)
+ 		/*
+ 		 * Native ATCDP brings the connection up after setting a nonzero
+ 		 * link rate. ACTIVATE alone precedes that clock configuration.
+-		 * Test one crossbar reselect at this boundary, using the same
+-		 * guarded route and ACIO owner as ACTIVATE. The already-active
+-		 * DPIN handshake is cached; this does not retrain or retry it.
++		 * With tunnel clocks configured, bring up the selected crossbar
++		 * without disconnecting it. Legacy probe-only builds retain the
++		 * old reselect. The DPIN handshake is cached by its owner.
+ 		 */
+ 		if (dptx->usb4_link_up_attempted)
+ 			return -EALREADY;
+ 		dptx->usb4_link_up_attempted = true;
+-		ret = dptxport_native_dpin(service, true);
++		ret = dptxport_native_dpin(service, true, usb4_tunnel_clock);
+ 		dev_info(dcp->dev, "native DPIN0: link-config up rate=0x%x result=%d\n",
+ 			 dptx->link_rate, ret);
+ 		if (ret)
+@@ -619,8 +619,9 @@ static int dptxport_call_set_tiled_display_hint(void *reply_,
+ 
+ /* Optional symbol: keep the default DRM module independent of USB4. */
+ extern int apple_usb4_right_dpin0_set_active(bool active);
++extern int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux);
+ 
+-static int dptxport_native_dpin(struct apple_epic_service *service, bool active)
++static int dptxport_native_dpin(struct apple_epic_service *service, bool active, bool bring_up)
+ {
+ 	struct apple_dcp *dcp = service->ep->dcp;
+ 	struct apple_dcp_typec_route *route = dcp->active_typec_route;
+@@ -639,7 +640,23 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active)
+ 	set_active = symbol_get(apple_usb4_right_dpin0_set_active);
+ 	if (!set_active)
+ 		return -EOPNOTSUPP;
+-	if (active) {
++	if (active && bring_up) {
++		int (*up)(struct mux_control *mux);
++
++		if (!usb4_tunnel_clock || !dptx->usb4_clock_phy || !dptx->link_rate) {
++			ret = -EINVAL;
++			goto out;
++		}
++		up = symbol_get(apple_dpxbar_right_dpin0_bring_up);
++		if (!up) {
++			ret = -EOPNOTSUPP;
++			goto out;
++		}
++		ret = up(route->usb4_xbar);
++		symbol_put(apple_dpxbar_right_dpin0_bring_up);
++		if (ret)
++			goto out;
++	} else if (active) {
+ 		/* macOS connects the crossbar here, after DCP power/reset. */
+ 		mux_control_deselect(route->usb4_xbar);
+ 		ret = mux_control_select(route->usb4_xbar, route->mux_index);
+@@ -664,7 +681,7 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 
+ 	/* The native USB4 candidate must never configure a physical DP PHY. */
+ 	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		ret = dptxport_native_dpin(service, true);
++		ret = dptxport_native_dpin(service, true, false);
+ 	else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+@@ -693,7 +710,7 @@ dptxport_call_deactivate(struct apple_epic_service *service,
+ 			dev_warn(dcp->dev, "USB4 tunnel clock cleanup failed: %d\n", clock_ret);
+ 	}
+ 	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		ret = dptxport_native_dpin(service, false);
++		ret = dptxport_native_dpin(service, false, false);
+ 	else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_INVALID, 0);
+diff --git a/drivers/mux/apple-display-crossbar.c b/drivers/mux/apple-display-crossbar.c
+index 0058faa..af1d7f6 100644
+--- a/drivers/mux/apple-display-crossbar.c
++++ b/drivers/mux/apple-display-crossbar.c
+@@ -105,6 +105,7 @@ struct apple_dpxbar {
+ 	int selected_dispext[MUX_MAX];
+ 	spinlock_t lock;
+ 	bool frame_snapshot_done[MUX_MAX];
++	bool dpin0_bringup_attempted;
+ };
+ 
+ static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
+@@ -326,6 +327,30 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 	return ret;
+ }
+ 
++/* Native T602x clock1 bring-up for an already selected right DPIN0/source2. */
++static int t602x_right_dpin0_bring_up(struct apple_dpxbar *xbar)
++{
++	/* Release existing resets; do not take the live connection down first. */
++	dpxbar_clear32(xbar, T602X_FIFO_WR_N_CLK_EN, BIT(2));
++	dpxbar_clear32(xbar, T602X_REG_014, BIT(2));
++	dpxbar_clear32(xbar, T602X_FIFO_RD_PCLK2_EN, BIT(0));
++	udelay(1);
++	if ((readl(xbar->regs + T602X_REG_804_STAT) & BIT(2)) ||
++	    (readl(xbar->regs + T602X_REG_810_STAT) & BIT(2)) ||
++	    (readl(xbar->regs + T602X_REG_81C_STAT) & BIT(0)))
++		return -ETIMEDOUT;
++
++	dpxbar_set32(xbar, T602X_FIFO_WR_UNK_EN, BIT(2));
++	dpxbar_mask32(xbar, T602X_REG_018, GENMASK(5, 4), BIT(4));
++	dpxbar_mask32(xbar, T602X_FIFO_RD_N_CLK_EN, GENMASK(1, 0), BIT(0));
++	dpxbar_set32(xbar, T602X_FIFO_WR_DPTX_CLK_EN, BIT(2));
++	dpxbar_set32(xbar, T602X_REG_00C, BIT(2));
++	dpxbar_set32(xbar, T602X_REG_01C, BIT(0));
++	dpxbar_set32(xbar, T602X_REG_034, BIT(0));
++	dpxbar_set32(xbar, T602X_FIFO_RD_UNK_EN, BIT(2));
++	return 0;
++}
++
+ static int apple_dpxbar_set(struct mux_control *mux, int state)
+ {
+ 	struct apple_dpxbar *dpxbar = mux_chip_priv(mux->chip);
+@@ -501,6 +526,39 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+ }
+ EXPORT_SYMBOL_GPL(apple_dpxbar_right_frame_snapshot);
+ 
++/* Optional, one-shot native bring-up after successful USB4 clock setup. */
++int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux);
++int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux)
++{
++	struct apple_dpxbar *xbar;
++	struct resource *res;
++	unsigned long flags;
++	int ret;
++
++	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
++	    mux_control_get_index(mux) != MUX_DPIN0 ||
++	    !of_machine_is_compatible("apple,j416s"))
++		return -EINVAL;
++	xbar = mux_chip_priv(mux->chip);
++	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
++	if (!res || res->start != 0xf0304c000ULL || resource_size(res) < 0x1000)
++		return -EINVAL;
++	spin_lock_irqsave(&xbar->lock, flags);
++	if (xbar->selected_dispext[MUX_DPIN0] != 2)
++		ret = -ENODEV;
++	else if (xbar->dpin0_bringup_attempted)
++		ret = -EALREADY;
++	else {
++		xbar->dpin0_bringup_attempted = true;
++		ret = t602x_right_dpin0_bring_up(xbar);
++		t602x_dump(xbar, "native-link-up-dpin0");
++	}
++	spin_unlock_irqrestore(&xbar->lock, flags);
++	dev_info(xbar->dev, "native DPIN0 crossbar bring-up result=%d\n", ret);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(apple_dpxbar_right_dpin0_bring_up);
++
+ static int apple_dpxbar_probe(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+-- 
+2.55.0
+

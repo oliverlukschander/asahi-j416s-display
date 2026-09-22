@@ -105,6 +105,7 @@ struct apple_dpxbar {
 	int selected_dispext[MUX_MAX];
 	spinlock_t lock;
 	bool frame_snapshot_done[MUX_MAX];
+	bool dpin0_bringup_attempted;
 };
 
 static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
@@ -326,6 +327,30 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
 	return ret;
 }
 
+/* Native T602x clock1 bring-up for an already selected right DPIN0/source2. */
+static int t602x_right_dpin0_bring_up(struct apple_dpxbar *xbar)
+{
+	/* Release existing resets; do not take the live connection down first. */
+	dpxbar_clear32(xbar, T602X_FIFO_WR_N_CLK_EN, BIT(2));
+	dpxbar_clear32(xbar, T602X_REG_014, BIT(2));
+	dpxbar_clear32(xbar, T602X_FIFO_RD_PCLK2_EN, BIT(0));
+	udelay(1);
+	if ((readl(xbar->regs + T602X_REG_804_STAT) & BIT(2)) ||
+	    (readl(xbar->regs + T602X_REG_810_STAT) & BIT(2)) ||
+	    (readl(xbar->regs + T602X_REG_81C_STAT) & BIT(0)))
+		return -ETIMEDOUT;
+
+	dpxbar_set32(xbar, T602X_FIFO_WR_UNK_EN, BIT(2));
+	dpxbar_mask32(xbar, T602X_REG_018, GENMASK(5, 4), BIT(4));
+	dpxbar_mask32(xbar, T602X_FIFO_RD_N_CLK_EN, GENMASK(1, 0), BIT(0));
+	dpxbar_set32(xbar, T602X_FIFO_WR_DPTX_CLK_EN, BIT(2));
+	dpxbar_set32(xbar, T602X_REG_00C, BIT(2));
+	dpxbar_set32(xbar, T602X_REG_01C, BIT(0));
+	dpxbar_set32(xbar, T602X_REG_034, BIT(0));
+	dpxbar_set32(xbar, T602X_FIFO_RD_UNK_EN, BIT(2));
+	return 0;
+}
+
 static int apple_dpxbar_set(struct mux_control *mux, int state)
 {
 	struct apple_dpxbar *dpxbar = mux_chip_priv(mux->chip);
@@ -500,6 +525,39 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
 	return ret;
 }
 EXPORT_SYMBOL_GPL(apple_dpxbar_right_frame_snapshot);
+
+/* Optional, one-shot native bring-up after successful USB4 clock setup. */
+int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux);
+int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux)
+{
+	struct apple_dpxbar *xbar;
+	struct resource *res;
+	unsigned long flags;
+	int ret;
+
+	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
+	    mux_control_get_index(mux) != MUX_DPIN0 ||
+	    !of_machine_is_compatible("apple,j416s"))
+		return -EINVAL;
+	xbar = mux_chip_priv(mux->chip);
+	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+	if (!res || res->start != 0xf0304c000ULL || resource_size(res) < 0x1000)
+		return -EINVAL;
+	spin_lock_irqsave(&xbar->lock, flags);
+	if (xbar->selected_dispext[MUX_DPIN0] != 2)
+		ret = -ENODEV;
+	else if (xbar->dpin0_bringup_attempted)
+		ret = -EALREADY;
+	else {
+		xbar->dpin0_bringup_attempted = true;
+		ret = t602x_right_dpin0_bring_up(xbar);
+		t602x_dump(xbar, "native-link-up-dpin0");
+	}
+	spin_unlock_irqrestore(&xbar->lock, flags);
+	dev_info(xbar->dev, "native DPIN0 crossbar bring-up result=%d\n", ret);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(apple_dpxbar_right_dpin0_bring_up);
 
 static int apple_dpxbar_probe(struct platform_device *pdev)
 {
