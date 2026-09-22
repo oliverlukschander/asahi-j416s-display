@@ -2672,3 +2672,22 @@ Transport owner is right NHI0xf01f00000/ACIO0xf01ac0000. No new physical
 mapping/address access; no panel,disp or ATC manual register operations.
 Hub remains attached for this read-only snapshot; no replug/reboot requested.
 Raw capture files remain private/untracked.
+
+## 2026-09-22 —0104 adapter reads completed; request safe unplug
+
+Both logged debugfs reads completed. Host/hub DP status both4lanes,HBR;
+CM handshake clear, VE/AE/HPD set. See notes/2026-09-22-0104-result.md.
+No new kernel patch, install or reboot. Monitor still no picture.
+After committing/pushing request unplug hub from RIGHT port and leave direct
+adapter disconnected. No shell command initiates removal. Normal teardown
+can restore saved ATC clock fields at core0xf03000000 size0x4c000:
+008/3ffff,1b0/fff,7000/207c,2224/3,2080/ffffffff,2084/0fffffff,
+2088/007fffff,2208/001f0000,2220/80,2214/1,2200/54,2000/1ffffff9.
+Normal driver-owned resources include lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000,crossbar0xf0304c000 size0x4000,
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000,CONTROL+c requestbit0,HPD+0/ACK+10reads.
+Crossbar teardown controls000,004,008,00c,014,018,01c,024,028,02c,030,034,
+050,070. No new mapping/manualMMIO/forbidden panel access or module unload.
+If eDP blacks out, stop with hub unplugged. No reconnect or reboot requested.
