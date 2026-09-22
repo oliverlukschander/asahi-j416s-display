@@ -1821,3 +1821,30 @@ python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0100.py chec
 
 Install/reboot/next hub connection each require their own later log entry
 committed and pushed before execution. This entry does not schedule them.
+
+## 2026-09-22 —0100 install with external connections absent
+
+Oliver confirms unplugged. `python3 scripts/manage-0100.py check` passes:
+correct kernel/machine, no hub router, no external DRM connection, all
+candidate hashes match. After this entry is committed and pushed, execute:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0100.py install
+```
+
+The installer backs up and verifies nine files in /var/tmp/j416s-0100-before:
+two installed copies each of ATC, appledrm, crossbar mux, thunderbolt_apple,
+plus /boot/initramfs-linux-aurora.img. It installs the recorded0100 hashes,
+writes /etc/modprobe.d/j416s-0100-native-dpin.conf, runs depmod and mkinitcpio,
+and verifies the image's modules/options. On failure it restores the verified
+original files. No insmod, live parameter write, MMIO access, driver unload,
+or reboot is performed by this command. Currently loaded0099 stays active.
+
+Address scope on the later separately logged boot/test: ATC2 core
+0xf03000000 size0x4c000; clock offsets008,1b0,7000,2224,2080,2084,2088,
+2208,2220,2214,2200,2000 with the masks in0100 notes; status reads a74/7044.
+Existing right crossbar0xf0304c000 size0x4000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000 size0x4000, NHI0xf01f00000, ACIO0xf01ac0000 remain
+owned by their existing drivers. No additional mappings from installation.
+All external display cables remain unplugged. Reboot requires its own
+subsequent committed/pushed action entry after install verification.
