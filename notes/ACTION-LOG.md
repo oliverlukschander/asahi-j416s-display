@@ -2362,3 +2362,31 @@ hyprctl monitors
 ```
 
 Install/reboot/next hotplug each require their own committed/pushed entry.
+
+## 2026-09-22 —0102 unplug completed;0103 installation
+
+Oliver confirms unplugged. manage-0103.py check passes; hub/external DRM
+absent, candidate hashes match. eDP active3456x2160@120, same boot
+741e4261-fa77-45f1-a1c6-07d98348fe65. Journal: SET_LINK_RATE0 at1050.478836s,
+clock cleanup callback0; DPIN deactivation-ENODEV after cable loss;
+crossbar disconnect completes. No reset observed. This is one successful
+unplug observation, not full cleanup/replug validation. Idle snapshot+800
+still4 while+000=0; no further live register probing performed.
+
+After committing and pushing this entry execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0103.py install
+```
+
+Back up/verify nine files in /var/tmp/j416s-0103-before: two installed
+copies each ATC/appledrm/mux/thunderbolt_apple plus initramfs. Install0103
+pinned hashes, write0103 options, depmod/mkinitcpio and verify image;
+restore verified originals on failure. No live reload, mapping, MMIO,
+parameter write or reboot; no hardware addresses accessed by installation.
+Later test scope remains right ATC core0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,DPIN0 0xf01e50000
+size0x4000,NHI0xf01f00000,ACIO0xf01ac0000.0103 new crossbar bring-up
+uses offsets004,014,024,008,018,028,000,00c,01c,034,02c and status
+804,810,81c as documented; no such operation during install. Keep both
+external connections unplugged. Reboot logged separately after verification.
