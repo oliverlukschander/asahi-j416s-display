@@ -649,6 +649,9 @@ struct apple_atcphy {
 	const struct atcphy_hw *hw;
 	enum atcphy_mode mode;
 	int dp_link_rate;
+	bool tunnel_attempted, tunnel_saved;
+	u8 tunnel_rate;
+	u32 tunnel_saved_regs[12];
 	bool swap_lanes;
 	bool pipehandler_up;
 
@@ -1891,12 +1894,187 @@ static int atcphy_power_on(struct apple_atcphy *atcphy)
 	return 0;
 }
 
+/*
+ * Bounded J416s right DPIN0 clock experiment. Native 13.5 uses a fixed
+ * AUSPLL descriptor and selects the requested rate at TX_DP_CTRL0.
+ * All addresses below belong to the existing ATC core mapping, not ACIO RC.
+ */
+static bool usb4_tunnel_clock;
+module_param(usb4_tunnel_clock, bool, 0444);
+MODULE_PARM_DESC(usb4_tunnel_clock, "Opt-in J416s right DPIN0 tunnel clock");
+
+struct atc_tunnel_saved_reg {
+	u32 reg;
+	u32 mask;
+};
+
+static const struct atc_tunnel_saved_reg atc_tunnel_regs[] = {
+	{ ACIOPHY_CFG0, 0x0003ffff },
+	{ ACIOPHY_SLEEP_CTRL, 0x00000fff },
+	{ ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, 0x0000207c },
+	{ AUSPLL_FREQ_CFG, 0x00000003 },
+	{ AUSPLL_FREQ_DESC_A, 0xffffffff },
+	{ AUSPLL_FREQ_DESC_B, 0x0fffffff },
+	{ AUSPLL_FREQ_DESC_C, 0x007fffff },
+	{ AUSPLL_CLKOUT_DIV, 0x001f0000 },
+	{ AUSPLL_CLKOUT_DTC_VREG, 0x00000080 },
+	{ AUSPLL_BGR, 0x00000001 },
+	{ AUSPLL_CLKOUT_MASTER, 0x00000054 },
+	{ AUSPLL_APB_CMD_OVERRIDE, 0x1ffffff9 },
+};
+
+static int atc_tunnel_command(struct apple_atcphy *atcphy, u32 command)
+{
+	u32 value;
+	int ret;
+
+	core_mask32(atcphy, AUSPLL_APB_CMD_OVERRIDE,
+		    AUSPLL_APB_CMD_OVERRIDE_CMD,
+		    FIELD_PREP(AUSPLL_APB_CMD_OVERRIDE_CMD, command) |
+		    AUSPLL_APB_CMD_OVERRIDE_REQ | AUSPLL_APB_CMD_OVERRIDE_UNK28);
+	ret = readl_poll_timeout(atcphy->regs.core + AUSPLL_APB_CMD_OVERRIDE,
+				value, value & AUSPLL_APB_CMD_OVERRIDE_ACK, 10, 10000);
+	core_clear32(atcphy, AUSPLL_APB_CMD_OVERRIDE, AUSPLL_APB_CMD_OVERRIDE_REQ);
+	return ret;
+}
+
+static void atc_tunnel_restore(struct apple_atcphy *atcphy)
+{
+	int i;
+
+	lockdep_assert_held(&atcphy->lock);
+	if (!atcphy->tunnel_saved)
+		return;
+	/* Stop our output before restoring the unused PLL descriptor. */
+	core_clear32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK1_ENABLE);
+	core_clear32(atcphy, AUSPLL_CLKOUT_MASTER, 0x54);
+	for (i = ARRAY_SIZE(atc_tunnel_regs) - 1; i >= 0; i--)
+		core_mask32(atcphy, atc_tunnel_regs[i].reg, atc_tunnel_regs[i].mask,
+			    atcphy->tunnel_saved_regs[i] & atc_tunnel_regs[i].mask);
+	atcphy->tunnel_saved = false;
+	atcphy->tunnel_rate = 0;
+}
+
+static int atc_tunnel_start(struct apple_atcphy *atcphy, u8 rate)
+{
+	u32 selector, value;
+	unsigned int i;
+	int ret;
+
+	lockdep_assert_held(&atcphy->lock);
+	switch (rate) {
+	case 0x06:
+		selector = 4;
+		break;
+	case 0x0a:
+		selector = 3;
+		break;
+	case 0x14:
+		selector = 1;
+		break;
+	case 0x1e:
+		selector = 0;
+		break;
+	default:
+		return -EINVAL;
+	}
+	if (atcphy->tunnel_saved)
+		return atcphy->tunnel_rate == rate ? 0 : -EBUSY;
+	if (atcphy->tunnel_attempted)
+		return -EALREADY;
+	/* Refuse to replace an existing clock client or an in-flight command. */
+	value = readl(atcphy->regs.core + ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0);
+	if (value & (DPTX_PCLK1_ENABLE | DPTX_PCLK2_ENABLE | DPRX_PCLK_ENABLE))
+		return -EBUSY;
+	value = readl(atcphy->regs.core + AUSPLL_CLKOUT_MASTER);
+	if (value & 0x54)
+		return -EBUSY;
+	value = readl(atcphy->regs.core + AUSPLL_APB_CMD_OVERRIDE);
+	if (value & AUSPLL_APB_CMD_OVERRIDE_REQ)
+		return -EBUSY;
+	ret = readl_poll_timeout(atcphy->regs.core + ACIOPHY_CMN_SHM_STS_REG0,
+				value, value & ACIOPHY_CMN_SHM_STS_REG0_CMD_READY,
+				10, 10000);
+	if (ret)
+		return ret;
+	atcphy->tunnel_attempted = true;
+	for (i = 0; i < ARRAY_SIZE(atc_tunnel_regs); i++)
+		atcphy->tunnel_saved_regs[i] = readl(atcphy->regs.core + atc_tunnel_regs[i].reg);
+	atcphy->tunnel_saved = true;
+
+	/* Native configureDPTunnelMode, first clock client; no lane mux writes. */
+	core_set32(atcphy, ACIOPHY_CFG0, BIT(2));
+	core_set32(atcphy, ACIOPHY_CFG0, BIT(3));
+	udelay(2);
+	core_set32(atcphy, ACIOPHY_CFG0, BIT(0));
+	core_set32(atcphy, ACIOPHY_CFG0, BIT(1));
+	udelay(2);
+	core_clear32(atcphy, ACIOPHY_CFG0, BIT(4));
+	core_set32(atcphy, ACIOPHY_CFG0, BIT(5));
+	udelay(2);
+	core_set32(atcphy, ACIOPHY_SLEEP_CTRL, 0x30);
+	core_set32(atcphy, ACIOPHY_SLEEP_CTRL, 0xc0);
+	udelay(2);
+	core_set32(atcphy, ACIOPHY_SLEEP_CTRL, 0x03);
+	core_set32(atcphy, ACIOPHY_SLEEP_CTRL, 0x0c);
+	udelay(2);
+	core_clear32(atcphy, ACIOPHY_SLEEP_CTRL, 0x300);
+	core_set32(atcphy, ACIOPHY_SLEEP_CTRL, 0xc00);
+	udelay(2);
+	core_set32(atcphy, ACIOPHY_CFG0, 0xc00);
+	core_set32(atcphy, ACIOPHY_CFG0, 0x3000);
+	udelay(2);
+	core_set32(atcphy, ACIOPHY_CFG0, 0xc0);
+	core_set32(atcphy, ACIOPHY_CFG0, 0x300);
+	udelay(2);
+	core_clear32(atcphy, ACIOPHY_CFG0, 0xc000);
+	core_set32(atcphy, ACIOPHY_CFG0, 0x30000);
+	udelay(2);
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, BIT(2));
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, BIT(3));
+	core_set32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK1_ENABLE);
+	core_mask32(atcphy, ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0, DPTX_PCLK1_SELECT,
+		    FIELD_PREP(DPTX_PCLK1_SELECT, selector));
+
+	/* Native fixed descriptor at cache VA 0xfffffe0007582418. */
+	core_clear32(atcphy, AUSPLL_FREQ_CFG, AUSPLL_FREQ_REFCLK);
+	core_mask32(atcphy, AUSPLL_FREQ_DESC_A, 0xffffffff,
+		    0x21c | (8 << 14) | (3 << 18) | (8 << 22) | (7 << 26));
+	core_mask32(atcphy, AUSPLL_FREQ_DESC_B, 0x0fffffff, 0);
+	core_mask32(atcphy, AUSPLL_FREQ_DESC_C, 0x007fffff,
+		    (5 << 9) | (1 << 14) | (5 << 16) | (2 << 20) | BIT(22));
+	core_mask32(atcphy, AUSPLL_CLKOUT_DIV, AUSPLL_CLKOUT_PLLA_REFBUFCLK_DI,
+		    FIELD_PREP(AUSPLL_CLKOUT_PLLA_REFBUFCLK_DI, 1));
+	core_set32(atcphy, AUSPLL_CLKOUT_DTC_VREG, AUSPLL_DTC_VREG_BYPASS);
+	core_set32(atcphy, AUSPLL_BGR, AUSPLL_BGR_CTRL_AVAIL);
+	core_set32(atcphy, AUSPLL_CLKOUT_MASTER, BIT(2));
+	core_set32(atcphy, AUSPLL_CLKOUT_MASTER, BIT(4));
+	core_set32(atcphy, AUSPLL_CLKOUT_MASTER, BIT(6));
+	ret = atc_tunnel_command(atcphy, 0);
+	if (ret)
+		goto restore;
+	ret = readl_poll_timeout(atcphy->regs.core + ACIOPHY_DP_PCLK_STAT,
+				value, value & ACIOPHY_AUSPLL_LOCK, 10, 10000);
+	if (ret)
+		goto restore;
+	ret = atc_tunnel_command(atcphy, 0x2000);
+	if (ret)
+		goto restore;
+	atcphy->tunnel_rate = rate;
+	return 0;
+restore:
+	atc_tunnel_restore(atcphy);
+	return ret;
+}
+
 static int atcphy_configure(struct apple_atcphy *atcphy, enum atcphy_mode mode)
 {
 	int ret = 0;
 	u32 reg;
 
 	lockdep_assert_held(&atcphy->lock);
+	/* Restore before the existing mode path can power down the registers. */
+	atc_tunnel_restore(atcphy);
 
 	if (mode == APPLE_ATCPHY_MODE_OFF) {
 		ret = atcphy_power_off(atcphy);
@@ -2172,6 +2350,33 @@ static const struct phy_ops apple_atc_dp_phy_ops = {
 	.validate = atcphy_dpphy_validate,
 	.set_mode = atcphy_dpphy_set_mode,
 };
+
+int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate);
+int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate)
+{
+	struct apple_atcphy *atcphy;
+	int ret;
+
+	if (!usb4_tunnel_clock || !phy || phy->ops != &apple_atc_dp_phy_ops ||
+	    !of_machine_is_compatible("apple,j416s"))
+		return -EOPNOTSUPP;
+	atcphy = phy_get_drvdata(phy);
+	if (!of_device_is_compatible(atcphy->np, "apple,t6020-atcphy") ||
+	    atcphy->res.core->start != 0xf03000000ULL ||
+	    resource_size(atcphy->res.core) < 0x7048)
+		return -EINVAL;
+	guard(mutex)(&atcphy->lock);
+	if (!rate) {
+		atc_tunnel_restore(atcphy);
+		return 0;
+	}
+	if (atcphy->mode != APPLE_ATCPHY_MODE_USB4)
+		return -EBUSY;
+	ret = atc_tunnel_start(atcphy, rate);
+	dev_info(atcphy->dev, "USB4 tunnel clock: rate=0x%x result=%d\n", rate, ret);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(apple_atc_right_usb4_tunnel_rate);
 
 static struct phy *atcphy_xlate(struct device *dev, const struct of_phandle_args *args)
 {

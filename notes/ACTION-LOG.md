@@ -1793,3 +1793,31 @@ notes/2026-09-22-0099-working-direct.md. Raw logs/disassembly private.
 No live hardware operation after the previously logged diagnostic snapshot.
 No candidate0100, parameter write, new mapping, hotplug or reboot scheduled.
 Direct adapter remains connected; future boots disarmed.
+
+## 2026-09-22 —0100 built offline; request direct-adapter unplug
+
+User requests the separate Apple USB4 tunnel clock path. Candidate0100
+implemented and RAM-tested; kernel commit b433579; see0100-tunnel-clock
+notes for provenance, masks, limitations and hashes. No0100 live operation,
+installation, parameter write, mapping or reboot has occurred. Future boots
+remain disarmed. Only0099 is loaded, direct adapter currently working.
+
+After this entry is committed and pushed, request exactly: unplug the
+working USB-C-to-HDMI adapter from the Mac RIGHT USB-C port; keep the OWC
+hub unplugged; report when disconnected. No shell command initiates the
+physical unplug. This is ordinary0099 direct-DP teardown, not the new0100
+clock path. Existing owner resources: ATC2 core0xf03000000 size0x4c000,
+lpdptx0xf03050000 size0x8000, axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000, pipehandler0xf02a84000 size0x4000;
+right crossbar0xf0304c000 size0x4000; dcpext1 0x315c00000. Crossbar
+existing controls+000,+004,+008,+00c,+014,+018,+01c,+024,+028,+02c,
++030,+034,+050,+070 and status reads remain driver-owned. Associated
+NHI0xf01f00000/ACIO0xf01ac0000 have no external router. No manual MMIO,
+new mapping or forbidden panel/lpdptx assignment. If eDP goes black,
+leave all external display cables unplugged and stop.
+
+After unplug, read-only verification command:
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0100.py check
+
+Install/reboot/next hub connection each require their own later log entry
+committed and pushed before execution. This entry does not schedule them.
