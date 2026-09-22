@@ -1171,3 +1171,33 @@ under the ACIO0xf01ac0000 power lock. Existing DPIN mapping is
 0xf01e50000..0xf01e53fff, NHI0xf01f00000, dcpext1 0x315c00000.
 No manual MMIO command or reboot accompanies this request. Installation
 and reboot need separate logged/pushed actions after absence is verified.
+
+## 2026-09-22 — Install 0096 after confirmed unplug
+
+Oliver reports unplug complete; preflight verifies hub absent, correct
+kernel/machine, matching candidate hashes and eDP enabled. After commit/push:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0096.py install
+```
+
+Back up SEVEN originals under /var/tmp/j416s-0096-before with verified
+SHA256 manifest: kernel and updates copies of appledrm.ko,
+thunderbolt_apple.ko and mux-apple-display-crossbar.ko, plus
+/boot/initramfs-linux-aurora.img. Install matching module copies and write
+/etc/modprobe.d/j416s-0096-native-dpin.conf: options appledrm
+usb4_protocol_probe=1 usb4_native_dpin=1; options thunderbolt_apple
+dpin_native=1. Run depmod -a 7.1.12-2.5-1-ARCH and mkinitcpio -p
+linux-aurora; verify image hashes/options, sync. Failure restores all seven
+originals and removes config. No live reload, MMIO, mapping or reboot.
+
+Crossbar SHA256 4bb0096ac4560f2da103148f7147403d43434ace76caa20c83cb704fa784a930
+appledrm SHA256 eb6122ba4ce9a30d357d02deb237545c8f9d943cf6769fe6f2947f98e13346a2
+thunderbolt SHA256 26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+
+Future right-port addresses (not accessed by installer): ACIO0xf01ac0000,
+NHI0xf01f00000, crossbar0xf0304c000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff; HPD+0, CONTROL+0xc, ACK+0x10.
+0096 DPIN0 crossbar teardown clears source bit at+0x00c and restores
+reset at+0x024 instead of setting+0x020. Requires fresh boot, separately
+logged and pushed; keep hub unplugged until postboot verification/disarm.
