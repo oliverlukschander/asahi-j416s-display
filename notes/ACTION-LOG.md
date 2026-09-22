@@ -1073,3 +1073,25 @@ options, depmods/syncs, without reload or reboot. After return verify eDP
 and loaded flags, then separately log/push/execute manage-0095.py disarm
 BEFORE asking for a right-port hotplug. No claim of successful boot or
 visible external picture is made by this entry.
+
+## 2026-09-22 — 0095 requires two restarts; hold test and disarm
+
+Oliver reports two restarts before desktop. Current boot
+bfac7473-5184-4715-9154-dad36350742a has eDP enabled, all three experiment
+flags Y, correct candidate hashes, and hub absent. Journal boot list shows
+only prior 0094 boot17277113 and current boot; no intervening failed attempt
+is preserved there. Cause and whether failure occurred on shutdown or startup
+remain undetermined. Do not schedule hotplug while investigating.
+
+After this entry is committed/pushed execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0095.py disarm
+```
+
+Removes /etc/modprobe.d/j416s-0095-native-dpin.conf, runs mkinitcpio -p
+linux-aurora, verifies extracted candidate hashes and absence of that config,
+then syncs. Current loaded flags remain Y; this only disarms future boots.
+No module reload, reboot, live parameter write or MMIO. No addresses accessed;
+experimental right path remains ACIO0xf01ac0000, NHI0xf01f00000,
+xbar0xf0304c000, dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff.
