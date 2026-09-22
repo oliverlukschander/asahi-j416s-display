@@ -1729,3 +1729,23 @@ modetest -M apple -e
 Keep raw captures private. Require after-frame-dpphy snapshot result0 and
 Oliver's visible-picture confirmation before treating this as a known-good
 reference. A later hub test requires its own log and review.
+
+## 2026-09-22 —0099 topology correction; request hub removal
+
+Logged capture commands completed. Live sysfs/journal identify OWC
+Thunderbolt5 Hub0-1 and VMM7100 behind it, not direct adapter attachment.
+0099 records after-frame-dpin0,+800=0,result0; user no picture/eDP on.
+Direct diagnostic has not run. See0099-first-connection notes; preserve
+raw evidence with corrected private filenames. No further MMIO initiated.
+
+After commit/push request exactly: unplug OWC hub from the Mac and leave
+it unplugged; report when disconnected. No shell command initiates this
+physical action. Current normal teardown uses typec2, NHI0xf01f00000,
+ACIO0xf01ac0000, dcpext1 0x315c00000, xbar0xf0304c000 size0x4000,
+existing controls+000,+004,+008,+00c,+014,+018,+01c,+024,+028,+02c,+030,
++034,+050,+070 and existing status reads. Native DPIN0 resource
+0xf01e50000..0xf01e53fff uses CONTROL+0xc bit0=1 request, HPD+0/ACK+0x10
+reads if cable-powered owner remains available. No manual register write
+or mapping. If eDP blacks out, stop with hub unplugged. No reboot or
+hub reconnection. Verify unplug before separately proceeding to direct
+adapter reference;0099 retains a separate direct snapshot allowance.
