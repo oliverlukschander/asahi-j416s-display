@@ -2315,3 +2315,12 @@ See0102-clock-success notes. Actual visible picture confirmation requested
 and pending; keyboard not attached in capture, functionality unverified.
 No further hardware action, unplug, reboot or persistence change requested.
 Current connected state preserved; future boots remain disarmed.
+
+## 2026-09-22 —0102 visual confirmation NEGATIVE
+
+Oliver: "nope, still no picture on the external one". Crossbar clock+800=4,
+PLL callback0 and external frame are confirmed intermediate progress only;
+monitor goal remains unmet. Corrected0102-clock-success notes accordingly.
+No further live register access, hotplug, reboot or parameter change.
+Current connection preserved, future boots remain disarmed. Investigate
+remaining video delivery offline; do not treat Hyprland detection as picture.
