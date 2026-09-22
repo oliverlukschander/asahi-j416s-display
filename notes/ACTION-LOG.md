@@ -1431,3 +1431,20 @@ modetest -M apple -e
 Inspect USB4 frame milestones to locate the stall. Raw captures remain
 private/untracked. Visible picture must be confirmed by Oliver; software
 mode dimensions and completion logs alone do not prove visible output.
+
+## 2026-09-22 — 0097 first frame completes; bounded software trace
+
+Logged captures complete. Boot fcc1d903 shows external frame2 start,
+submit acknowledgement ret0 and actual completion at170.336s. This disproves
+the unqualified earlier assertion that the first external frame never
+completes. Physical picture confirmation requested, pending. Do not infer
+pixel transport from completion alone or stall from transient compositor logs.
+
+After commit/push execute exactly:
+sudo -n python3 /tmp/j416s-0097-trace.py
+Creates isolated /sys/kernel/tracing/instances/j416s0097; enables only
+DCP swap submit, complete, complete intent and abort trace events for10s,
+stops tracing, writes /tmp/j416s-0097-frame-trace.txt, removes instance.
+No modeset, parameter write, MMIO, mapping, module reload or reboot initiated.
+Hardware remains right xbar0xf0304c000, ACIO0xf01ac0000, NHI0xf01f00000,
+dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff.
