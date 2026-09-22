@@ -1394,3 +1394,40 @@ flags remain Y for this boot. No live reload, MMIO, mapping, parameter write
 or reboot. Right addresses unchanged, not accessed by disarm:
 xbar0xf0304c000, ACIO0xf01ac0000, NHI0xf01f00000, dcpext1 0x315c00000,
 DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
+
+## 2026-09-22 — Schedule one diagnostic0097 right-port connection
+
+Disarm completed and extracted image verified. Disarmed image SHA256:
+74fded6167a80366ced0440d30124c49199985089848aacbdd05cbc442feba47
+Current boot retains flags; no test performed yet.
+
+After commit/push request exactly: connect hub with monitor attached to
+RIGHT USB-C once. If eDP blacks out, unplug immediately and stop. No
+reboot with hub attached, no repeated connection. Keyboard may remain
+absent; do not claim tested. No shell command initiates physical hotplug.
+
+Same0096 hardware behavior: typec2, NHI0xf01f00000, ACIO0xf01ac0000,
+dcpext1 0x315c00000, target0x8021, normal tunnel0:5 to1:19. Existing
+crossbar0xf0304c000 size0x4000 is selected at ACTIVATE and reselected
+once after first nonzero link configuration. Existing controls offsets
+0x000..0x034,0x050/0x070 and status reads including0x800 are used.
+DPIN0 teardown clears source bit2 at+0x00c, restores reset bit0 at+0x024;
+it does not set the erroneous+0x020 path. Native ACIO reserves/maps
+0xf01e50000..0xf01e53fff nonposted with cable-power lock, reads
+HPD0xf01e50000, CONTROL0xf01e5000c and ACK0xf01e50010. Activation
+clears CONTROL bit0, polls ACK at most1s, restores original bit on failure;
+deactivation requests bit0=1. Link-config helper uses cached active state.
+No DPIN+8, panel mapping, manual PHY or analog write, or second tunnel.
+0097 adds software milestone logs only, not new hardware operations.
+
+After connection capture exactly:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0097-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0097-right-kernel.log
+modetest -M apple -e
+```
+
+Inspect USB4 frame milestones to locate the stall. Raw captures remain
+private/untracked. Visible picture must be confirmed by Oliver; software
+mode dimensions and completion logs alone do not prove visible output.
