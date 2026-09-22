@@ -1,0 +1,368 @@
+{
+  "j416s-display-disconnected-20260922T074155": {
+    "file_sha256": {
+      "capture.txt": "c7e4c98ceecf60f324323712e9a487415a680cb6359eab769d755a283ab0b035",
+      "device-tree.plist": "0fc0d56331ac22a86828b0a0cb79715b91f314d7b184bb078a69e0a257ff1885",
+      "displays.plist": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "framebuffers.plist": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "macos-version.txt": "e369ac71ae1ffdf3230a664aee3f2258f8786b9262a715c677cd1ab59d0b615b",
+      "model.txt": "890bdc115232fb1e51d7d78d73367733ecbd6c4de7265904605b11d9124db33e",
+      "service-tree.txt": "233a10ef00ec8dbc57358768c6f9124a8181dba2d55fd17593cc25565f88e56d",
+      "topology.json": "b25ccb2d45b1d3303a0377df544f078c0676cd53ff21b72c6b1c143b522ed1bf"
+    },
+    "nodes": {
+      "atc0-dpxbar": {
+        "AAPL,phandle": "0x95",
+        "resources": [
+          {
+            "address": "0x70304c000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc0-dpin0": {
+        "AAPL,phandle": "0x97",
+        "acio-parent": "0x79",
+        "atc-phy": "0xe8",
+        "dp-switch-dfp-endpoint": "0x0",
+        "dp-switch-dfp-port": "0x1",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x95",
+        "transport-index": "0x0",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0x701e50000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc0-dpin1": {
+        "AAPL,phandle": "0x98",
+        "acio-parent": "0x79",
+        "atc-phy": "0xe8",
+        "dp-switch-dfp-endpoint": "0x0",
+        "dp-switch-dfp-port": "0x2",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x95",
+        "transport-index": "0x1",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0x701e58000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpxbar": {
+        "AAPL,phandle": "0x9d",
+        "resources": [
+          {
+            "address": "0xf0304c000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpin0": {
+        "AAPL,phandle": "0x9f",
+        "acio-parent": "0x8d",
+        "atc-phy": "0xf4",
+        "dp-switch-dfp-endpoint": "0x2",
+        "dp-switch-dfp-port": "0x1",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x9d",
+        "transport-index": "0x0",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0xf01e50000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpin1": {
+        "AAPL,phandle": "0xa0",
+        "acio-parent": "0x8d",
+        "atc-phy": "0xf4",
+        "dp-switch-dfp-endpoint": "0x2",
+        "dp-switch-dfp-port": "0x2",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x9d",
+        "transport-index": "0x1",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0xf01e58000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "dcpext1": {
+        "AAPL,phandle": "0x128",
+        "dp-switch-parent": "0x94",
+        "dp-switch-ufp-endpoint": "0x1",
+        "dp-switch-ufp-port": "0x0",
+        "resources": [
+          {
+            "address": "0x315c00000",
+            "length": "0x6c000"
+          },
+          {
+            "address": "0x315850000",
+            "length": "0x4000"
+          }
+        ]
+      }
+    },
+    "dispext1_dcpdp_service": false,
+    "dpin_driver_present": true
+  },
+  "j416s-display-hub-20260922T074227": {
+    "file_sha256": {
+      "capture.txt": "3344e5a8e412c7db601a86adfdd1d6fbf05a0a40c274515f09e29d8b578edce8",
+      "device-tree.plist": "c5c6301ee78b06bf056b1142eb861762f0edc812f5abd4bc65e277bc6f16c521",
+      "displays.plist": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "framebuffers.plist": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "macos-version.txt": "e369ac71ae1ffdf3230a664aee3f2258f8786b9262a715c677cd1ab59d0b615b",
+      "model.txt": "890bdc115232fb1e51d7d78d73367733ecbd6c4de7265904605b11d9124db33e",
+      "service-tree.txt": "d77701ae899bf0375210bde8d55e0a0e369080ad5a85c6c69014a5325989138c",
+      "topology.json": "a7713b1d97247b4ee8f4d6b50cf01ae131ba2e028977aeb31fbb299247ac1324"
+    },
+    "nodes": {
+      "atc0-dpxbar": {
+        "AAPL,phandle": "0x95",
+        "resources": [
+          {
+            "address": "0x70304c000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc0-dpin0": {
+        "AAPL,phandle": "0x97",
+        "acio-parent": "0x79",
+        "atc-phy": "0xe8",
+        "dp-switch-dfp-endpoint": "0x0",
+        "dp-switch-dfp-port": "0x1",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x95",
+        "transport-index": "0x0",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0x701e50000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc0-dpin1": {
+        "AAPL,phandle": "0x98",
+        "acio-parent": "0x79",
+        "atc-phy": "0xe8",
+        "dp-switch-dfp-endpoint": "0x0",
+        "dp-switch-dfp-port": "0x2",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x95",
+        "transport-index": "0x1",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0x701e58000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpxbar": {
+        "AAPL,phandle": "0x9d",
+        "resources": [
+          {
+            "address": "0xf0304c000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpin0": {
+        "AAPL,phandle": "0x9f",
+        "acio-parent": "0x8d",
+        "atc-phy": "0xf4",
+        "dp-switch-dfp-endpoint": "0x2",
+        "dp-switch-dfp-port": "0x1",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x9d",
+        "transport-index": "0x0",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0xf01e50000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpin1": {
+        "AAPL,phandle": "0xa0",
+        "acio-parent": "0x8d",
+        "atc-phy": "0xf4",
+        "dp-switch-dfp-endpoint": "0x2",
+        "dp-switch-dfp-port": "0x2",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x9d",
+        "transport-index": "0x1",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0xf01e58000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "dcpext1": {
+        "AAPL,phandle": "0x128",
+        "dp-switch-parent": "0x94",
+        "dp-switch-ufp-endpoint": "0x1",
+        "dp-switch-ufp-port": "0x0",
+        "resources": [
+          {
+            "address": "0x315c00000",
+            "length": "0x6c000"
+          },
+          {
+            "address": "0x315850000",
+            "length": "0x4000"
+          }
+        ]
+      }
+    },
+    "dispext1_dcpdp_service": true,
+    "dpin_driver_present": true
+  },
+  "j416s-display-hub-20260922T074252": {
+    "file_sha256": {
+      "capture.txt": "400f1199855f36e15f0032c0370d2ede1ca5f908a881906013dace077da75388",
+      "device-tree.plist": "d9cd5e09dffb83030e71a4773d1752971c2520c7e6726ce9362ca1416408abc3",
+      "displays.plist": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "framebuffers.plist": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "macos-version.txt": "e369ac71ae1ffdf3230a664aee3f2258f8786b9262a715c677cd1ab59d0b615b",
+      "model.txt": "890bdc115232fb1e51d7d78d73367733ecbd6c4de7265904605b11d9124db33e",
+      "service-tree.txt": "500d235aef997f2e15cff3485770ad60bd09d4b84a3fb82e4f6530c34d5ce105",
+      "topology.json": "322978294e9efaeda0f123bb8c6d888ec6da1142edebb56ae41fc6229ee1725b"
+    },
+    "nodes": {
+      "atc0-dpxbar": {
+        "AAPL,phandle": "0x95",
+        "resources": [
+          {
+            "address": "0x70304c000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc0-dpin0": {
+        "AAPL,phandle": "0x97",
+        "acio-parent": "0x79",
+        "atc-phy": "0xe8",
+        "dp-switch-dfp-endpoint": "0x0",
+        "dp-switch-dfp-port": "0x1",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x95",
+        "transport-index": "0x0",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0x701e50000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc0-dpin1": {
+        "AAPL,phandle": "0x98",
+        "acio-parent": "0x79",
+        "atc-phy": "0xe8",
+        "dp-switch-dfp-endpoint": "0x0",
+        "dp-switch-dfp-port": "0x2",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x95",
+        "transport-index": "0x1",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0x701e58000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpxbar": {
+        "AAPL,phandle": "0x9d",
+        "resources": [
+          {
+            "address": "0xf0304c000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpin0": {
+        "AAPL,phandle": "0x9f",
+        "acio-parent": "0x8d",
+        "atc-phy": "0xf4",
+        "dp-switch-dfp-endpoint": "0x2",
+        "dp-switch-dfp-port": "0x1",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x9d",
+        "transport-index": "0x0",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0xf01e50000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "atc2-dpin1": {
+        "AAPL,phandle": "0xa0",
+        "acio-parent": "0x8d",
+        "atc-phy": "0xf4",
+        "dp-switch-dfp-endpoint": "0x2",
+        "dp-switch-dfp-port": "0x2",
+        "dp-switch-parent": "0x94",
+        "dpxbar-parent": "0x9d",
+        "transport-index": "0x1",
+        "transport-tunneled": "0x1",
+        "transport-type": "0x5",
+        "resources": [
+          {
+            "address": "0xf01e58000",
+            "length": "0x4000"
+          }
+        ]
+      },
+      "dcpext1": {
+        "AAPL,phandle": "0x128",
+        "dp-switch-parent": "0x94",
+        "dp-switch-ufp-endpoint": "0x1",
+        "dp-switch-ufp-port": "0x0",
+        "resources": [
+          {
+            "address": "0x315c00000",
+            "length": "0x6c000"
+          },
+          {
+            "address": "0x315850000",
+            "length": "0x4000"
+          }
+        ]
+      }
+    },
+    "dispext1_dcpdp_service": true,
+    "dpin_driver_present": true
+  }
+}
