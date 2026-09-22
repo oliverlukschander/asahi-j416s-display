@@ -2647,3 +2647,28 @@ modetest -M apple -e
 
 Confirm live right port in logs, repeated completion ACK and frame/modeset
 outcome; actual visible picture required regardless of Hyprland/clock status.
+
+## 2026-09-22 —0104 no signal; inspect existing DP configuration interfaces
+
+User reports connected, monitor idle/no picture. Capture completed. Right
+NHI f01f00000 confirmed, PLL result0, nativeup0,4lanes,DPRX1,crossbar800=4,
+mode and frame completed. No repeated DID_CHANGE this attachment, so0104
+cache path unexercised. eDP and USB-3 enabled in Hyprland, not proof of video.
+
+After commit/push execute exactly:
+
+```
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/regs > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0104-dpin-regs.txt
+sudo -n cat /sys/kernel/debug/thunderbolt/0-1/port19/regs > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0104-dpout-regs.txt
+```
+
+Reads USB4 TB_CFG_PORT configuration space on route0 adapter5 and route1
+adapter19 using existing tb_port_read transport, not physical MMIO maps.
+Reviewed debugfs.c port_regs_show: runtime-PM reference, domain lock, basic
+DWORD offsets0..8, then existing capability chain with advertised lengths;
+DP v1 capability relative DWORD0..8. Includes any advertised VSE reads,
+no VSE writes, no hop credit writes, no counters reset or sideband operation.
+Transport owner is right NHI0xf01f00000/ACIO0xf01ac0000. No new physical
+mapping/address access; no panel,disp or ATC manual register operations.
+Hub remains attached for this read-only snapshot; no replug/reboot requested.
+Raw capture files remain private/untracked.
