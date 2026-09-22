@@ -2987,3 +2987,35 @@ Confirm right port and pre-clock gates off, then PLL/nativeup result,
 034/800, lanes/DPRX, both counter reads, and actual picture. If sequence
 stalls, capture and stop without retrying gates or changing registers. No
 visible success assumed regardless of counter values.
+
+## 2026-09-22 —0106 connection captured; DP-IN counter nonzero; request unplug
+
+Previously logged capture commands completed. Sequence reproduces0105
+exactly (route select030=2002gates deferred,PLL/nativeup result0,4lanes,
+DPRX_DONE1,frame complete id=2,034 still0,800=4). User confirms "nothing new
+to see" — no external picture, same outcome as0102-0105. eDP stayed
+connected throughout and after capture.
+
+New: DP-IN hop counter (route0-0 port5,counter index0, enabled for the first
+time this boot by0106) reads0x0000421b — nonzero, where tb_path_activate
+clears it to0 at every activation. This is new hardware evidence that video
+traffic left the crossbar/DP IN adapter into the USB4 tunnel on this attempt.
+Hub-side read (route0-1 port19,counter index0) reads0, but that hop's
+counter was never enabled by0106 (only the DP-IN hop was instrumented, by
+design); an unenabled counter reading zero is uninformative and no
+conclusion is drawn from it. Full analysis in
+notes/2026-09-22-0106-result.md. No speculative register write or reboot
+performed. Future boots remain disarmed.
+
+After committing/pushing request unplug RIGHT-port hub; leave direct adapter
+disconnected. No reboot/reconnection requested. Physical unplug may invoke
+existing owner cleanup identical in scope to every prior0102-0105 unplug:
+ATC0xf03000000 size4c000 saved masks008/3ffff,1b0/fff,7000/207c,2224/3,
+2080/ffffffff,2084/0fffffff,2088/007fffff,2208/001f0000,2220/80,2214/1,
+2200/54,2000/1ffffff9. Other resources lpdptx0xf03050000 size8000,
+axi2af0xf00000000 size4000,usb2phy0xf02a90000 size4000,
+pipehandler0xf02a84000 size4000,crossbar0xf0304c000 size4000,
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size4000 CONTROL+cbit0,HPD+0/ACK+10reads. No new
+mapping/manualMMIO/panelaccess/moduleunload. If eDP blacks out, stop with
+hub unplugged. No shell command initiates physical removal.
