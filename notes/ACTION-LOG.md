@@ -1046,3 +1046,30 @@ No MMIO or mapping during installation. Future right-port path remains
 ACIO0xf01ac0000, NHI0xf01f00000, xbar0xf0304c000, dcpext1 0x315c00000,
 DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
 Reboot and physical hotplug require separate pre-action log entries.
+
+## 2026-09-22 — Reboot into verified 0095 with hub absent
+
+Installation succeeded; extracted initramfs module hashes and candidate
+options verified. Second preflight confirms hub absent. New image SHA256:
+fea06cc3c9ffd25da7e5ea4f9f0d4594b90117bbbfe4fb4d60eebc04987a9d6b
+
+After committing/pushing this entry execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0095.py check && sudo -n systemctl reboot
+```
+
+Keep hub unplugged through reboot and postboot checks. No eligible native
+DPIN activation occurs without the hub. Candidate only targets right typec2,
+dcpext1 0x315c00000, ACIO0xf01ac0000, NHI0xf01f00000,
+xbar0xf0304c000, DPIN0 0xf01e50000..0xf01e53fff (HPD+0,
+CONTROL+0xc, ACK+0x10). No manual MMIO operation accompanies this command.
+
+Verified originals and manifest are in /var/tmp/j416s-0095-before. Recovery
+with hub absent, separately logged before execution:
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0095.py restore
+This restores both copies of both modules and original image, removes 0095
+options, depmods/syncs, without reload or reboot. After return verify eDP
+and loaded flags, then separately log/push/execute manage-0095.py disarm
+BEFORE asking for a right-port hotplug. No claim of successful boot or
+visible external picture is made by this entry.
