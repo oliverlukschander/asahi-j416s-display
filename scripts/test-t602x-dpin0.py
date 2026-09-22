@@ -23,6 +23,8 @@ typedef int spinlock_t;
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 #define scnprintf snprintf
 #define dev_info(...) ((void)0)
+#define module_param(...)
+#define MODULE_PARM_DESC(...)
 #define spin_lock_irqsave(lock, flags) ((void)(lock), (flags)=0)
 #define spin_unlock_irqrestore(lock, flags) ((void)(lock), (void)(flags))
 #define udelay(n) ((void)(n))
@@ -35,7 +37,10 @@ struct mux_control { void *chip; unsigned int index; };
 static u32 readl(void *p) { return *(u32 *)p; }
 static u32 *watched;
 static unsigned writes;
+static u32 *record_base;
+static unsigned recorded[128], nrecorded;
 static void writel(u32 v, void *p) {
+ if(record_base) { assert(nrecorded<128); recorded[nrecorded++]=((u32 *)p-record_base)*4; }
  if (watched) {
   unsigned off=(u32 *)p-watched;
   const unsigned allowed[]={0x004,0x014,0x024,0x008,0x018,0x028,
@@ -54,6 +59,36 @@ static void writel(u32 v, void *p) {
 '''
 tests = r'''
 int main(void) {
+ {
+  u32 regs[0x1000/4]={0};
+  struct apple_dpxbar x={.regs=regs,.selected_dispext={-1,-1,-1},.defer_dpin0_bringup=true};
+  struct mux_control m={.chip=&x,.index=MUX_DPIN0};
+  regs[4/4]=0x1ff; regs[0x14/4]=0x1ff; regs[0x24/4]=0x111;
+  record_base=regs;nrecorded=0;
+  assert(apple_dpxbar_set_t602x(&m,3)==-EINVAL && nrecorded==0);
+  x.selected_dispext[MUX_DPPHY]=2;
+  assert(apple_dpxbar_set_t602x(&m,2)==-EBUSY && nrecorded==0);
+  x.selected_dispext[MUX_DPPHY]=-1;
+  assert(apple_dpxbar_set_t602x(&m,2)==0);
+  assert(nrecorded==1 && recorded[0]==0x30 && regs[0x30/4]==0x2002);
+  assert(regs[0]==0 && regs[0x34/4]==0 && regs[4/4]==0x1ff);
+  /* ACTIVATE's deselect/select must still leave all gates off. */
+  assert(apple_dpxbar_set_t602x(&m,MUX_IDLE_DISCONNECT)==0);
+  nrecorded=0;
+  assert(apple_dpxbar_set_t602x(&m,2)==0);
+  assert(nrecorded==1 && recorded[0]==0x30 && regs[0]==0 && regs[0x34/4]==0);
+  nrecorded=0;
+  assert(t602x_right_dpin0_bring_up(&x)==0);
+  assert(nrecorded==11 && regs[0]==4 && regs[0x34/4]==1);
+  assert(regs[0x30/4]==0x2002);
+  nrecorded=0;
+  assert(apple_dpxbar_set_t602x(&m,MUX_IDLE_DISCONNECT)==0);
+  for(unsigned i=0;i<nrecorded;i++) assert(recorded[i]!=0x50 && recorded[i]!=0x70);
+  assert(regs[0]==0 && regs[0x34/4]==0 && regs[0x30/4]==0 && (regs[0x24/4]&1));
+  record_base=NULL;
+  puts("PASS: staged route selects only030; ACTIVATE leaves gates off; bring-up enables; teardown skips legacy050/070; invalid/conflicting routes refused");
+ }
+
  for (unsigned state = 0; state < 9; state++) {
   u32 regs[0x1000/4] = {0};
   struct apple_dpxbar x = { .regs=regs, .selected_dispext={-1,-1,-1} };

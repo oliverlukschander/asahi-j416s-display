@@ -2691,3 +2691,25 @@ DPIN0 0xf01e50000 size0x4000,CONTROL+c requestbit0,HPD+0/ACK+10reads.
 Crossbar teardown controls000,004,008,00c,014,018,01c,024,028,02c,030,034,
 050,070. No new mapping/manualMMIO/forbidden panel access or module unload.
 If eDP blacks out, stop with hub unplugged. No reconnect or reboot requested.
+
+## 2026-09-22 —0105 staged-route candidate; install with hub unplugged
+
+User confirmed unplug. Preflight passes, eDP active,0104 cleanup rate0 result0.
+0105 source/test/patch described in notes/2026-09-22-0105-deferred-gates.md.
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0105.py install
+```
+
+Back up nine module/image files to /var/tmp/j416s-0105-before; install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module reload,
+parameter write, MMIO, mapping or reboot. Future candidate uses existing
+right ATC0xf03000000 size0x4c000,crossbar0xf0304c000 size0x4000,
+lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000,
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000. None accessed during this install.
+Initial crossbar selection writes only030; existing nativeup gates occur
+after clock setup. No new address access; prohibited operations remain
+prohibited. Hub/direct display stay unplugged; reboot separately logged.

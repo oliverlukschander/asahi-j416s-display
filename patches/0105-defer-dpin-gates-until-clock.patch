@@ -1,0 +1,126 @@
+From f79519f9596f3fd829dc07e0aab3bedd719a686f Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 12:01:38 +0200
+Subject: [PATCH] mux: apple: defer right USB4 DPIN gates until tunnel clock
+ setup
+
+The experimental T602x mux selection enables gates before the USB4
+tunnel PLL is configured. Native connect only selects the route;
+bringConnectionUp enables gates after clock setup.
+
+Add a default-off option restricted to J416s right DPIN0/source2 that
+defers initial gate programming to the existing guarded bring-up helper.
+Skip legacy T8103 enable registers on this path. Leave direct
+DisplayPort and other ports unchanged. This tests sequencing; visible
+output is not yet verified.
+
+Signed-off-by: Oliver Lukschander <oliver.lukschander@golf.at>
+---
+ drivers/mux/apple-display-crossbar.c | 28 ++++++++++++++++++++++++++--
+ 1 file changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/mux/apple-display-crossbar.c b/drivers/mux/apple-display-crossbar.c
+index af1d7f6..be1eabd 100644
+--- a/drivers/mux/apple-display-crossbar.c
++++ b/drivers/mux/apple-display-crossbar.c
+@@ -99,6 +99,10 @@ struct apple_dpxbar_hw {
+ 	const struct mux_control_ops *ops;
+ };
+ 
++static bool usb4_defer_bringup;
++module_param(usb4_defer_bringup, bool, 0444);
++MODULE_PARM_DESC(usb4_defer_bringup, "Defer J416s right DPIN0 gates until tunnel clock setup");
++
+ struct apple_dpxbar {
+ 	struct device *dev;
+ 	void __iomem *regs;
+@@ -106,6 +110,7 @@ struct apple_dpxbar {
+ 	spinlock_t lock;
+ 	bool frame_snapshot_done[MUX_MAX];
+ 	bool dpin0_bringup_attempted;
++	bool defer_dpin0_bringup;
+ };
+ 
+ static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
+@@ -213,6 +218,7 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 	unsigned int dispext_bit_en;
+ 	u32 atc_bit, mux_mask, mux_val;
+ 	bool enable;
++	bool deferred = dpxbar->defer_dpin0_bringup && index == MUX_DPIN0;
+ 	int ret = 0;
+ 
+ 	if (index >= MUX_MAX)
+@@ -230,6 +236,9 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 		return -EINVAL;
+ 	}
+ 
++	if (deferred && enable && state != 2)
++		return -EINVAL;
++
+ 	atc_bit = t602x_atc_bit(index);
+ 	mux_mask = t602x_mux_mask(index);
+ 	mux_val = t602x_mux_set(index, mux_state);
+@@ -273,8 +282,10 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 			    T602X_FIFO_RD_PCLK2_EN : FIFO_RD_PCLK1_EN, atc_bit);
+ 
+ 		dpxbar_clear32(dpxbar, T602X_REG_034, atc_bit);
+-		dpxbar_clear32(dpxbar, CROSSBAR_ATC_EN, atc_bit);
+-		dpxbar_clear32(dpxbar, CROSSBAR_DISPEXT_EN, prev_dispext_bit);
++		if (!deferred) {
++			dpxbar_clear32(dpxbar, CROSSBAR_ATC_EN, atc_bit);
++			dpxbar_clear32(dpxbar, CROSSBAR_DISPEXT_EN, prev_dispext_bit);
++		}
+ 		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, 0);
+ 
+ 		dpxbar->selected_dispext[index] = -1;
+@@ -284,6 +295,10 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, mux_val);
+ 		udelay(10);
+ 
++		/* Native connect() selects only; DID_CHANGE enables after PLL setup. */
++		if (deferred)
++			goto route_selected;
++
+ 		dpxbar_clear32(dpxbar, T602X_FIFO_WR_N_CLK_EN, dispext_bit);
+ 		dpxbar_clear32(dpxbar, T602X_REG_014, 0x4);
+ 
+@@ -308,6 +323,7 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 
+ 		dpxbar_set32(dpxbar, T602X_FIFO_RD_UNK_EN, dispext_bit);
+ 
++route_selected:
+ 		dpxbar->selected_dispext[index] = state;
+ 	}
+ 
+@@ -322,6 +338,8 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 		dev_info(dpxbar->dev, "Switched %s to disconnected state\n",
+ 			 apple_dpxbar_names[index]);
+ 
++	if (deferred && enable)
++		dev_info(dpxbar->dev, "native DPIN0: route selected; gates deferred until clock setup\n");
+ 	t602x_dump(dpxbar, enable ? apple_dpxbar_names[index] : "idle");
+ 
+ 	return ret;
+@@ -565,6 +583,7 @@ static int apple_dpxbar_probe(struct platform_device *pdev)
+ 	struct mux_chip *mux_chip;
+ 	struct apple_dpxbar *dpxbar;
+ 	const struct apple_dpxbar_hw *hw;
++	struct resource *res;
+ 	int ret;
+ 
+ 	hw = of_device_get_match_data(dev);
+@@ -576,6 +595,11 @@ static int apple_dpxbar_probe(struct platform_device *pdev)
+ 	mux_chip->ops = hw->ops;
+ 	spin_lock_init(&dpxbar->lock);
+ 
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	dpxbar->defer_dpin0_bringup = usb4_defer_bringup && res &&
++		res->start == 0xf0304c000ULL && resource_size(res) >= 0x1000 &&
++		of_machine_is_compatible("apple,j416s") &&
++		of_device_is_compatible(dev->of_node, "apple,t6020-display-crossbar");
+ 	dpxbar->dev = dev;
+ 	dpxbar->regs = devm_platform_ioremap_resource(pdev, 0);
+ 	if (IS_ERR(dpxbar->regs))
+-- 
+2.55.0
+
