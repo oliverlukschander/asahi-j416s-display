@@ -1154,3 +1154,20 @@ modetest -M apple -e
 Keep raw captures private/untracked. Require Oliver's visible-picture and
 keyboard confirmation, plus enabled eDP, link rate/lanes/DPRX/modeset and
 frame completion evidence. Hyprland dimensions alone are not success.
+
+## 2026-09-22 — 0095 no picture; 0096 built offline; request unplug
+
+Oliver confirms no external picture; other operation normal, no keyboard
+attached. Logged captures complete. New link-config callback ran successfully,
+but pending page flip persists. Offline native comparison identifies two
+DPIN0 teardown errors; corrected module builds and RAM register tests pass.
+See notes/2026-09-22-0096-crossbar-teardown.md. No new live hardware action.
+
+After committing/pushing, request exactly: unplug hub from RIGHT USB-C and
+leave it unplugged before installing0096. No shell command initiates unplug.
+Loaded0095 teardown may deselect xbar0xf0304c000 and, if powered,
+request native inactive CONTROL0xf01e5000c bit0=1 and poll ACK0xf01e50010
+under the ACIO0xf01ac0000 power lock. Existing DPIN mapping is
+0xf01e50000..0xf01e53fff, NHI0xf01f00000, dcpext1 0x315c00000.
+No manual MMIO command or reboot accompanies this request. Installation
+and reboot need separate logged/pushed actions after absence is verified.
