@@ -1019,3 +1019,30 @@ CONTROL 0xf01e5000c bit0=1 and polls ACK0xf01e50010, under ACIO owner lock,
 using existing mapping0xf01e50000..0xf01e53fff. No manual register command.
 Installation/reboot of 0095 must be separately logged/pushed after absence
 is verified. Never reboot with hub attached; eDP black means unplug and stop.
+
+## 2026-09-22 — Install 0095 with hub absent
+
+Oliver says proceed. manage-0095.py check confirms correct kernel/machine,
+no external Thunderbolt router and matching candidate hashes. eDP enabled.
+After this entry is committed/pushed execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0095.py install
+```
+
+Installer verifies backups of both kernel/updates copies of appledrm.ko and
+thunderbolt_apple.ko and /boot/initramfs-linux-aurora.img under
+/var/tmp/j416s-0095-before with SHA256 manifest. Installs matching candidates,
+writes /etc/modprobe.d/j416s-0095-native-dpin.conf with options appledrm
+usb4_protocol_probe=1 usb4_native_dpin=1 and options thunderbolt_apple
+dpin_native=1. Runs depmod -a 7.1.12-2.5-1-ARCH, mkinitcpio -p linux-aurora,
+verifies extracted image module hashes/options and syncs. On failure restores
+the five original files and removes new config. No live reload or reboot.
+
+appledrm SHA256 eb6122ba4ce9a30d357d02deb237545c8f9d943cf6769fe6f2947f98e13346a2
+thunderbolt_apple SHA256 26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+
+No MMIO or mapping during installation. Future right-port path remains
+ACIO0xf01ac0000, NHI0xf01f00000, xbar0xf0304c000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
+Reboot and physical hotplug require separate pre-action log entries.
