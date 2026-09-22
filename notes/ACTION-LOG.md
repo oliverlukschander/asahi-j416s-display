@@ -3176,3 +3176,55 @@ Oliver confirmed the hub is unplugged from the right port; sysfs shows no
 thunderbolt devices, eDP remained connected before and after. No further
 hardware action performed this boot (one-attempt guard). No speculative
 register write or reboot performed.
+
+## 2026-09-22 -0108 built offline; grant DP bandwidth immediately
+
+Purely offline review of already-captured data (0104/0107 dumps, no new
+hardware read): the host DP IN adapter's LOCAL field has DP_COMMON_CAP_BW_MODE
+(bit28) set, so tb_dp_pre_activate always enters bandwidth-allocation-mode
+for this tunnel; tb_dp_bandwidth_alloc_mode_enable then explicitly grants0
+Mb/s initially per spec, relying on the DP IN adapter to request more via a
+hardware notification later. The DP IN adapter's own DP_STATUS field
+(offset0x06,"STAT" in existing dumps,bits31:24) reads STAT=00000000 -
+allocated bandwidth0 - in every already-captured right-port attempt
+(0104,0107), and nothing in apple.c has ever been shown to generate or
+forward the notification that would raise it. Kernel commit9e122f5 adds a
+default-off module parameter dp_bw_grant that, gated by the same restrictive
+predicate as dp_video_counter (now factored into a shared
+tb_dp_is_apple_j416s_right_dpin helper, no behavior change to the existing
+counter), grants min(non_reduced_bw,estimated_bw) immediately instead of0.
+estimated_bw is tunnel->max_down/max_up - bandwidth the connection manager
+already reserved for this tunnel before it existed - so the grant can never
+exceed an already-admitted budget and cannot oversubscribe the fabric or
+affect any other tunnel; no other DP adapter on any other system is
+affected. Writes exactly one field (DP_STATUS allocated-bandwidth) via the
+existing unmodified usb4_dp_port_allocate_bandwidth() helper the driver
+already calls at this point for every DP tunnel; does not touch DP IN hop
+credits, routing, ACIO analog or panel registers. Full analysis in
+notes/2026-09-22-0108-bandwidth-grant.md. checkpatch on the full
+accumulated tunnel.c diff:0errors/0warnings. `make` in src/thunderbolt
+rebuilds only thunderbolt.ko; the other four modules are unchanged from
+0107 (verified by SHA256).
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0108.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0108-before (same five
+module pairs as0106/0107 plus initramfs); install pinned modules/options,
+depmod, rebuild/verify initramfs. No live module reload, parameter write,
+MMIO, mapping or reboot. Options keep the0105 set plus
+dp_video_counter=1 (kept enabled for continued observability) and the new
+dp_bw_grant=1. Candidate hashes: thunderbolt(core)
+dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7; atc
+e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9; mux
+38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24; appledrm
+9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3;
+thunderbolt_apple26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.
