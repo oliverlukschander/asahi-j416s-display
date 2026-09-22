@@ -912,3 +912,23 @@ This restores all five verified backup files and removes candidate options;
 it does not reload or reboot. Postboot next step is verify eDP and module
 flags, then log/push and execute manage-0094.py disarm BEFORE asking Oliver
 to connect the hub to RIGHT. This entry records planned reboot, not success.
+
+## 2026-09-22 — 0094 boot verified; disarm future boots
+
+Boot 17277113-8b54-4315-87fb-867feccb3faa has eDP enabled at
+3456x2160@120, all three experiment flags Y, hub absent, and no native
+handshake attempted. Read-only modetest -M apple -e confirms right encoder
+97 has initial possible_crtcs=0x4 (other USB encoders 0x6), as intended.
+
+After this entry is committed and pushed execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0094.py disarm
+```
+
+Removes /etc/modprobe.d/j416s-0094-native-dpin.conf, rebuilds initramfs via
+mkinitcpio -p linux-aurora, verifies candidate hashes and options absent,
+and syncs. Loaded flags remain Y for this boot only. No live module reload,
+parameter write, mapping, MMIO or reboot. Right path addresses remain
+ACIO 0xf01ac0000, NHI 0xf01f00000, crossbar 0xf0304c000, dcpext1
+0x315c00000, DPIN0 0xf01e50000..0xf01e53fff; none accessed by this command.
