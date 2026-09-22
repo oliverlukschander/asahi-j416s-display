@@ -3664,3 +3664,36 @@ remain Y for this test. No live MMIO,mapping,module reload or parameter
 write. No addresses accessed; resource scope remains ATC0xf03000000,
 crossbar0xf0304c000,DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
 DPIN0 0xf01e50000. Hotplug will be logged separately after successful disarm.
+
+## 2026-09-22 -0110 disarmed; single right-port attachment (explicit-guess test)
+
+Disarm exited0, image verified; new SHA256
+411e2701e019dc4d15c15043a12adab5f44a4a6051579bea0e7a2854121115f4 (matches
+0108/0109's disarmed image, as expected since options are unchanged).
+Current0110 flags remain enabled for this boot only; future boots
+disarmed. After committing and pushing this entry request exactly: connect
+hub once to RIGHT USB-C port with monitor on hub; leave connected for
+capture; report visible picture and eDP status. If eDP blacks out, unplug
+hub and stop. No replug/reboot. No shell command initiates physical
+connection. Keyboard untested unless attached and checked.
+
+Scope is identical to0109 (existing owner mappings unchanged) plus0110's
+addition: apple_dpin_handshake now also writes an explicit-guess value(9)
+to DPIN0+0x1c and+0x14 when activating, in native's own call order. Same
+DPIN0 resource already safely used; no new addresses, no forbidden
+register access. This value is NOT confirmed - see
+notes/2026-09-22-0110-mode-value-guess.md.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0110-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0110-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0110-dpin-counters.txt
+```
+
+Confirm right port, pre-clock gates off, PLL/nativeup result,034/800,
+lanes/DPRX, counter readback, and actual picture - the last decided only
+by Oliver's visual confirmation. If sequence stalls, capture and stop
+without retrying gates or changing registers.
