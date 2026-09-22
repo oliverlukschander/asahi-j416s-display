@@ -1666,3 +1666,23 @@ Restores seven checksummed originals, removes config, depmods and syncs;
 no reload/reboot. After return verify live build IDs and eDP, then log/push
 and execute manage-0099.py disarm before requesting DIRECT right USB-C
 adapter connection. No claim of successful boot or visible output yet.
+
+## 2026-09-22 — Verify0099 boot and disarm future boots
+
+Boote7238bcd-c22b-4d8b-ab00-dd5542cf0061: hub absent, candidate hashes
+match, all three loaded module build-ID notes match0099. Three experiment
+flags Y. Hyprland eDP-1 active3456x2160@120, DPMS on, disabled=false.
+Panel modeset completes48.279478s; no native DPIN or frame snapshot yet.
+
+After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0099.py disarm
+```
+
+Remove /etc/modprobe.d/j416s-0099-native-dpin.conf, rebuild initramfs,
+verify candidate hashes/options absent, sync. Live flags remain enabled
+for this boot. No live reload, parameter write, mapping, MMIO or reboot.
+Right addresses unchanged and unaccessed by disarm: xbar0xf0304c000,
+NHI0xf01f00000, ACIO0xf01ac0000, dcpext1 0x315c00000, DPIN0
+0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
