@@ -1472,3 +1472,28 @@ resource0xf01e50000..0xf01e53fff deactivation requests CONTROL+0xc bit0=1
 and uses existing HPD+0 and ACK+0x10 reads. No manual MMIO or panel mapping.
 If eDP blacks out, leave hub unplugged and stop. Installation and reboot
 require their own committed/pushed entries after hub absence is verified.
+
+## 2026-09-22 — Install0098 with hub verified absent
+
+manage-0098.py check confirms correct kernel/machine, no external router,
+and all three candidate hashes match. After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0098.py install
+```
+
+Back up and checksum seven original files to /var/tmp/j416s-0098-before:
+two copies each of appledrm, mux-apple-display-crossbar, thunderbolt_apple,
+and /boot/initramfs-linux-aurora.img. Install pinned module copies, create
+/etc/modprobe.d/j416s-0098-native-dpin.conf, depmod, mkinitcpio, extract
+and verify image hashes/options, sync. Automatic restore on install failure.
+No live module reload, MMIO, parameter write or reboot in this command.
+Candidate hashes are recorded in notes/2026-09-22-0098-after-frame.md.
+
+Right experiment addresses (not accessed by installer): crossbar
+0xf0304c000 size0x4000; NHI0xf01f00000; ACIO0xf01ac0000; dcpext1
+0x315c00000; native DPIN0 0xf01e50000..0xf01e53fff, HPD+0, CONTROL+0xc,
+ACK+0x10. New diagnostic reuses crossbar reads once after completed frame:
++000,+004,+008,+00c,+014,+018,+01c,+024,+028,+02c,+030,+034,+040,+044,
++048,+04c,+050,+060,+070,+800,+020,+820,+81c. No new register writes.
+Keep hub absent through separately logged reboot and postboot validation.
