@@ -881,3 +881,34 @@ Future right-port test addresses (not accessed by installation): ACIO
 0xf01ac0000, NHI 0xf01f00000, xbar 0xf0304c000, dcpext1 0x315c00000,
 DPIN0 0xf01e50000..0xf01e53fff; HPD +0, CONTROL +0xc, ACK +0x10.
 Reboot and physical connection require separate pre-action log entries.
+
+## 2026-09-22 — Boot verified 0094 with hub absent
+
+Installation completed successfully; extracted initramfs module hashes and
+candidate options verified. A second preflight confirms hub absent.
+New /boot/initramfs-linux-aurora.img SHA256:
+7b22d3cca8a595e3caa619dac3224aa1ea4bf3885836c3edf390046e017b13ac
+Backup /var/tmp/j416s-0094-before/manifest.json verifies both original
+appledrm copies as 2e5cb7146f07aa7f23bfb4f03afd2c5e66c0e3efea81b68fc49fdfc2dafdcefc,
+both thunderbolt_apple copies as 993526f4fef5b1c2042c5b57a0b6b397e1987893dff89552ee7dbcc184f228ad,
+and original image as 94a7d8a1e9e58bf0f7f055e43853eeedf97fc27330ca79455a4ec19aea800b75.
+
+After committing and pushing this entry, execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0094.py check && sudo -n systemctl reboot
+```
+
+Hub remains unplugged throughout restart and until postboot checks and
+future-boot disarm are complete. No native DPIN ACTIVATE is eligible with
+hub absent. The armed candidate targets only right typec2, dcpext1
+0x315c00000, ACIO 0xf01ac0000, NHI 0xf01f00000, xbar 0xf0304c000,
+DPIN0 0xf01e50000..0xf01e53fff (HPD +0, CONTROL +0xc, ACK +0x10).
+No manual mapping or register operation accompanies this reboot command.
+
+Recovery if necessary, with hub absent and separately logged before use:
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0094.py restore
+This restores all five verified backup files and removes candidate options;
+it does not reload or reboot. Postboot next step is verify eDP and module
+flags, then log/push and execute manage-0094.py disarm BEFORE asking Oliver
+to connect the hub to RIGHT. This entry records planned reboot, not success.
