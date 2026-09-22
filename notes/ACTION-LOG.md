@@ -3147,3 +3147,32 @@ pre-clock gates off, PLL/nativeup result,034/800, lanes/DPRX, both counter
 reads, and actual picture. If sequence stalls, capture and stop without
 retrying gates or changing registers. No visible success assumed regardless
 of counter values.
+
+## 2026-09-22 -0107 connection captured; both hops nonzero; unplug confirmed
+
+Previously logged capture commands completed. Sequence reproduces0105/0106
+exactly (route select gates deferred,PLL/nativeup result0,4lanes,DPRX_DONE1,
+frame complete id=2). User confirms "connected, no external display / still
+standby - no other problems" - same outcome as0102-0106. eDP stayed
+connected throughout.
+
+DP-IN hop counter (route0-0 port5,idx0): 0x0000a465. To find the downstream
+hop actually carrying our marker, all hub ports1-23 under route0-1 were
+scanned read-only (cat .../pathfor each, no writes) and decoded; hub port1
+hop10 (out_port=19,counter=0,counter_enable=1) uniquely matches what0107's
+gate sets - confirmed as the video path's downstream hop, not assumed.
+Reading its counter (route0-1 port1,idx0): 0x0001765b. Both nonzero, where
+tb_path_activate clears each to0 at every activation. New evidence: video
+traffic reaches the hub-side hop that forwards directly to the DP OUT
+adapter (out_port=19). Combined with0104's DP OUT CS registers already
+showing4lanes/HBR negotiated and DPRX done, and the standing fact this
+exact hub+adapter+monitor combo works under macOS, the crossbar/DCP/tunnel
+path built across0102-0107 is no longer a credible explanation. Remaining
+suspects are outside Linux driver control (hub firmware/physical DP-alt-mode
+training) or unexplored (DP tunnel bandwidth allocation mode - not yet
+checked either way). Full analysis in notes/2026-09-22-0107-result.md.
+
+Oliver confirmed the hub is unplugged from the right port; sysfs shows no
+thunderbolt devices, eDP remained connected before and after. No further
+hardware action performed this boot (one-attempt guard). No speculative
+register write or reboot performed.
