@@ -851,3 +851,33 @@ uses right ACIO0xf01ac0000, NHI0xf01f00000, xbar0xf0304c000 and native
 DPIN0 0xf01e50000..0xf01e53fff. Installation, reboot and right hotplug
 must each be separately logged and pushed before execution. This entry
 records the unplug request only, not execution or a working monitor.
+
+## 2026-09-22 — Install 0094 with hub disconnected
+
+Oliver reports unplug complete. Read-only preflight confirms j416s, running
+7.1.12-2.5-1-ARCH, no external Thunderbolt router, and eDP enabled.
+After committing and pushing this entry, execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0094.py install
+```
+
+This backs up both kernel and updates copies of appledrm.ko and
+thunderbolt_apple.ko plus /boot/initramfs-linux-aurora.img into
+/var/tmp/j416s-0094-before, with verified SHA256 manifest. Installs matching
+0094 modules, writes /etc/modprobe.d/j416s-0094-native-dpin.conf containing
+options appledrm usb4_protocol_probe=1 usb4_native_dpin=1 and options
+thunderbolt_apple dpin_native=1, runs depmod -a 7.1.12-2.5-1-ARCH and
+mkinitcpio -p linux-aurora, then verifies extracted image modules/options.
+On installation failure it restores the five backed-up files and removes
+that config. No live reload, MMIO, mapping, cable action or reboot here.
+
+Candidate appledrm SHA256:
+a6ec3ac3a4bd4a06d0726cdfd0e21f1243cd6d4f58d360d0c7649f9b3c99c449
+Candidate thunderbolt_apple SHA256:
+26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+
+Future right-port test addresses (not accessed by installation): ACIO
+0xf01ac0000, NHI 0xf01f00000, xbar 0xf0304c000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff; HPD +0, CONTROL +0xc, ACK +0x10.
+Reboot and physical connection require separate pre-action log entries.
