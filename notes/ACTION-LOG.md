@@ -2503,3 +2503,39 @@ hardware operation. Kernel fa3f3dd, patch exported; not installed. No live
 MMIO, parameter change, new hotplug or reboot requested. Future boots remain
 disarmed. Preserve present state pending clarification; next unplug/install/
 reboot/hotplug requires a separate committed/pushed action entry.
+
+## 2026-09-22 —0103 reconnection confirmed manual; request unplug for0104
+
+Oliver confirms he unplugged/reconnected the hub. Do not classify that
+recorded disconnect as spontaneous hardware failure. Current boot remains
+fad74e21-836b-45f1-9488-6b5f75a7f4be; sysfs external router0-1 present.
+0104 is built/tested/pushed but not installed. Future boots remain disarmed.
+
+After committing and pushing this entry request exactly: unplug the OWC
+hub from the Mac RIGHT USB-C port, leave direct adapter disconnected from
+Mac, and report when unplugged. No shell command initiates this physical
+removal. Current0103 already returned clock cleanup0 after the first
+removal; its saved state should be clear. If any saved state remains, normal
+owner cleanup restores the existing ATC core0xf03000000 size0x4c000 fields:
+008/3ffff,1b0/fff,7000/207c,2224/3,2080/ffffffff,2084/0fffffff,
+2088/007fffff,2208/001f0000,2220/80,2214/1,2200/54,2000/1ffffff9.
+No manual register operation or new mapping.
+
+Normal teardown also owns lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000,crossbar0xf0304c000 size0x4000,
+dcpext1 0x315c00000,NHI0xf01f00000/ACIO0xf01ac0000. Existing crossbar
+controls000,004,008,00c,014,018,01c,024,028,02c,030,034,050,070;
+DPIN0 base0xf01e50000 size0x4000 CONTROL+0xc requestbit0,HPD+0/ACK+0x10
+reads if owner remains available. No forbidden panel/39c000000 mapping or
+assignment, /dev/mem or module unload. If eDP goes black, stop with hub
+unplugged. No reboot/reconnection requested by this entry.
+
+After unplug verify exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0104.py check
+hyprctl monitors
+```
+
+Install/reboot/next single hotplug require separately committed/pushed entries.
