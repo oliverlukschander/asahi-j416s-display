@@ -1,0 +1,208 @@
+From 095ff2b0cfae52d66c995f5c1b793a2670060062 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 08:30:31 +0200
+Subject: [PATCH] drm/apple: pin native USB4 test to right-port dcpext1 from
+ registration
+
+0093 reaches DPRX_DONE and publishes 22 modes, but userspace caches the initial broad CRTC mask and selects CRTC69 while the live encoder only permits CRTC88. Advertise the native test route consistently from registration and enforce its allocation. Move the bounded native handshake to the user-requested right port with target 0x8021 and the matching native resource. Default behavior is unchanged.
+---
+ drivers/gpu/drm/apple/apple_drv.c    |  9 +++++++++
+ drivers/gpu/drm/apple/dcp-internal.h |  1 +
+ drivers/gpu/drm/apple/dcp.c          | 23 +++++++++++++++++------
+ drivers/gpu/drm/apple/dptxep.c       |  8 ++++----
+ drivers/thunderbolt/apple.c          | 16 ++++++++--------
+ 5 files changed, 39 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/apple_drv.c b/drivers/gpu/drm/apple/apple_drv.c
+index 4c6fa62..44767b1 100644
+--- a/drivers/gpu/drm/apple/apple_drv.c
++++ b/drivers/gpu/drm/apple/apple_drv.c
+@@ -466,6 +466,15 @@ static int apple_probe_typec_ports(struct drm_device *drm,
+ 		INIT_WORK(&connector->hotplug_wq, dcp_hotplug);
+ 
+ 		for (i = 0; i < num_dcp; i++) {
++			struct apple_dcp *candidate = platform_get_drvdata(dcp[i]);
++
++			/*
++			 * Userspace caches possible_crtcs before the hub is attached.
++			 * The native test owns dcpext1; advertise only that CRTC
++			 * from registration, not a wider mask narrowed at hotplug.
++			 */
++			if (dcp_usb4_native_route(idx) && candidate->index != 2)
++				continue;
+ 			if (dcp_typec_port_has_candidate(idx, dcp[i]))
+ 				mask |= crtc_mask[i];
+ 		}
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index b6cd544..20fdb78 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -50,6 +50,7 @@ bool dcp_is_usb4_output(struct apple_dcp *dcp);
+ bool dcp_usb4_drm_allowed(void);
+ bool dcp_usb4_protocol_probe_enabled(void);
+ extern bool usb4_native_dpin;
++bool dcp_usb4_native_route(unsigned int typec_index);
+ 
+ struct dcpav_service_epic;
+ 
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 5f6818b..42c3f2b 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -119,7 +119,7 @@ static bool usb4_force_dptx;
+ static bool usb4_protocol_probe;
+ module_param(usb4_protocol_probe, bool, 0444);
+ MODULE_PARM_DESC(usb4_protocol_probe,
+-		 "One USB4 typec0 protocol probe using target 0x8001, without a PHY");
++		 "One USB4 protocol probe without a PHY (native: right port)");
+ bool usb4_native_dpin;
+ module_param(usb4_native_dpin, bool, 0444);
+ MODULE_PARM_DESC(usb4_native_dpin,
+@@ -199,8 +199,17 @@ static bool dcp_typec_route_fixed_output_busy(struct apple_dcp_typec_route *rout
+ 	return false;
+ }
+ 
++bool dcp_usb4_native_route(unsigned int typec_index)
++{
++	return usb4_native_dpin && usb4_protocol_probe && typec_index == 2;
++}
++
+ static bool dcp_typec_route_available(struct apple_dcp_typec_route *route)
+ {
++	/* Match the fixed CRTC advertised for the bounded native experiment. */
++	if (dcp_usb4_native_route(route->typec_index) && route->dcp->index != 2)
++		return false;
++
+ 	return !route->dcp->active_typec_route &&
+ 	       !dcp_typec_route_fixed_output_busy(route);
+ }
+@@ -1439,11 +1448,12 @@ static int dcp_usb4_protocol_connect(struct apple_dcp *dcp, u32 port)
+ 	struct apple_dcp_typec_route *route = dcp->active_typec_route;
+ 	struct dptx_port *dptx = &dcp->dptxport[port];
+ 	struct apple_epic_service *svc = dptx->service;
++	u8 atc = usb4_native_dpin ? 2 : 0;
+ 	int ret;
+ 
+-	/* This probe is bounded to the confirmed left-back DP IN 0:5 route. */
++	/* Native test: right DPIN0; retain left-back for the protocol-only probe. */
+ 	if (!route || !route->usb4_selected || !route->usb4_xbar ||
+-	    route->typec_index != 0 || port != 0 || usb4_dpin_index != 1 ||
++	    route->typec_index != atc || port != 0 || usb4_dpin_index != 1 ||
+ 	    dcp->index != 2 || dcp->dptx_die != 0 ||
+ 	    usb4_force_dptx || !dptx->enabled || !svc)
+ 		return -EINVAL;
+@@ -1466,12 +1476,13 @@ static int dcp_usb4_protocol_connect(struct apple_dcp *dcp, u32 port)
+ 	reinit_completion(&dptx->linkcfg_completion);
+ 	reinit_completion(&dptx->usb4_lane_completion);
+ 	dptx->lane_count = 0;
+-	dev_info(dcp->dev, "USB4 protocol probe: target=0x8001, PHY absent, one attempt\n");
+-	ret = dptxport_validate_connection(svc, 1, 0, dcp->dptx_die);
++	dev_info(dcp->dev, "USB4 protocol probe: target=0x%x typec%u, PHY absent, one attempt\n",
++		 0x8001 | (atc << 4), atc);
++	ret = dptxport_validate_connection(svc, 1, atc, dcp->dptx_die);
+ 	dev_info(dcp->dev, "USB4 protocol probe: validate=%d\n", ret);
+ 	if (ret)
+ 		goto out;
+-	ret = dptxport_connect(svc, 1, 0, dcp->dptx_die, true);
++	ret = dptxport_connect(svc, 1, atc, dcp->dptx_die, true);
+ 	dev_info(dcp->dev, "USB4 protocol probe: connect=%d\n", ret);
+ 	if (ret)
+ 		goto out;
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 6fc3541..f004b45 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -549,7 +549,7 @@ static int dptxport_call_set_tiled_display_hint(void *reply_,
+ }
+ 
+ /* Optional symbol: keep the default DRM module independent of USB4. */
+-extern int apple_usb4_dpin0_set_active(bool active);
++extern int apple_usb4_right_dpin0_set_active(bool active);
+ 
+ static int dptxport_native_dpin(struct apple_epic_service *service, bool active)
+ {
+@@ -561,13 +561,13 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active)
+ 
+ 	if (!dcp_usb4_protocol_probe_enabled() || !route ||
+ 	    !route->usb4_selected || !route->usb4_xbar ||
+-	    route->typec_index != 0 || route->mux_index != 2 ||
++	    !dcp_usb4_native_route(route->typec_index) || route->mux_index != 2 ||
+ 	    dcp->index != 2 || !of_machine_is_compatible("apple,j416s") ||
+ 	    dcp->dptx_die != 0 || dptx->unit != 0 ||
+ 	    dcp->fw_compat != DCP_FIRMWARE_V_13_5 ||
+ 	    usb4_dpin_index != 1 || dptx->atcphy)
+ 		return -EINVAL;
+-	set_active = symbol_get(apple_usb4_dpin0_set_active);
++	set_active = symbol_get(apple_usb4_right_dpin0_set_active);
+ 	if (!set_active)
+ 		return -EOPNOTSUPP;
+ 	if (active) {
+@@ -579,7 +579,7 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active)
+ 	}
+ 	ret = set_active(active);
+ out:
+-	symbol_put(apple_usb4_dpin0_set_active);
++	symbol_put(apple_usb4_right_dpin0_set_active);
+ 	dev_info(dcp->dev, "native DPIN0: DCP active=%u result=%d\n", active, ret);
+ 	return ret;
+ }
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index a5f2f5d..34b30d6 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -122,7 +122,7 @@
+ /* J416s lab candidate: never enabled implicitly by a connected hub. */
+ static bool dpin_native;
+ module_param(dpin_native, bool, 0444);
+-MODULE_PARM_DESC(dpin_native, "Opt-in J416s left-back native DP-IN handshake");
++MODULE_PARM_DESC(dpin_native, "Opt-in J416s right-port native DP-IN handshake");
+ 
+ struct apple_cio {
+ 	struct device *dev;
+@@ -1796,12 +1796,12 @@ static int apple_dpin_wait(void *ctx)
+ 	return 0;
+ }
+ 
+-int apple_usb4_dpin0_set_active(bool active);
+-int apple_usb4_dpin0_set_active(bool active)
++int apple_usb4_right_dpin0_set_active(bool active);
++int apple_usb4_right_dpin0_set_active(bool active)
+ {
+ 	struct resource res = {
+-		.start = 0x701e50000ULL,
+-		.end = 0x701e53fffULL,
++		.start = 0xf01e50000ULL,
++		.end = 0xf01e53fffULL,
+ 		.flags = IORESOURCE_MEM | IORESOURCE_MEM_NONPOSTED,
+ 		.name = "j416s-native-dpin0",
+ 	};
+@@ -1819,7 +1819,7 @@ int apple_usb4_dpin0_set_active(bool active)
+ 
+ 	if (!dpin_native || !of_machine_is_compatible("apple,j416s"))
+ 		return -EOPNOTSUPP;
+-	np = of_find_node_by_path("/soc/cio@701ac0000");
++	np = of_find_node_by_path("/soc/cio@f01ac0000");
+ 	if (!np)
+ 		return -ENODEV;
+ 	pdev = of_find_device_by_node(np);
+@@ -1839,7 +1839,7 @@ int apple_usb4_dpin0_set_active(bool active)
+ 		goto unlock_device;
+ 	}
+ 	if (!acio->current_cable_info || !acio->nhi_pdev ||
+-	    acio->rc_res->start != 0x701ac0000ULL)
++	    acio->rc_res->start != 0xf01ac0000ULL)
+ 		goto unlock_cio;
+ 	if (active == acio->dpin_active) {
+ 		ret = 0;
+@@ -1875,7 +1875,7 @@ int apple_usb4_dpin0_set_active(bool active)
+ 	put_device(&pdev->dev);
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(apple_usb4_dpin0_set_active);
++EXPORT_SYMBOL_GPL(apple_usb4_right_dpin0_set_active);
+ 
+ static struct platform_driver * const apple_cio_drivers[] = {
+ 	&apple_nhi_driver,
+-- 
+2.55.0
+

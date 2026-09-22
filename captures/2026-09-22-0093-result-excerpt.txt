@@ -1,0 +1,38 @@
+[  197.280357] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: target=0x8001, PHY absent, one attempt
+[  197.280943] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: validate=0
+[  197.281494] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: connect=0
+[  197.285163] omarchy-m2 kernel: thunderbolt-apple-acio 701ac0000.cio: native DPIN0: active=1 base=0x0000000701e50000, CONTROL=0x0c ACK=0x10
+[  197.285440] omarchy-m2 kernel: thunderbolt-apple-acio 701ac0000.cio: native DPIN0: active=1 handshake=0
+[  197.285750] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: DCP active=1 result=0
+[  197.286037] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: request_display=0 modes=0
+[  197.302321] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: HPD=0 cached_lanes=4 modes=0
+[  197.302619] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe finished: 0; no automatic retry
+[  197.339008] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: SET_LINK_RATE 0xa
+[  197.350566] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4/DPTX: SET_ACTIVE_LANE_COUNT 4
+[  197.486854] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=ColorElements bytes=5049 accepted=1 nr_modes=0
+[  197.537034] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=TimingElements bytes=205757 accepted=1 nr_modes=22
+[  197.537373] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=DisplayAttributes bytes=1285 accepted=1 nr_modes=22
+[  197.537688] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=Transport bytes=53 accepted=1 nr_modes=22
+[  197.538294] omarchy-m2 kernel: apple-dcp 315c00000.dcp: cb_hotplug() connected:1, valid_mode:0 nr_modes:22
+[  197.538605] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:22
+[  197.720178] omarchy-m2 kernel: thunderbolt-apple-nhi 701f00000.nhi: 0:5: DP IN DPRX_DONE=1 (ACIO AUX completed)
+[  227.480592] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: SET_LINK_RATE 0x0
+
+Compositor controller allocation:
+DEBUG from aquamarine ]: drm: slot 2 crtc 88 unassigned
+DEBUG from aquamarine ]: drm: connected slot 1 crtc 69 assigned to USB-1
+DEBUG from aquamarine ]: drm: slot 2 crtc 88 unassigned
+DEBUG from aquamarine ]: drm: Connecting connector USB-1, CRTC ID 69
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+
+Live kernel encoder masks (read-only modetest -M apple -e):
+opened device `Apple display controller DRM driver` on driver `apple` (version 1.0.0 at 0)
+Encoders:
+id	crtc	type	possible crtcs	possible clones	
+51	50	TMDS	0x00000001	0x00000001
+70	0	TMDS	0x00000002	0x00000002
+91	0	TMDS	0x00000004	0x00000004
+94	0	TMDS	0x00000006	0x00000008
+97	0	TMDS	0x00000006	0x00000010
+
+

@@ -816,3 +816,38 @@ The native handshake result alone is not display success. Check actual
 SET_LINK_RATE, SET_ACTIVE_LANE_COUNT > 0, DPRX=1, Hyprland monitor list and
 Oliver's confirmation of picture and keyboard. This entry schedules the
 single physical test; it does not claim the connection or experiment ran.
+
+## 2026-09-22 — 0093 discovery success; modeset mismatch; prepare right-port 0094
+
+Oliver confirms the hub is in the left port but no picture appears, and
+requests the RIGHT USB-C port for the next test. The two previously logged
+capture commands completed. Preserve full reports privately and commit the
+sanitized event excerpt plus notes/2026-09-22-0093-result.md.
+
+The first native handshake completed; firmware requested 0x0a link rate and
+four active lanes, delivered 22 TimingElements modes and connected hotplug,
+and host DP IN reported DPRX_DONE=1. eDP stays enabled. Hyprland exposes the
+BenQ at 0x0 and its ATOMIC_TEST_ONLY requests fail with EINVAL. Read-only
+encoder inspection confirms userspace selected CRTC69 while the connector
+only permits CRTC88. No new MMIO/probe/retry was performed for this analysis.
+
+Built 0094 offline with a fixed initial right-port CRTC mask and matching
+route constraint, native target0x8021 and right DPIN0 resource0xf01e50000.
+Both modules compile; nine mock tests pass. Installer/restore helper is
+prepared but not executed. 0093 future boot flags remain disarmed.
+
+After this entry is committed and pushed, request exactly this physical
+action: Oliver unplugs the hub from LEFT-BACK and leaves it disconnected
+before installation. No shell command, reload or reboot is part of this
+request. Current left path: ACIO0x701ac0000, NHI0x701f00000,
+xbar0x70304c000, dcpext1 0x315c00000. Normal candidate DEACTIVATE, if called
+while ACIO is still powered, may set DPIN0 CONTROL0x701e5000c bit0=1 and
+read ACK0x701e50010; its ACIO owner lock prevents access after cable power
+teardown. This is the same logged 0093 deactivation behavior, not a new probe.
+
+Do not move directly to right while 0093 is loaded: its one-attempt guard is
+consumed and its native route is left-only. The next fresh-boot candidate
+uses right ACIO0xf01ac0000, NHI0xf01f00000, xbar0xf0304c000 and native
+DPIN0 0xf01e50000..0xf01e53fff. Installation, reboot and right hotplug
+must each be separately logged and pushed before execution. This entry
+records the unplug request only, not execution or a working monitor.
