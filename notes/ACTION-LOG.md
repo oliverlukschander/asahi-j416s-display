@@ -2304,3 +2304,14 @@ Assess all four preflight values, clock callback result, link rate/lanes,
 DPRX, completed frame and crossbar+800. Success requires actual visible
 picture with eDP retained; keyboard unverified unless checked. Further
 hardware action needs its own committed/pushed entry.
+
+## 2026-09-22 —0102 capture: clock setup succeeds and crossbar+800=4
+
+Previously logged capture commands completed after user "connected".
+Right ATC preflight7000=e001,2200=2000,2000=10000000,7044=0; rate0xa
+clock setup result0. Four lanes,DPRX1,completed external frame,+800=4.
+Hyprland BenQ USB-3 active2560x1440 alongside activeeDP3456x2160@120.
+See0102-clock-success notes. Actual visible picture confirmation requested
+and pending; keyboard not attached in capture, functionality unverified.
+No further hardware action, unplug, reboot or persistence change requested.
+Current connected state preserved; future boots remain disarmed.
