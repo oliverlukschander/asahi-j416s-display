@@ -1,0 +1,402 @@
+From a812ab4c84f9dc59eb4fb0ed7a6d978cca8b50ed Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 08:09:04 +0200
+Subject: [PATCH] usb4: add opt-in J416s native DP-IN activation handshake
+
+Implement the DPTX_INACTIVE/ACK handshake observed in the preserved T6020 macOS 13.5 driver. Keep MMIO behind ACIO cable power locking and narrow machine, port and resource guards. Integrate with the single-attempt DCP protocol probe, default disabled. This is an untested-on-hardware lab candidate; no general DP-IN support is claimed.
+---
+ drivers/gpu/drm/apple/dcp-internal.h       |   1 +
+ drivers/gpu/drm/apple/dcp.c                |  11 +-
+ drivers/gpu/drm/apple/dptxep.c             |  57 ++++++++--
+ drivers/thunderbolt/apple-dpin-handshake.h |  69 ++++++++++++
+ drivers/thunderbolt/apple.c                | 125 +++++++++++++++++++++
+ 5 files changed, 253 insertions(+), 10 deletions(-)
+ create mode 100644 drivers/thunderbolt/apple-dpin-handshake.h
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index 4d5b5c2..b6cd544 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -49,6 +49,7 @@ bool dcp_is_typec_output(struct apple_dcp *dcp);
+ bool dcp_is_usb4_output(struct apple_dcp *dcp);
+ bool dcp_usb4_drm_allowed(void);
+ bool dcp_usb4_protocol_probe_enabled(void);
++extern bool usb4_native_dpin;
+ 
+ struct dcpav_service_epic;
+ 
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 8e30f59..5f6818b 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -120,6 +120,10 @@ static bool usb4_protocol_probe;
+ module_param(usb4_protocol_probe, bool, 0444);
+ MODULE_PARM_DESC(usb4_protocol_probe,
+ 		 "One USB4 typec0 protocol probe using target 0x8001, without a PHY");
++bool usb4_native_dpin;
++module_param(usb4_native_dpin, bool, 0444);
++MODULE_PARM_DESC(usb4_native_dpin,
++		 "Opt-in native DP-IN ACTIVATE handshake; requires usb4_protocol_probe");
+ static atomic_t usb4_protocol_probe_started = ATOMIC_INIT(0);
+ 
+ bool dcp_usb4_protocol_probe_enabled(void)
+@@ -1479,6 +1483,10 @@ static int dcp_usb4_protocol_connect(struct apple_dcp *dcp, u32 port)
+ 	/* Record ownership so ordinary unplug releases this request. */
+ 	dptx->connected = true;
+ 
++	/* Native candidate reselects inside ACTIVATE before the DP-IN handshake. */
++	if (usb4_native_dpin)
++		goto assert_hpd;
++
+ 	/* Retain the existing post-reset crossbar selection for this comparison. */
+ 	mux_control_deselect(route->usb4_xbar);
+ 	ret = mux_control_select(route->usb4_xbar, route->mux_index);
+@@ -1486,9 +1494,10 @@ static int dcp_usb4_protocol_connect(struct apple_dcp *dcp, u32 port)
+ 	if (ret)
+ 		goto out;
+ 
++assert_hpd:
+ 	/* One HPD assertion, after power, as in the working physical DP path. */
+ 	ret = dptxport_set_hpd_timeout(svc, true, 8000);
+-	dev_info(dcp->dev, "USB4 protocol probe: HPD=%d lanes=%u modes=%u\n",
++	dev_info(dcp->dev, "USB4 protocol probe: HPD=%d cached_lanes=%u modes=%u\n",
+ 		 ret, dptx->lane_count, dcp->nr_modes);
+ out:
+ 	mutex_unlock(&dcp->hpd_mutex);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 60bc1c9..6fc3541 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -548,6 +548,42 @@ static int dptxport_call_set_tiled_display_hint(void *reply_,
+ 	return 0;
+ }
+ 
++/* Optional symbol: keep the default DRM module independent of USB4. */
++extern int apple_usb4_dpin0_set_active(bool active);
++
++static int dptxport_native_dpin(struct apple_epic_service *service, bool active)
++{
++	struct apple_dcp *dcp = service->ep->dcp;
++	struct apple_dcp_typec_route *route = dcp->active_typec_route;
++	struct dptx_port *dptx = service->cookie;
++	int (*set_active)(bool active);
++	int ret;
++
++	if (!dcp_usb4_protocol_probe_enabled() || !route ||
++	    !route->usb4_selected || !route->usb4_xbar ||
++	    route->typec_index != 0 || route->mux_index != 2 ||
++	    dcp->index != 2 || !of_machine_is_compatible("apple,j416s") ||
++	    dcp->dptx_die != 0 || dptx->unit != 0 ||
++	    dcp->fw_compat != DCP_FIRMWARE_V_13_5 ||
++	    usb4_dpin_index != 1 || dptx->atcphy)
++		return -EINVAL;
++	set_active = symbol_get(apple_usb4_dpin0_set_active);
++	if (!set_active)
++		return -EOPNOTSUPP;
++	if (active) {
++		/* macOS connects the crossbar here, after DCP power/reset. */
++		mux_control_deselect(route->usb4_xbar);
++		ret = mux_control_select(route->usb4_xbar, route->mux_index);
++		if (ret)
++			goto out;
++	}
++	ret = set_active(active);
++out:
++	symbol_put(apple_usb4_dpin0_set_active);
++	dev_info(dcp->dev, "native DPIN0: DCP active=%u result=%d\n", active, ret);
++	return ret;
++}
++
+ static int
+ dptxport_call_activate(struct apple_epic_service *service,
+ 		       const void *data, size_t data_size,
+@@ -555,18 +591,18 @@ dptxport_call_activate(struct apple_epic_service *service,
+ {
+ 	struct dptx_port *dptx = service->cookie;
+ 	struct apple_dcp *dcp = service->ep->dcp;
++	int ret = 0;
+ 
+-	/*
+-	 * Standalone PHYs need DCP input selection. USB4 keeps ATC lanes
+-	 * in USB4 and only enables lpdptx AUX (phy-apple-atc set_mode).
+-	 */
+-	if (dptx->atcphy &&
++	/* The native USB4 candidate must never configure a physical DP PHY. */
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		ret = dptxport_native_dpin(service, true);
++	else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+ 
+ 	memcpy(reply, data, min(reply_size, data_size));
+ 	if (reply_size >= 4)
+-		memset(reply, 0, 4);
++		*(__le32 *)reply = cpu_to_le32(ret ? 1 : 0);
+ 
+ 	return 0;
+ }
+@@ -577,16 +613,19 @@ dptxport_call_deactivate(struct apple_epic_service *service,
+ 		       void *reply, size_t reply_size)
+ {
+ 	struct dptx_port *dptx = service->cookie;
+-	const struct apple_dcp *dcp = service->ep->dcp;
++	struct apple_dcp *dcp = service->ep->dcp;
++	int ret = 0;
+ 
+ 	dev_info(dcp->dev, "DPTXPort: DEACTIVATE\n");
+-	if (dptx->atcphy &&
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		ret = dptxport_native_dpin(service, false);
++	else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_INVALID, 0);
+ 
+ 	memcpy(reply, data, min(reply_size, data_size));
+ 	if (reply_size >= 4)
+-		memset(reply, 0, 4);
++		*(__le32 *)reply = cpu_to_le32(ret ? 1 : 0);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/thunderbolt/apple-dpin-handshake.h b/drivers/thunderbolt/apple-dpin-handshake.h
+new file mode 100644
+index 0000000..8dd74da
+--- /dev/null
++++ b/drivers/thunderbolt/apple-dpin-handshake.h
+@@ -0,0 +1,69 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++#ifndef _APPLE_DPIN_HANDSHAKE_H
++#define _APPLE_DPIN_HANDSHAKE_H
++
++#include <linux/errno.h>
++
++#define APPLE_DPIN_HPD 0x00
++#define APPLE_DPIN_CONTROL 0x0c
++#define APPLE_DPIN_ACK 0x10
++#define APPLE_DPIN_HPD_LEVEL (1U << 2)
++#define APPLE_DPIN_INACTIVE 1U
++
++/* Caller owns powered register access and provides a bounded wait. */
++struct apple_dpin_io {
++	unsigned int (*read)(void *ctx, unsigned int offset);
++	void (*write)(void *ctx, unsigned int offset, unsigned int value);
++	int (*wait)(void *ctx);
++	void *ctx;
++};
++
++/* Only CONTROL bit 0 is written; HPD and ACK are read-only here. */
++static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
++				      int active)
++{
++	unsigned int hpd, saved, value, ack;
++	int ret;
++
++	if (active) {
++		hpd = io->read(io->ctx, APPLE_DPIN_HPD);
++		if (hpd == ~0U)
++			return -EIO;
++		if (!(hpd & APPLE_DPIN_HPD_LEVEL))
++			return -ENOLINK;
++	}
++	saved = io->read(io->ctx, APPLE_DPIN_CONTROL);
++	if (saved == ~0U)
++		return -EIO;
++	value = active ? saved & ~APPLE_DPIN_INACTIVE :
++			 saved | APPLE_DPIN_INACTIVE;
++	io->write(io->ctx, APPLE_DPIN_CONTROL, value);
++	for (;;) {
++		ack = io->read(io->ctx, APPLE_DPIN_ACK);
++		if (ack == ~0U) {
++			ret = -EIO;
++			break;
++		}
++		if ((ack & APPLE_DPIN_INACTIVE) ==
++		    (value & APPLE_DPIN_INACTIVE))
++			return 0;
++		if (active) {
++			hpd = io->read(io->ctx, APPLE_DPIN_HPD);
++			if (hpd == ~0U || !(hpd & APPLE_DPIN_HPD_LEVEL)) {
++				ret = hpd == ~0U ? -EIO : -ENOLINK;
++				break;
++			}
++		}
++		ret = io->wait(io->ctx);
++		if (ret)
++			break;
++	}
++	/* Restore only our bit; do not invent resets on a failed handshake. */
++	ack = io->read(io->ctx, APPLE_DPIN_CONTROL);
++	if (ack != ~0U)
++		io->write(io->ctx, APPLE_DPIN_CONTROL,
++			  (ack & ~APPLE_DPIN_INACTIVE) |
++			  (saved & APPLE_DPIN_INACTIVE));
++	return ret;
++}
++#endif
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 88839f5..a5f2f5d 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -77,6 +77,7 @@
+ #include <linux/usb/typec_tbt.h>
+ #include <linux/workqueue.h>
+ 
++#include "apple-dpin-handshake.h"
+ #include "nhi.h"
+ #include "tb.h"
+ 
+@@ -118,6 +119,11 @@
+ #define TB_VSE_CAP_APPLE_CABLE_INFO_LEGACY_ADAPTER BIT(9)
+ #define TB_VSE_CAP_APPLE_CABLE_INFO_TBT2_3 BIT(10)
+ 
++/* J416s lab candidate: never enabled implicitly by a connected hub. */
++static bool dpin_native;
++module_param(dpin_native, bool, 0444);
++MODULE_PARM_DESC(dpin_native, "Opt-in J416s left-back native DP-IN handshake");
++
+ struct apple_cio {
+ 	struct device *dev;
+ 	struct device_node *np;
+@@ -129,6 +135,9 @@ struct apple_cio {
+ 	void __iomem *rc_base;
+ 	struct resource *rc_res;
+ 	struct apple_tunable *rc_tunable;
++	void __iomem *dpin_base;
++	bool dpin_attempted;
++	bool dpin_active;
+ 
+ 	struct resource *sram_res;
+ 	void __iomem *sram_base;
+@@ -1431,6 +1440,7 @@ static void apple_cio_stop(struct apple_cio *acio)
+ 		dev_pm_syscore_device(acio->pd_list->pd_devs[i], false);
+ 	}
+ 
++	acio->dpin_active = false;
+ 	acio->current_cable_info = 0;
+ }
+ 
+@@ -1752,6 +1762,121 @@ static struct platform_driver apple_cio_driver = {
+ 	.remove = apple_cio_remove,
+ };
+ 
++/*
++ * Native 13.5 AppleATCDPINAdapterPort, independently observed offline.
++ * Fixed resource comes from this machine's native ADT, not an RC offset.
++ * This is a bounded lab candidate, not a general DP-IN platform binding.
++ */
++struct apple_dpin_poll {
++	void __iomem *base;
++	unsigned long deadline;
++};
++
++static unsigned int apple_dpin_read(void *ctx, unsigned int offset)
++{
++	struct apple_dpin_poll *poll = ctx;
++
++	return readl(poll->base + offset);
++}
++
++static void apple_dpin_write(void *ctx, unsigned int offset, unsigned int value)
++{
++	struct apple_dpin_poll *poll = ctx;
++
++	writel(value, poll->base + offset);
++}
++
++static int apple_dpin_wait(void *ctx)
++{
++	struct apple_dpin_poll *poll = ctx;
++
++	if (time_after_eq(jiffies, poll->deadline))
++		return -ETIMEDOUT;
++	usleep_range(1000, 2000);
++	return 0;
++}
++
++int apple_usb4_dpin0_set_active(bool active);
++int apple_usb4_dpin0_set_active(bool active)
++{
++	struct resource res = {
++		.start = 0x701e50000ULL,
++		.end = 0x701e53fffULL,
++		.flags = IORESOURCE_MEM | IORESOURCE_MEM_NONPOSTED,
++		.name = "j416s-native-dpin0",
++	};
++	struct apple_dpin_poll poll;
++	struct apple_dpin_io io = {
++		.read = apple_dpin_read,
++		.write = apple_dpin_write,
++		.wait = apple_dpin_wait,
++		.ctx = &poll,
++	};
++	struct platform_device *pdev;
++	struct device_node *np;
++	struct apple_cio *acio;
++	int ret = -ENODEV;
++
++	if (!dpin_native || !of_machine_is_compatible("apple,j416s"))
++		return -EOPNOTSUPP;
++	np = of_find_node_by_path("/soc/cio@701ac0000");
++	if (!np)
++		return -ENODEV;
++	pdev = of_find_device_by_node(np);
++	of_node_put(np);
++	if (!pdev)
++		return -ENODEV;
++	/* Fail rather than wait behind unbind or a cable power transition. */
++	if (!device_trylock(&pdev->dev)) {
++		ret = -EBUSY;
++		goto put;
++	}
++	if (pdev->dev.driver != &apple_cio_driver.driver)
++		goto unlock_device;
++	acio = platform_get_drvdata(pdev);
++	if (!acio || !mutex_trylock(&acio->lock)) {
++		ret = -EBUSY;
++		goto unlock_device;
++	}
++	if (!acio->current_cable_info || !acio->nhi_pdev ||
++	    acio->rc_res->start != 0x701ac0000ULL)
++		goto unlock_cio;
++	if (active == acio->dpin_active) {
++		ret = 0;
++		goto unlock_cio;
++	}
++	if (active && acio->dpin_attempted) {
++		ret = -EALREADY;
++		goto unlock_cio;
++	}
++	if (active)
++		acio->dpin_attempted = true;
++	if (!acio->dpin_base) {
++		acio->dpin_base = devm_ioremap_resource(&pdev->dev, &res);
++		if (IS_ERR(acio->dpin_base)) {
++			ret = PTR_ERR(acio->dpin_base);
++			acio->dpin_base = NULL;
++			goto unlock_cio;
++		}
++	}
++	poll.base = acio->dpin_base;
++	poll.deadline = jiffies + msecs_to_jiffies(1000);
++	dev_info(acio->dev, "native DPIN0: active=%u base=%pa, CONTROL=0x0c ACK=0x10\n",
++		 active, &res.start);
++	ret = apple_dpin_handshake(&io, active);
++	if (!ret)
++		acio->dpin_active = active;
++	dev_info(acio->dev, "native DPIN0: active=%u handshake=%d\n", active, ret);
++unlock_cio:
++	mutex_unlock(&acio->lock);
++unlock_device:
++	device_unlock(&pdev->dev);
++put:
++	put_device(&pdev->dev);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(apple_usb4_dpin0_set_active);
++
+ static struct platform_driver * const apple_cio_drivers[] = {
+ 	&apple_nhi_driver,
+ 	&apple_cio_driver,
+-- 
+2.55.0
+

@@ -622,3 +622,28 @@ blacks out or the system behaves unexpectedly, unplug the hub and stop.
 Keep reports on the M2 Desktop for review; no automatic upload/commit.
 No return reboot is scheduled or authorized by this log entry. This records
 the proposed physical sequence before instructions, not its execution.
+
+## 2026-09-22 — 0093 built offline; next action is user unplug only
+
+Built appledrm and thunderbolt_apple with a default-disabled native DP-IN
+handshake candidate, derived from this machine's preserved Apple 13.5
+kernel cache. No module installation, reload, parameter write, ioremap,
+MMIO operation or reboot has occurred. Evidence, guards, build hashes and
+remaining limitations are in notes/2026-09-22-0093-native-dpin.md.
+
+Read-only kernel journal confirms the CURRENT hub is on RIGHT typec2:
+NHI 0xf01f00000, ACIO 0xf01ac0000, crossbar 0xf0304c000. Current boot is
+d1045ee5-d459-4fa1-8175-76725cee1e07. The candidate refuses that route.
+
+After this entry is committed and pushed, request this exact physical action:
+Oliver unplugs the OWC hub cable from the M2's right USB-C port and leaves
+it unplugged. There is no shell command and no manual register access for
+this action. eDP must remain on. This entry records the requested action,
+not a claim it has happened. Do not reconnect, install, reboot or execute
+scripts/load-appledrm.sh under this entry.
+
+The later candidate requires its own separate preflight/action entry with
+exact commands and backups. Its only new resource would be LEFT-BACK DPIN0
+0x701e50000..0x701e53fff, reads at +0,+0x0c,+0x10 and writes only +0x0c
+bit0, controlled by the ACIO owner lock. Existing left-back crossbar is
+0x70304c000 and external DCP is 0x315c00000. None is accessed in this step.
