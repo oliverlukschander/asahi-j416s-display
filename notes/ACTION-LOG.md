@@ -698,3 +698,46 @@ dcpext1 0x315c00000. Right-port candidate access is refused. Panel DCP
 Keep the hub unplugged. Reboot and subsequent hotplug require separate
 entries, committed and pushed before either action. After candidate boot,
 disarm persistent options and verify initramfs before permitting hotplug.
+
+## 2026-09-22 — 0093 installed and verified; hub-absent reboot next
+
+The logged installer completed successfully. All four installed module
+files match the candidate hashes. The extracted initramfs contains the
+candidate appledrm and exact opt-in configuration. No live driver reload
+occurred. Hub absence was rechecked. eDP remains enabled.
+
+Verified backups at /var/tmp/j416s-0093-before/manifest.json:
+- Both original appledrm copies: ceb3aea107ee878ca1004098ae23f5b0ab2fdfa929dd244271224919e668e30f
+- Both original thunderbolt_apple copies: cd83aafe75264173ba78f466ab88cee42e1ee4b1d1dc63c2f17c8d76fcb9b6b8
+- Original initramfs: 73667d5cfb78ba19c4e10910e30f34e842d3debfe8736709ecd5cdaf69c1d2bc
+- New verified initramfs: 8b27aa5b1893113e69667606057a0a167258585e0856e2f131893f08814c38bf
+
+After this entry is committed and pushed, execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0093.py check && sudo -n systemctl reboot
+```
+
+This is a normal system reboot with the hub unplugged. Kernel boot accesses
+normal platform resources, including panel DCP 0x389c00000 and external DCPs
+0x289c00000/0x315c00000. The new DPIN0 resource 0x701e50000..0x701e53fff
+must NOT be mapped without a later eligible USB4 ACTIVATE on left-back.
+Left-back context: ACIO 0x701ac0000, NHI 0x701f00000, xbar 0x70304c000.
+No manual register command is run. No alternate port or tunnel is forced.
+
+Oliver has been told to leave the hub disconnected after the desktop
+returns and report back. Next agent must verify new boot ID, eDP, module
+parameters and logs. Before any requested replug, remove persistent test
+options and rebuild/verify initramfs using the reviewed manage-0093.py disarm
+operation, separately logged before execution. Current loaded flags remain
+active for the bounded test while future boots revert to defaults.
+
+If recovery is required, the prepared operation is
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0093.py restore
+with hub absent; log it before execution. It verifies backup hashes,
+restores all five originals, removes the candidate config, runs depmod,
+and syncs. It does not reload live drivers or reboot. Do not restore only
+appledrm: 0093 also changes thunderbolt_apple.
+
+This entry records the imminent reboot, not its successful completion or
+any display result. Never reconnect the hub while the panel is black.
