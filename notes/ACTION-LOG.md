@@ -2584,3 +2584,25 @@ DPIN0 0xf01e50000 size0x4000. No new manual address access or mapping;
 no forbidden panel mapping, /dev/mem, PHY mode change or module unload.
 On return verify loaded modules/eDP and disarm future boots before separately
 logged single RIGHT-port attachment. No picture success claimed.
+
+## 2026-09-22 —0104 boot verified; disarm future boots before attachment
+
+Boot c7df4aec-08c9-475c-87c9-58c7de8499b0. Hub/external display absent;
+eDP-1 active3456x2160@120, DPMS1, disabledfalse. All four loaded build IDs
+match candidates: DRM3bc81d7a70df6a01cdca3b8d1da93df2b8e22ef4,
+ATCf4fc4b28eb06cabfd7b88d2fdcf6b8b72c42614e,
+mux6effcfefd97193d8737d73ba31a56adbb4899a0c,
+TB016770f55ed62a96a882387ca75dafc3887438c5.
+NativeDPIN and tunnelclock flags Y. After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0104.py disarm
+```
+
+Deletes0104 boot options and rebuilds/verifies initramfs. Current loaded
+readonly flags remain Y for one attachment. No live parameter/MMIO/mapping,
+module reload or reboot. No addresses accessed: test resources remain right
+ATC0xf03000000 size0x4c000, crossbar0xf0304c000 size0x4000,
+lpdptx0xf03050000,axi2af0xf00000000,usb2phy0xf02a90000,
+pipehandler0xf02a84000,dcpext1 0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000. Hotplug separately logged after success.
