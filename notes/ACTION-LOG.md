@@ -769,3 +769,50 @@ ACIO 0x701ac0000, NHI 0x701f00000, crossbar 0x70304c000,
 dcpext1 0x315c00000. Keep hub unplugged until successful image verification
 and a separate committed/pushed hotplug entry. No hotplug is authorized by
 this entry alone.
+
+## 2026-09-22 — future boots disarmed; one left-back 0093 hotplug next
+
+The logged disarm completed and verified the rebuilt initramfs: candidate
+appledrm hash is correct, and j416s-0093-native-dpin.conf is absent from both
+/etc/modprobe.d and the extracted image. Disarmed initramfs SHA256:
+94a7d8a1e9e58bf0f7f055e43853eeedf97fc27330ca79455a4ec19aea800b75.
+Current boot 910bfa0d-a6e8-46b5-b27b-8d67922d7ad6 still has all three loaded
+read-only flags Y, no Thunderbolt devices and eDP enabled.
+
+After committing and pushing this entry, request this exact physical action:
+connect the existing OWC hub, with monitor adapter and keyboard still on it,
+to the M2 LEFT-BACK USB-C port (left-side USB-C nearest the hinge/MagSafe).
+Do not use the right port or left-front port. This physical connection is
+the trigger; no shell parameter write, insmod, driver reload or reboot.
+Wait about 15 seconds and report laptop picture, external picture and hub
+keyboard operation. If eDP blacks out, unplug the hub immediately and stop.
+Do not repeat the connection or reboot with the hub attached.
+
+The logged candidate automatically handles one eligible request, target
+0x8001, dcpext1 0x315c00000 / typec0 / unit0 / mux index2 / DPIN0. The
+normal USB4 stack supplies the tunnel; do not build another tunnel. Confirm
+live NHI 0x701f00000 and ACIO 0x701ac0000 from the new kernel messages.
+
+During ACTIVATE, existing crossbar selection is repeated at 0x70304c000
+(resource size 0x4000, including existing control offsets 0x000..0x034,
+0x050/0x070 and status reads including 0x800). The new ACIO-owned operation
+reserves and maps exactly 0x701e50000..0x701e53fff once, with nonposted
+mapping and the ACIO cable-power lock held. It reads HPD at 0x701e50000,
+CONTROL at 0x701e5000c and ACK at 0x701e50010. If HPD is high it clears
+CONTROL bit0 and polls ACK bit0 for up to one second. On a failed handshake
+it restores only the original CONTROL bit0; on DEACTIVATE it requests bit0=1
+and waits for ACK. Other bits are preserved. There is no write to DPIN +8,
+panel mapping, RC analog operation added by this candidate, or physical PHY
+mode change. No default-on or repeating native test is configured.
+
+After Oliver reports the result, use these exact read-only capture commands:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0093-replugged.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0093-replug-kernel.log
+```
+
+The native handshake result alone is not display success. Check actual
+SET_LINK_RATE, SET_ACTIVE_LANE_COUNT > 0, DPRX=1, Hyprland monitor list and
+Oliver's confirmation of picture and keyboard. This entry schedules the
+single physical test; it does not claim the connection or experiment ran.
