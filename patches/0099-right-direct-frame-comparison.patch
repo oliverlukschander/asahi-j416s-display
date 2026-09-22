@@ -1,0 +1,130 @@
+From 78044feaccbbc3aa6efc61b1ee68cf60edc79e7e Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 09:53:52 +0200
+Subject: [PATCH] drm/apple: allow bounded right-port direct-frame comparison
+
+---
+ drivers/gpu/drm/apple/dcp-internal.h   |  2 +-
+ drivers/gpu/drm/apple/iomfb_template.c | 24 +++++++++++++++---------
+ drivers/mux/apple-display-crossbar.c   | 16 ++++++++++------
+ 3 files changed, 26 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index 88f715c..59a6de6 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -293,7 +293,7 @@ struct apple_dcp {
+ 	struct typec_mux *typec_mux;
+ 	struct apple_dcp_typec_route typec_routes[DCP_MAX_TYPEC_ROUTES];
+ 	struct apple_dcp_typec_route *active_typec_route;
+-	bool usb4_frame_snapshot_done;
++	bool right_frame_snapshot_done[2];
+ 	u32 nr_typec_routes;
+ 	bool phy_managed_by_typec;
+ 	bool typec_cable_connected;
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index 5cdb1cc..88fd6ab 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -122,26 +122,32 @@ static u32 dcpep_cb_zero(struct apple_dcp *dcp)
+ 
+ extern int apple_dpxbar_right_frame_snapshot(struct mux_control *mux);
+ 
+-static void usb4_frame_snapshot(struct apple_dcp *dcp)
++static void right_frame_snapshot(struct apple_dcp *dcp)
+ {
+ 	struct apple_dcp_typec_route *route = dcp->active_typec_route;
++	struct mux_control *mux;
+ 	int (*snapshot)(struct mux_control *mux);
++	bool usb4;
+ 	int ret;
+ 
+ 	if (!usb4_native_dpin || !dcp_usb4_protocol_probe_enabled() ||
+-	    !dcp_is_usb4_output(dcp) || dcp->index != 2 || !route ||
+-	    !dcp_usb4_native_route(route->typec_index) || route->mux_index != 2 ||
+-	    !route->usb4_xbar || dcp->usb4_frame_snapshot_done)
++	    dcp->index != 2 || !route ||
++	    !dcp_usb4_native_route(route->typec_index) || route->mux_index != 2)
+ 		return;
+-	dcp->usb4_frame_snapshot_done = true;
++	usb4 = dcp_is_usb4_output(dcp);
++	mux = usb4 ? route->usb4_xbar : route->xbar;
++	if (!mux || dcp->right_frame_snapshot_done[usb4])
++		return;
++	dcp->right_frame_snapshot_done[usb4] = true;
+ 	snapshot = symbol_get(apple_dpxbar_right_frame_snapshot);
+ 	if (!snapshot) {
+-		dev_info(dcp->dev, "USB4 frame: crossbar snapshot unavailable\n");
++		dev_info(dcp->dev, "Right frame: crossbar snapshot unavailable\n");
+ 		return;
+ 	}
+-	ret = snapshot(route->usb4_xbar);
++	ret = snapshot(mux);
+ 	symbol_put(apple_dpxbar_right_frame_snapshot);
+-	dev_info(dcp->dev, "USB4 frame: crossbar snapshot result=%d\n", ret);
++	dev_info(dcp->dev, "Right frame: usb4=%u crossbar snapshot result=%d\n",
++		 usb4, ret);
+ }
+ 
+ static void dcpep_cb_swap_complete(struct apple_dcp *dcp,
+@@ -154,7 +160,7 @@ static void dcpep_cb_swap_complete(struct apple_dcp *dcp,
+ 	dcp->last_swap_id = resp->swap_id;
+ 
+ 	dcp_drm_crtc_page_flip(dcp, now);
+-	usb4_frame_snapshot(dcp);
++	right_frame_snapshot(dcp);
+ 	if (dcp->crc_enabled) {
+ 		u32 crc32 = 0;
+ 		drm_crtc_add_crc_entry(&dcp->crtc->base, true, resp->swap_id, &crc32);
+diff --git a/drivers/mux/apple-display-crossbar.c b/drivers/mux/apple-display-crossbar.c
+index c668fd1..0058faa 100644
+--- a/drivers/mux/apple-display-crossbar.c
++++ b/drivers/mux/apple-display-crossbar.c
+@@ -104,7 +104,7 @@ struct apple_dpxbar {
+ 	void __iomem *regs;
+ 	int selected_dispext[MUX_MAX];
+ 	spinlock_t lock;
+-	bool frame_snapshot_done;
++	bool frame_snapshot_done[MUX_MAX];
+ };
+ 
+ static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
+@@ -471,12 +471,15 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+ 	struct apple_dpxbar *xbar;
+ 	struct resource *res;
+ 	unsigned long flags;
++	unsigned int index;
+ 	int ret = 0;
+ 
+ 	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
+-	    mux_control_get_index(mux) != MUX_DPIN0 ||
+ 	    !of_machine_is_compatible("apple,j416s"))
+ 		return -EINVAL;
++	index = mux_control_get_index(mux);
++	if (index != MUX_DPIN0 && index != MUX_DPPHY)
++		return -EINVAL;
+ 	xbar = mux_chip_priv(mux->chip);
+ 	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+ 	if (!res || res->start != 0xf0304c000ULL || resource_size(res) < 0x1000)
+@@ -484,13 +487,14 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+ 
+ 	/* Selection and disconnect use this same lock. No new mapping/writes. */
+ 	spin_lock_irqsave(&xbar->lock, flags);
+-	if (xbar->selected_dispext[MUX_DPIN0] != 2)
++	if (xbar->selected_dispext[index] != 2)
+ 		ret = -ENODEV;
+-	else if (xbar->frame_snapshot_done)
++	else if (xbar->frame_snapshot_done[index])
+ 		ret = -EALREADY;
+ 	else {
+-		xbar->frame_snapshot_done = true;
+-		t602x_dump(xbar, "after-frame");
++		xbar->frame_snapshot_done[index] = true;
++		t602x_dump(xbar, index == MUX_DPIN0 ?
++			   "after-frame-dpin0" : "after-frame-dpphy");
+ 	}
+ 	spin_unlock_irqrestore(&xbar->lock, flags);
+ 	return ret;
+-- 
+2.55.0
+

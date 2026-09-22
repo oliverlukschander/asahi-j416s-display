@@ -1607,3 +1607,34 @@ CONTROL+0xc bit0=1 and uses existing HPD+0/ACK+0x10 reads. No manual
 MMIO, new mapping or panel access. If eDP blacks out, leave unplugged
 and stop. Future boots already disarmed. Any subsequent direct-USB-C
 test or changed diagnostic must be reviewed and logged separately.
+
+## 2026-09-22 — Hub absent; prepare and install0099 reference diagnostic
+
+User confirms unplugged;0098 preflight verifies hub absent. Existing logs
+show source gates cleared and crossbar idle restored after disconnect.
+DEACTIVATE returned-ENODEV after cable loss; do not claim DPIN deactivation
+handshake completed. eDP remains on.0099 adds bounded direct-reference
+snapshot, described in notes/2026-09-22-0099-direct-comparison.md.
+
+After commit/push execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0099.py check
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0099.py install
+```
+
+Back up seven current module/image files to /var/tmp/j416s-0099-before,
+verify checksums, install pinned candidates in kernel/updates copies,
+create /etc/modprobe.d/j416s-0099-native-dpin.conf, depmod, mkinitcpio,
+verify extracted boot image/options, sync. Failure restores originals.
+No live reload, parameter write, MMIO, new mapping or reboot. Reboot
+requires separate logged/pushed entry. Leave all display cables absent.
+
+Unaccessed experiment addresses: right crossbar0xf0304c000 size0x4000,
+NHI0xf01f00000, ACIO0xf01ac0000, dcpext1 0x315c00000, native DPIN0
+0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).0099 adds
+only existing-crossbar after-frame reads, once each for source2 DPIN0
+and DPPHY: offsets000,004,008,00c,014,018,01c,024,028,02c,030,034,
+040,044,048,04c,050,060,070,800,020,820,81c. No register-write changes.
+Direct cable attachment and its normal PHY accesses will be logged
+separately after reboot verification; nothing initiates them here.

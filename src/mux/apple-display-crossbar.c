@@ -104,7 +104,7 @@ struct apple_dpxbar {
 	void __iomem *regs;
 	int selected_dispext[MUX_MAX];
 	spinlock_t lock;
-	bool frame_snapshot_done;
+	bool frame_snapshot_done[MUX_MAX];
 };
 
 static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
@@ -471,11 +471,14 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
 	struct apple_dpxbar *xbar;
 	struct resource *res;
 	unsigned long flags;
+	unsigned int index;
 	int ret = 0;
 
 	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
-	    mux_control_get_index(mux) != MUX_DPIN0 ||
 	    !of_machine_is_compatible("apple,j416s"))
+		return -EINVAL;
+	index = mux_control_get_index(mux);
+	if (index != MUX_DPIN0 && index != MUX_DPPHY)
 		return -EINVAL;
 	xbar = mux_chip_priv(mux->chip);
 	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
@@ -484,13 +487,14 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
 
 	/* Selection and disconnect use this same lock. No new mapping/writes. */
 	spin_lock_irqsave(&xbar->lock, flags);
-	if (xbar->selected_dispext[MUX_DPIN0] != 2)
+	if (xbar->selected_dispext[index] != 2)
 		ret = -ENODEV;
-	else if (xbar->frame_snapshot_done)
+	else if (xbar->frame_snapshot_done[index])
 		ret = -EALREADY;
 	else {
-		xbar->frame_snapshot_done = true;
-		t602x_dump(xbar, "after-frame");
+		xbar->frame_snapshot_done[index] = true;
+		t602x_dump(xbar, index == MUX_DPIN0 ?
+			   "after-frame-dpin0" : "after-frame-dpphy");
 	}
 	spin_unlock_irqrestore(&xbar->lock, flags);
 	return ret;
