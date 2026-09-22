@@ -2781,3 +2781,45 @@ ATC0xf03000000,crossbar0xf0304c000,lpdptx0xf03050000,
 axi2af0xf00000000,usb2phy0xf02a90000,pipehandler0xf02a84000,
 DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,DPIN0 0xf01e50000.
 Hotplug will be logged separately after successful disarm.
+
+## 2026-09-22 —0105 disarmed; single right-port attachment
+
+Disarm exited0, image verified; SHA256
+361dcfd6eb2a4cee098947d22087f21517741e4e64fe878555ce43f3f4c387ee.
+Current0105 flags remain enabled; future boots disarmed. After committing
+and pushing this entry request exactly: connect hub once to RIGHT USB-C port
+with monitor on hub; leave connected for capture, report visible picture and
+eDP status. If eDP blacks out, unplug hub and stop. No replug/reboot.
+No shell command initiates physical connection. Keyboard untested unless
+attached and checked.
+
+Scope is existing owner mappings. ATC0xf03000000 size0x4c000 masks
+008/3ffff,1b0/fff,7000/207c,2224/3,2080/ffffffff,2084/0fffffff,
+2088/007fffff,2208/001f0000,2220/80,2214/1,2200/54,2000/1ffffff9;
+preflight7000,2200,2000,7044; statusa74/7044.
+Lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000.
+Crossbar0xf0304c000 size0x4000, DPIN0/source2. Initial0105 selection only
+030bits15:12/3:0. Existing ACTIVATE teardown can clear000,008,00c,018,01c,
+028,02c,034 and030 and assert resets004,014,024. It now omits050/070.
+After successful PLL, nativeup releases004bit2,014bit2,024bit0; reads
+804bit2,810bit2,81cbit0; sets008bit2,018bits5:4=1,028bits1:0=1,
+000bit2,00cbit2,01cbit0,034bit0,02cbit2. No selector rewrite then.
+Snapshots000,004,008,00c,014,018,01c,024,028,02c,030,034,040,044,048,
+04c,050,060,070,800,020,820,81c. No new addresses added by0105.
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000 CONTROL+c bit0,HPD+0/ACK+10 reads.
+No forbidden panel mappings,analog writes,39c000000 assignment,/dev/mem,
+manual tunnel,PHY mode override or module unload.
+
+After user connects capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0105-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0105-right-kernel.log
+modetest -M apple -e
+```
+
+Confirm right port and pre-clock gates off, then PLL/nativeup result,034/800,
+lanes/DPRX and actual picture. If sequence stalls, capture and stop without
+retrying gates or changing registers. No visible success assumed.
