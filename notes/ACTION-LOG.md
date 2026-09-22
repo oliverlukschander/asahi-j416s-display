@@ -2236,3 +2236,26 @@ After desktop returns verify boot ID, loaded driver build IDs and eDP;
 separately log/push future-boot disarm before executing it, then separately
 log/push one right-port hub connection. Keep hub unplugged until those
 checks. If eDP does not return, stop the test and do not connect hub.
+
+## 2026-09-22 —0102 user reboot verified; disarm future boots
+
+Oliver reports reboot done; agent had not executed a reboot command.
+New boot741e4261-fa77-45f1-a1c6-07d98348fe65. Candidate hash/machine/kernel
+check passes; hub and external DRM absent. eDP active3456x2160@120.
+All five expected loaded flags Y. Loaded build IDs match candidate ELF:
+ATC f4fc4b28eb06cabfd7b88d2fdcf6b8b72c42614e,
+appledrm 890025a11411c927b51a4b014d142d4398b66dc4.
+
+After this entry is committed and pushed execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0102.py disarm
+```
+
+Remove0102 modprobe options, rebuild/verify initramfs without them.
+Current loaded flags remain unchanged. No MMIO, mapping, live parameter
+write, reload or reboot; no hardware address accessed by disarm. Future
+test scope remains ATC2 core0xf03000000 size0x4c000,crossbar0xf0304c000
+size0x4000,dcpext1 0x315c00000,DPIN0 0xf01e50000 size0x4000,
+NHI0xf01f00000,ACIO0xf01ac0000. Keep both external cables unplugged
+until disarm verification and a separately committed/pushed hotplug entry.
