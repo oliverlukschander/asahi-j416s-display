@@ -1201,3 +1201,36 @@ DPIN0 0xf01e50000..0xf01e53fff; HPD+0, CONTROL+0xc, ACK+0x10.
 0096 DPIN0 crossbar teardown clears source bit at+0x00c and restores
 reset at+0x024 instead of setting+0x020. Requires fresh boot, separately
 logged and pushed; keep hub unplugged until postboot verification/disarm.
+
+## 2026-09-22 — Reboot into verified 0096 with hub absent
+
+Installation succeeded, seven-file backup manifest verified, extracted boot
+image candidate hashes/options verified. Repeat preflight confirms hub absent.
+New image SHA256: 7285438374cf5c03b11786abd39f0f5bfaf8ce07e650fa0ac8c94421dc4bd45e
+
+After this entry is committed/pushed, execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0096.py check && sudo -n systemctl reboot
+```
+
+Keep hub unplugged throughout reboot and postboot verification/disarm. No
+manual MMIO or reload accompanies this command. Normal crossbar module
+probe initializes platform muxes; new teardown correction only applies to
+DPIN0 with an existing selected source. Hub-absent boot does not qualify
+for native DPIN ACTIVATE. Right experimental path: crossbar0xf0304c000,
+ACIO0xf01ac0000, NHI0xf01f00000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
+
+Known uncertainty: prior restart required two attempts; no intervening failed
+boot journal persisted, cause unresolved. Oliver subsequently authorized
+continuation; report which startup screen appears if this recurs. Do not
+connect hub to investigate a boot failure.
+
+Recovery, hub absent and separately logged before use:
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0096.py restore
+Restores all seven originals from /var/tmp/j416s-0096-before after hash
+verification, removes candidate options, depmods/syncs; no reboot/reload.
+After return verify eDP, correct loaded modules/options and no hub activity,
+then separately log/push/execute manage-0096.py disarm before right hotplug.
+This records a planned reboot, not a successful boot or display fix.
