@@ -1905,3 +1905,27 @@ DPIN0 0xf01e50000 size0x4000. No external connection; no new tunnel
 clock programming expected. No manual MMIO or module unload. Keep both
 external connections unplugged after boot until loaded-driver verification
 and separately logged future-boot disarm. If eDP fails, stop the test.
+
+## 2026-09-22 —0100 boot verified; disarm future boots before hotplug
+
+New boot db25bd04-ac78-4144-96ad-344a8b49757d, kernel7.1.12-2.5-1-ARCH.
+Hyprland eDP-1 active3456x2160@120, dpms1, disabledfalse. No external
+DRM connector or USB4 hub router; candidate hash check passes. Loaded
+appledrm usb4_tunnel_clock/native_dpin/protocol_probe, phy_apple_atc
+usb4_tunnel_clock and thunderbolt_apple dpin_native all report Y.
+
+After committing and pushing this entry execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0100.py disarm
+```
+
+This removes /etc/modprobe.d/j416s-0100-native-dpin.conf and rebuilds and
+verifies /boot/initramfs-linux-aurora.img without the candidate options.
+Loaded read-only flags remain unchanged for this boot's bounded test.
+No live parameter write, insmod, MMIO, mapping or reboot. Thus no hardware
+address is accessed by the disarm command. Later test resource scope remains
+ATC2 core0xf03000000 size0x4c000, crossbar0xf0304c000 size0x4000,
+dcpext1 0x315c00000, DPIN0 0xf01e50000 size0x4000, NHI0xf01f00000,
+ACIO0xf01ac0000; clock offsets/masks unchanged from0100 notes. Hub and
+direct adapter stay unplugged. A separate pushed entry will precede hotplug.
