@@ -1110,3 +1110,47 @@ journal. Therefore neither a 0095 kernel regression nor a specific shutdown
 or boot failure is established. Oliver's report of two restarts is recorded,
 and clarification of screen state and cable state is pending. Hold physical
 hub test; no further reboot, module reload or hardware action scheduled.
+
+## 2026-09-22 — Resume with one 0095 right-port hotplug
+
+Oliver confirms hub was unplugged throughout the troublesome restart and
+explicitly asks to continue. Current boot bfac7473 remains stable with eDP
+enabled, all three loaded flags Y, hub absent, candidate hashes matching,
+and no native DPIN/protocol probe activity. Future-boot options remain
+absent; disarmed image was verified in the previous entry. The restart
+cause is unresolved; this test does not require another reboot.
+
+After this entry is committed/pushed, request exactly: connect hub with
+monitor and keyboard attached to RIGHT USB-C once. If eDP goes black,
+unplug immediately and stop. Do not reboot with hub attached or retry.
+No shell command initiates the physical connection.
+
+Expected live path: typec2, NHI0xf01f00000, ACIO0xf01ac0000,
+crossbar0xf0304c000 (size0x4000), dcpext1 0x315c00000, target0x8021.
+Normal USB4 stack supplies existing tunnel0:5 to1:19; no manual tunnel or
+DP altmode change. ACTIVATE reselects existing right crossbar using existing
+register operations at offsets0x000..0x034, 0x050/0x070 and status reads
+including0x800. ACIO owner maps/reserves native DPIN0
+0xf01e50000..0xf01e53fff nonposted with its cable-power lock held, reads
+HPD0xf01e50000, CONTROL0xf01e5000c, ACK0xf01e50010; active handshake
+clears CONTROL bit0 and polls ACK for up to1s, restores original bit0 on
+failure preserving other bits. DEACTIVATE requests CONTROL bit0=1.
+No DPIN+8, panel, PHY-mode or added analog write.
+
+0095 adds ONE additional reselect of that same crossbar on the first
+DID_CHANGE_LINK_CONFIG with nonzero cached rate, using the existing guarded
+native helper. ACIO should return cached active success without another
+handshake. Repeated nonzero link-up callbacks are refused. This is a bounded
+sequencing experiment, not a proven video fix or reconnect implementation.
+
+After connection, capture with these exact read-only commands:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0095-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0095-right-kernel.log
+modetest -M apple -e
+```
+
+Keep raw captures private/untracked. Require Oliver's visible-picture and
+keyboard confirmation, plus enabled eDP, link rate/lanes/DPRX/modeset and
+frame completion evidence. Hyprland dimensions alone are not success.
