@@ -2562,3 +2562,25 @@ usb2phy0xf02a90000 size0x4000, pipehandler0xf02a84000 size0x4000,
 dcpext1 0x315c00000, NHI0xf01f00000, ACIO0xf01ac0000,
 DPIN0 0xf01e50000 size0x4000. No access to these addresses during install.
 Keep hub/direct adapter disconnected. Reboot/hotplug logged separately.
+
+## 2026-09-22 —0104 installation verified; request unplugged reboot
+
+Installer exited0, verified backup /var/tmp/j416s-0104-before and module
+hashes/options inside initramfs. Image SHA256:
+603553c7f9761d2533cea352d8068c36c02d3e01a86eaed13a9947500a3bd7c3.
+Post-install preflight passes, hub/external display absent. No live reload.
+Recurring firmware/font/architecture warnings only; image verification passed.
+
+After committing/pushing this entry ask Oliver to keep hub and direct display
+adapter unplugged, reboot with exactly `systemctl reboot`, then report back
+before plugging anything in. This is a user-executed reboot instruction;
+no agent reboot command executed. New boot arms0104 options. Hardware paths
+and addresses remain those recorded in preceding installation entry:
+ATC0xf03000000 size0x4c000, crossbar0xf0304c000 size0x4000,
+lpdptx0xf03050000 size0x8000, axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000, pipehandler0xf02a84000 size0x4000,
+dcpext1 0x315c00000, NHI0xf01f00000, ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000. No new manual address access or mapping;
+no forbidden panel mapping, /dev/mem, PHY mode change or module unload.
+On return verify loaded modules/eDP and disarm future boots before separately
+logged single RIGHT-port attachment. No picture success claimed.
