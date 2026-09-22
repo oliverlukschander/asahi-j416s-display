@@ -2758,3 +2758,26 @@ No manual MMIO or new mapping; no panel mapping,39c000000 assignment,
 USB4 lane mode override, module unload or forbidden operation.
 After reboot verify loaded hashes, eDP and mux readonly flag, then separately
 log/push disarm and single right-port attachment. Do not connect yet.
+
+## 2026-09-22 —0105 boot verified; disarm future boots
+
+Boot4198e4ef-c026-41aa-8aa9-9275e358dbc3, preflight passes, hub and external
+display absent. eDP active3456x2160@120,DPMS1,disabledfalse. All loaded IDs
+match candidates: DRM3bc81d7a70df6a01cdca3b8d1da93df2b8e22ef4,
+ATCf4fc4b28eb06cabfd7b88d2fdcf6b8b72c42614e,
+muxc37ada7d21313f63257ed02934264d5a044ac376,
+TB016770f55ed62a96a882387ca75dafc3887438c5.
+Mux usb4_defer_bringup Y; DRM native/clock,ATCclock,TBnative flags Y.
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0105.py disarm
+```
+
+Removes0105 options and rebuilds/verifies initramfs. Current readonly flags
+remain Y for this test. No live MMIO,mapping,module reload or parameter write.
+No addresses accessed; future/current driver resource scope remains
+ATC0xf03000000,crossbar0xf0304c000,lpdptx0xf03050000,
+axi2af0xf00000000,usb2phy0xf02a90000,pipehandler0xf02a84000,
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,DPIN0 0xf01e50000.
+Hotplug will be logged separately after successful disarm.
