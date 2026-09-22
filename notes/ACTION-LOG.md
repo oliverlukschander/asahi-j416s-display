@@ -3019,3 +3019,44 @@ DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
 DPIN0 0xf01e50000 size4000 CONTROL+cbit0,HPD+0/ACK+10reads. No new
 mapping/manualMMIO/panelaccess/moduleunload. If eDP blacks out, stop with
 hub unplugged. No shell command initiates physical removal.
+
+## 2026-09-22 -0107 built offline; downstream (hub-side) hop counter
+
+Oliver confirmed the0106 unplug. Extending the same0106 mechanism rather
+than opening a new question: kernel commit8c472cb adds to the existing
+dp_video_counter gate in tb_dp_init_video_path (drivers/thunderbolt/
+tunnel.c) - when it already matches (Apple NHI,apple,j416s,right-hand
+USB-C port,DP IN adapter) - also set in_counter_index=0 on the video path's
+LAST hop (the downstream router's ingress side of the same path; concretely
+the hub's upstream link-in port, not the DP OUT adapter itself, which is
+always this path's terminal out_port and has no hop counter of its own in
+this model). Uses the same unmodified tb_path_activate() write as0106; no
+change to credits/routing/priority/weight on either hop, no new ioremap/
+MMIO. Design and interpretation in
+notes/2026-09-22-0107-downstream-counter.md. checkpatch on the full
+accumulated tunnel.c diff:0errors/0warnings. `make` in src/thunderbolt
+rebuilds only thunderbolt.ko; the other four modules are unchanged from
+0106 (verified by SHA256).
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0107.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0107-before (same five
+module pairs as0106 plus initramfs); install pinned modules/options,
+depmod, rebuild/verify initramfs. No live module reload, parameter write,
+MMIO, mapping or reboot. Options keep the0105 set active plus thunderbolt
+dp_video_counter=1 (unchanged option string from0106 - the new hop is
+enabled in code, not by a new option). Candidate hashes: thunderbolt(core)
+ebbd7a80568be7422d403bc6d05a5d0a577dbf24d4f939c359e0561f69255906; atc
+e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9; mux
+38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24; appledrm
+9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3;
+thunderbolt_apple26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.

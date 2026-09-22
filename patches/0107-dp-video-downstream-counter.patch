@@ -1,0 +1,63 @@
+From 8c472cb8b801cd064e26a703c19a995b90b34127 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 14:45:53 +0200
+Subject: [PATCH] thunderbolt: also count the DP video path's downstream hop
+
+0106 confirmed the DP-IN hop's packet counter goes nonzero on the
+Apple j416s right-port hub route, but the monitor still shows no
+picture. That only shows traffic left the host; it says nothing about
+whether it reaches the far end of the tunnel.
+
+Extend the same dp_video_counter gate to also assign counter index 0
+to the video path's last hop (the downstream router's ingress side,
+e.g. the hub's upstream link), using the same tb_path_activate code
+path and the same restrictive predicate. A zero reading there after a
+nonzero DP-IN reading would newly show traffic is lost somewhere in
+the tunnel; a nonzero reading would point further downstream, at the
+hub's DP OUT programming or the physical adapter/HDMI chain.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/tunnel.c | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index dd730cb..c39ea31 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -109,7 +109,7 @@ MODULE_PARM_DESC(bw_alloc_mode,
+ static bool dp_video_counter;
+ module_param(dp_video_counter, bool, 0444);
+ MODULE_PARM_DESC(dp_video_counter,
+-		 "diagnostic: count packets entering the DP video path's DP IN hop (Apple j416s right ACIO route only; read via debugfs port counters); default: false");
++		 "diagnostic: count packets on the DP video path's DP IN hop and its downstream (hub-side) hop (Apple j416s right ACIO route only; read via debugfs port counters); default: false");
+ 
+ static void tb_dp_dump_apple(struct tb_tunnel *tunnel);
+ static int tb_apple_nhi_typec_index(struct tb_nhi *nhi);
+@@ -1619,9 +1619,23 @@ static int tb_dp_init_video_path(struct tb_path *path, bool pm_support)
+ 	path->weight = TB_DP_VIDEO_WEIGHT;
+ 
+ 	if (tb_dp_video_counter_wanted(path)) {
++		struct tb_path_hop *last = &path->hops[path->path_length - 1];
++
+ 		path->hops[0].in_counter_index = 0;
+ 		tb_port_dbg(path->hops[0].in_port,
+ 			   "dp_video_counter: enabling counter 0 on DP IN hop\n");
++
++		/*
++		 * Second checkpoint: the downstream router's ingress side of
++		 * the same path (e.g. the hub's upstream link), so a 0105/
++		 * 0106-style attach can show whether DP-IN traffic actually
++		 * crosses into the far end, not just leaves the host.
++		 */
++		if (last != &path->hops[0]) {
++			last->in_counter_index = 0;
++			tb_port_dbg(last->in_port,
++				   "dp_video_counter: enabling counter 0 on downstream hop\n");
++		}
+ 	}
+ 
+ 	tb_path_for_each_hop(path, hop) {
+-- 
+2.55.0
+
