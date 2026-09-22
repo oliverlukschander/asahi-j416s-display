@@ -1374,3 +1374,23 @@ This verifies/restores all seven originals from /var/tmp/j416s-0097-before,
 removes new config, depmods and syncs, without reload/reboot. After return
 verify loaded modules and eDP, then log/push/execute manage-0097.py disarm
 before asking for right-port connection. This entry is intent, not success.
+
+## 2026-09-22 — Verify diagnostic0097 boot; disarm future boots
+
+Boot fcc1d903-4f1a-445b-a8cc-d4da6f826c9a: hub absent, eDP enabled,
+three experiment flags Y, candidate hashes match. Loaded appledrm and
+crossbar build-ID notes exactly match candidate ELF sections. Panel modeset
+completes11.175s; no native probe or first-frame experiment activity.
+
+After commit/push execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0097.py disarm
+```
+
+Remove /etc/modprobe.d/j416s-0097-native-dpin.conf, rebuild with mkinitcpio
+-p linux-aurora, verify image module hashes/options absent, sync. Loaded
+flags remain Y for this boot. No live reload, MMIO, mapping, parameter write
+or reboot. Right addresses unchanged, not accessed by disarm:
+xbar0xf0304c000, ACIO0xf01ac0000, NHI0xf01f00000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
