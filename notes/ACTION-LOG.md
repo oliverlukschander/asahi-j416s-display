@@ -1983,3 +1983,33 @@ DPRX and completed-frame crossbar+800. Success requires Oliver's actual
 visible-picture confirmation plus eDP remaining on; keyboard remains
 unverified unless attached and checked. Software detection alone is not
 success. No further hardware experiment is covered by this entry.
+
+## 2026-09-22 —0100 capture completed; request hub removal for0101
+
+Previously logged capture commands completed. User no picture; eDP active.
+Right ATC callback returns-EBUSY on first SET_LINK_RATE0xa, before any new
+clock writes. DPRX_DONE1 but no external frame. See0100-result-0101-diagnostics
+notes. Built/tested0101 only adds logging to existing clock preflight reads;
+it is not installed. Future boots remain disarmed.
+
+After commit/push request exactly: unplug OWC hub from Mac RIGHT USB-C;
+keep direct display adapter disconnected from Mac; report when unplugged.
+No shell command initiates physical removal. Current0100 clock state was
+never saved/programmed, so its restore helper performs no MMIO. Normal
+teardown remains driver-owned at right ATC core0xf03000000 size0x4c000,
+lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,
+NHI0xf01f00000/ACIO0xf01ac0000. Existing crossbar controls+000,+004,
++008,+00c,+014,+018,+01c,+024,+028,+02c,+030,+034,+050,+070;
+native DPIN0 base0xf01e50000 size0x4000 CONTROL+0xc request bit0,
+HPD+0/ACK+0x10 reads if owner still available. No new mapping, manual
+register write, forbidden panel access, or39c000000 assignment. If eDP
+blacks out, stop with hub unplugged. No reboot/replug covered by this entry.
+After unplug verify with:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0101.py check
+```
+
+Installation and reboot require subsequent committed/pushed entries.

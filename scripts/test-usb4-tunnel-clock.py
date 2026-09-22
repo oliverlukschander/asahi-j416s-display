@@ -27,6 +27,7 @@ typedef uint8_t u8;
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 #define lockdep_assert_held(x) ((void)0)
 #define udelay(x) ((void)0)
+#define dev_info(dev, ...) ((void)0)
 struct apple_atcphy {
  struct { unsigned char *core; } regs;
  bool tunnel_attempted, tunnel_saved;

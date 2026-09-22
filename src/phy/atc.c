@@ -1978,18 +1978,25 @@ static int atc_tunnel_start(struct apple_atcphy *atcphy, u8 rate)
 	default:
 		return -EINVAL;
 	}
-	if (atcphy->tunnel_saved)
+	if (atcphy->tunnel_saved) {
+		if (atcphy->tunnel_rate != rate)
+			dev_info(atcphy->dev, "USB4 tunnel clock busy: active rate=0x%x requested=0x%x\n",
+				 atcphy->tunnel_rate, rate);
 		return atcphy->tunnel_rate == rate ? 0 : -EBUSY;
+	}
 	if (atcphy->tunnel_attempted)
 		return -EALREADY;
 	/* Refuse to replace an existing clock client or an in-flight command. */
 	value = readl(atcphy->regs.core + ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0);
+	dev_info(atcphy->dev, "USB4 tunnel clock preflight: PCLK gates +7000=%08x\n", value);
 	if (value & (DPTX_PCLK1_ENABLE | DPTX_PCLK2_ENABLE | DPRX_PCLK_ENABLE))
 		return -EBUSY;
 	value = readl(atcphy->regs.core + AUSPLL_CLKOUT_MASTER);
+	dev_info(atcphy->dev, "USB4 tunnel clock preflight: PLL outputs +2200=%08x\n", value);
 	if (value & 0x54)
 		return -EBUSY;
 	value = readl(atcphy->regs.core + AUSPLL_APB_CMD_OVERRIDE);
+	dev_info(atcphy->dev, "USB4 tunnel clock preflight: APB request +2000=%08x\n", value);
 	if (value & AUSPLL_APB_CMD_OVERRIDE_REQ)
 		return -EBUSY;
 	ret = readl_poll_timeout(atcphy->regs.core + ACIOPHY_CMN_SHM_STS_REG0,
