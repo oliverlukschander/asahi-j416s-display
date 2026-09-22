@@ -2037,3 +2037,32 @@ and guards retained. Crossbar0xf0304c000 size0x4000, dcpext1 0x315c00000,
 DPIN0 0xf01e50000 size0x4000, NHI0xf01f00000/ACIO0xf01ac0000.
 Both external connections remain unplugged. Reboot logged separately
 only after successful installation verification.
+
+## 2026-09-22 —0101 installed/verified; unplugged reboot instruction
+
+Installer completed: nine-file backup verified at /var/tmp/j416s-0101-before,
+initramfs module/options verification passed. Armed image SHA256
+f508d2524f0d8e010b484db13a0c299d3a304c7ac50c637e0e34f12d82f44b6a.
+Boot before reboot db25bd04-ac78-4144-96ad-344a8b49757d. Post-install
+check passes; hub and external display absent. No live module reload.
+
+After committing and pushing this entry instruct Oliver to run:
+
+```
+systemctl reboot
+```
+
+Keep hub and direct adapter unplugged through boot. No agent-executed
+reboot this turn. Normal driver-owned resources: right ATC core0xf03000000
+size0x4c000,lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. No tunnel clock callback
+or its MMIO expected while unplugged.0101 adds only logs of0100 existing
+preflight reads; clock masks/guards unchanged. No manual MMIO, forbidden
+panel mapping,39c000000 assignment, or live driver unload.
+
+Once desktop returns verify boot/drivers/eDP, then separately log/push
+and disarm future test boots before separately logging right-port hub
+connection. Keep hub unplugged until that verification. If eDP does not
+return, stop the test and do not connect hub.
