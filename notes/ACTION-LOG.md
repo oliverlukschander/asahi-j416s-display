@@ -2832,3 +2832,23 @@ mode/framecomplete,800=4. Crossbar034 still0. eDP and BenQ both enabled in
 Hyprland. User physical picture confirmation pending; do not claim success
 or failure yet. See notes/2026-09-22-0105-result.md. Future boots disarmed.
 No additional hardware action, parameter write or reboot requested.
+
+## 2026-09-22 —0105 user confirms no signal; end this attachment
+
+User confirms external inactive/no picture. Updated0105 result with failed
+visible outcome and additional offline crossbar lookup/accessor checks.
+No speculative kernel patch, live MMIO or parameter change. Future boots
+remain disarmed. After committing/pushing request unplug RIGHT-port hub;
+leave direct adapter disconnected. No reboot/reconnection requested.
+Physical unplug may invoke existing owner cleanup: ATC0xf03000000 size4c000
+saved masks008/3ffff,1b0/fff,7000/207c,2224/3,2080/ffffffff,
+2084/0fffffff,2088/007fffff,2208/001f0000,2220/80,2214/1,2200/54,
+2000/1ffffff9. Other resources lpdptx0xf03050000 size8000,
+axi2af0xf00000000 size4000,usb2phy0xf02a90000 size4000,
+pipehandler0xf02a84000 size4000,crossbar0xf0304c000 size4000,
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size4000 CONTROL+cbit0,HPD+0/ACK+10reads.
+0105 DPIN0 crossbar teardown controls000,004,008,00c,014,018,01c,024,
+028,02c,030,034; excludes legacy050/070. Sizes/offsets hexadecimal.
+No new mapping/manualMMIO/panelaccess/moduleunload. If eDP blacks out, stop
+with hub unplugged. No shell command initiates physical removal.
