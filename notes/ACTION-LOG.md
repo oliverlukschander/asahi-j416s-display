@@ -3107,3 +3107,43 @@ remain Y for this test. No live MMIO,mapping,module reload or parameter
 write. No addresses accessed; resource scope remains ATC0xf03000000,
 crossbar0xf0304c000,DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
 DPIN0 0xf01e50000. Hotplug will be logged separately after successful disarm.
+
+## 2026-09-22 -0107 disarmed; single right-port attachment with two-hop counter readback
+
+Disarm exited0, image verified; new SHA256
+4d77bf2db9ccd8b694aeeeee5ff762f84881e1ff1e48b94455f919de329a8993. Current
+0107 flags (including dp_video_counter) remain enabled for this boot only;
+future boots disarmed. After committing and pushing this entry request
+exactly: connect hub once to RIGHT USB-C port with monitor on hub; leave
+connected for capture; report visible picture and eDP status. If eDP blacks
+out, unplug hub and stop. No replug/reboot. No shell command initiates
+physical connection. Keyboard untested unless attached and checked.
+
+Scope is identical to0106 (existing0105 owner mappings: ATC0xf03000000
+size0x4c000,crossbar0xf0304c000 size0x4000,lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000 CONTROL+cbit0,HPD+0/ACK+10reads)
+plus0107's addition: the video path's LAST hop (downstream router's ingress
+side, i.e. the hub's upstream link-in port) also gets in_counter_index=0 via
+the same unmodified tb_path_activate() write. No new ioremap/MMIO, no
+change to credits/routing/priority/weight, no ACIO analog or panel access.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0107-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0107-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0107-dpin-counters.txt
+```
+
+The kernel log determines the hub's route and the video path's actual last
+hop `in_port` number (read from the crossbar/tunnel activation messages,
+same way route/port were confirmed for every prior right-port attempt); the
+matching debugfs counters file for that exact route/port is read separately
+once identified, rather than guessed in advance. Confirm right port,
+pre-clock gates off, PLL/nativeup result,034/800, lanes/DPRX, both counter
+reads, and actual picture. If sequence stalls, capture and stop without
+retrying gates or changing registers. No visible success assumed regardless
+of counter values.
