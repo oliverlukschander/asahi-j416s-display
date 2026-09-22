@@ -980,3 +980,11 @@ at 2560x1440@59.951 beside enabled eDP-1 at 3456x2160@120. Physical picture
 and keyboard confirmation requested, pending. No extra hardware probe.
 See notes/2026-09-22-0094-result.md and sanitized result excerpt. Raw logs
 remain untracked with private copies. Future boots remain disarmed.
+
+## 2026-09-22 — 0094 physical result correction
+
+Oliver reports external screen inactive, no visible picture. Successful
+link training and accepted modeset did not achieve video output. Read-only
+DRM state shows CRTC88 active with a Hyprland framebuffer; compositor logs
+show pending-page-flip / EBUSY. Investigating frame completion and native
+crossbar/link-change implementation offline. No new hardware action.
