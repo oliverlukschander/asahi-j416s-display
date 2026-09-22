@@ -19,7 +19,7 @@ OPTIONS = ('options appledrm usb4_protocol_probe=1 usb4_native_dpin=1\n'
            'options thunderbolt_apple dpin_native=1\n')
 CANDIDATES = {
     'mux': (ROOT / 'src/mux/mux-apple-display-crossbar.ko',
-            '4bb0097ac4560f2da103148f7147403d43434ace76caa20c83cb704fa784a930'),
+            '4bb0096ac4560f2da103148f7147403d43434ace76caa20c83cb704fa784a930'),
     'appledrm': (ROOT / 'src/appledrm/appledrm.ko',
                 'b536c83e9f0e678aa0df3df24d146e5aca3fff5eebac4865bfef4e144af19103'),
     'thunderbolt_apple': (ROOT / 'src/thunderbolt/thunderbolt_apple.ko',

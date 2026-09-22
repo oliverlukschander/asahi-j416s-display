@@ -1314,3 +1314,36 @@ source+0x00c and reset+0x024); native DEACTIVATE may set DPIN CONTROL
 power lock while powered, using existing0xf01e50000..0xf01e53fff mapping.
 NHI0xf01f00000, dcpext1 0x315c00000. No manual MMIO or reboot with
 this request. Installation/reboot must be separately logged/pushed.
+
+## 2026-09-22 — Correct 0097 installer checksum; install hub absent
+
+Oliver confirms unplug. Initial read-only check refused crossbar checksum:
+naive0096-to0097 script rename accidentally changed matching digits inside
+its pinned hash. Actual module still matches verified0096 hash4bb0096...;
+corrected installer literal and reran check successfully. No installation
+or hardware action occurred on the failed check. eDP enabled, hub absent.
+
+After committing/pushing this entry and corrected installer execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0097.py install
+```
+
+Back up and verify seven files in /var/tmp/j416s-0097-before: kernel/updates
+copies of appledrm.ko, thunderbolt_apple.ko, mux-apple-display-crossbar.ko,
+and /boot/initramfs-linux-aurora.img. Install pinned copies, write
+/etc/modprobe.d/j416s-0097-native-dpin.conf with options appledrm
+usb4_protocol_probe=1 usb4_native_dpin=1 and options thunderbolt_apple
+dpin_native=1, depmod -a 7.1.12-2.5-1-ARCH, mkinitcpio -p linux-aurora,
+verify extracted image modules/options and sync. Failure restores seven
+originals and removes config. No live reload, MMIO or reboot.
+
+appledrm b536c83e9f0e678aa0df3df24d146e5aca3fff5eebac4865bfef4e144af19103
+crossbar 4bb0096ac4560f2da103148f7147403d43434ace76caa20c83cb704fa784a930
+thunderbolt 26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+
+Future right route (not accessed by installation): xbar0xf0304c000,
+ACIO0xf01ac0000, NHI0xf01f00000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
+0097 only adds first-frame logs; hardware behavior remains0096.
+Reboot and later physical connection require separate logged/pushed entries.
