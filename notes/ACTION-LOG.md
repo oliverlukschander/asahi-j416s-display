@@ -2900,3 +2900,26 @@ Future candidate uses existing right ATC0xf03000000 size0x4c000,
 crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
 ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
 install. Hub/direct display stay unplugged; reboot separately logged.
+
+## 2026-09-22 —0106 installed and verified; request unplugged reboot
+
+Installer exited0, verified backup /var/tmp/j416s-0106-before (eleven files;
+manifest confirms all four unchanged modules match0105 exactly and
+thunderbolt(core) backup is the prior7842204c… build) and installed/initramfs
+module hashes/options. New image SHA256
+57ad3b1b1ad51ed0d7465a960ad7c0d5f5ceb0b6939b122191e366f9cab91c1c. Post-install
+preflight passes, hub/external display absent. Recurring firmware/font/
+architecture mkinitcpio warnings only; image verification passed. No live
+reload/MMIO/parameter write occurred.
+
+After committing/pushing this entry ask Oliver to keep hub and direct display
+adapter unplugged, reboot with exactly `systemctl reboot`, then report back
+before plugging anything in. This is a user-executed reboot instruction; no
+agent reboot command executed. New boot arms0106 options (the0105 set plus
+thunderbolt dp_video_counter=1). Hardware paths/addresses remain those
+recorded in the preceding installation entry: ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. No new manual address access or
+mapping; no forbidden panel mapping,/dev/mem,PHY mode change or module
+unload. On return verify loaded modules/eDP and disarm future boots before
+separately logged single RIGHT-port attachment. No picture success claimed.
