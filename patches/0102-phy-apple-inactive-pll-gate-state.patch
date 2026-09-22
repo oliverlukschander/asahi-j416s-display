@@ -1,0 +1,65 @@
+From beef38579bab71f505139f8795dc8d10673d6b2c Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 10:57:55 +0200
+Subject: [PATCH] phy: apple: allow observed USB4 gate state only with inactive
+ PLL
+
+Log all four clock preflight values before returning. Permit the exact 0xe001 gate/reset state only if PLL output enables, command request and lock are clear; keep other enabled-gate states blocked. Native tunnel setup tracks client rates separately from gate bits. This remains a bounded right-port experiment.
+---
+ drivers/phy/apple/atc.c | 32 ++++++++++++++++++++------------
+ 1 file changed, 20 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/phy/apple/atc.c b/drivers/phy/apple/atc.c
+index 6c747cd..e391b85 100644
+--- a/drivers/phy/apple/atc.c
++++ b/drivers/phy/apple/atc.c
+@@ -1960,7 +1960,7 @@ static void atc_tunnel_restore(struct apple_atcphy *atcphy)
+ 
+ static int atc_tunnel_start(struct apple_atcphy *atcphy, u8 rate)
+ {
+-	u32 selector, value;
++	u32 selector, value, gates, outputs, command, status;
+ 	unsigned int i;
+ 	int ret;
+ 
+@@ -1989,18 +1989,26 @@ static int atc_tunnel_start(struct apple_atcphy *atcphy, u8 rate)
+ 	}
+ 	if (atcphy->tunnel_attempted)
+ 		return -EALREADY;
+-	/* Refuse to replace an existing clock client or an in-flight command. */
+-	value = readl(atcphy->regs.core + ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0);
+-	dev_info(atcphy->dev, "USB4 tunnel clock preflight: PCLK gates +7000=%08x\n", value);
+-	if (value & (DPTX_PCLK1_ENABLE | DPTX_PCLK2_ENABLE | DPRX_PCLK_ENABLE))
++	/* Read every guard before deciding, so a refusal records the whole state. */
++	gates = readl(atcphy->regs.core + ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0);
++	outputs = readl(atcphy->regs.core + AUSPLL_CLKOUT_MASTER);
++	command = readl(atcphy->regs.core + AUSPLL_APB_CMD_OVERRIDE);
++	status = readl(atcphy->regs.core + ACIOPHY_DP_PCLK_STAT);
++	dev_info(atcphy->dev,
++		 "USB4 tunnel clock preflight: +7000=%08x +2200=%08x +2000=%08x +7044=%08x\n",
++		 gates, outputs, command, status);
++	/*
++	 * 0101 observed 0xe001 before the first rate request: gate bits set,
++	 * byte-clock reset asserted, selectors and reset-release bits clear.
++	 * Native configureDPTunnelMode tracks clients in software, not these
++	 * gates. Accept only this exact additional state, with no enabled
++	 * PLL output, outstanding command or lock. Other gate states refuse.
++	 */
++	if (outputs & 0x54 || command & AUSPLL_APB_CMD_OVERRIDE_REQ ||
++	    status & ACIOPHY_AUSPLL_LOCK)
+ 		return -EBUSY;
+-	value = readl(atcphy->regs.core + AUSPLL_CLKOUT_MASTER);
+-	dev_info(atcphy->dev, "USB4 tunnel clock preflight: PLL outputs +2200=%08x\n", value);
+-	if (value & 0x54)
+-		return -EBUSY;
+-	value = readl(atcphy->regs.core + AUSPLL_APB_CMD_OVERRIDE);
+-	dev_info(atcphy->dev, "USB4 tunnel clock preflight: APB request +2000=%08x\n", value);
+-	if (value & AUSPLL_APB_CMD_OVERRIDE_REQ)
++	if ((gates & (DPTX_PCLK1_ENABLE | DPTX_PCLK2_ENABLE | DPRX_PCLK_ENABLE)) &&
++	    gates != 0x0000e001)
+ 		return -EBUSY;
+ 	ret = readl_poll_timeout(atcphy->regs.core + ACIOPHY_CMN_SHM_STS_REG0,
+ 				value, value & ACIOPHY_CMN_SHM_STS_REG0_CMD_READY,
+-- 
+2.55.0
+

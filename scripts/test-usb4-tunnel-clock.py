@@ -66,7 +66,7 @@ static void core_mask32(struct apple_atcphy *p, u32 reg, u32 mask, u32 value) {
 /* The four poll points are ready, command 0 ACK, PLL lock, command 0x2000 ACK. */
 #define readl_poll_timeout(addr,value,condition,delay,timeout) ({ \
  (void)(delay); assert((timeout)==10000); \
- polls++; (value)=readl(addr); \
+ polls++; (value)=readl(addr); if (polls==3) (value)|=8; \
  int result=(polls==fail_poll) ? -ETIMEDOUT : ((condition) ? 0 : -ETIMEDOUT); \
  result; })
 static struct apple_atcphy fresh(void) {
@@ -76,7 +76,7 @@ static struct apple_atcphy fresh(void) {
  ram[0x2000/4] &= ~1U;
  ram[0x2000/4] |= 2; /* read-only ACK */
  ram[0xa74/4] |= 1;
- ram[0x7044/4] |= 8;
+ ram[0x7044/4] &= ~8U;
  memcpy(before,ram,sizeof(ram));
  writes=polls=fail_poll=command_count=0;
  return (struct apple_atcphy){.regs.core=(unsigned char *)ram};
@@ -86,8 +86,10 @@ tests = r'''
 int main(void) {
  const u8 rates[]={6,10,20,30};
  const u32 selectors[]={4,3,1,0};
+ for (unsigned int preset=0;preset<2;preset++) {
  for (unsigned int i=0;i<4;i++) {
   struct apple_atcphy p=fresh();
+  if(preset) ram[0x7000/4]=before[0x7000/4]=0xe001;
   assert(atc_tunnel_start(&p,rates[i])==0);
   assert(p.tunnel_saved && p.tunnel_attempted && p.tunnel_rate==rates[i]);
   assert(command_count==2 && commands[0]==0 && commands[1]==0x2000);
@@ -107,24 +109,36 @@ int main(void) {
   assert(writes==w && !p.tunnel_saved && !p.tunnel_rate);
   assert(atc_tunnel_start(&p,rates[i])==-EALREADY && writes==w);
  }
+ }
+ for (unsigned int preset=0;preset<2;preset++)
  for (unsigned int fail=1;fail<=4;fail++) {
   struct apple_atcphy p=fresh(); fail_poll=fail;
+  if(preset) ram[0x7000/4]=before[0x7000/4]=0xe001;
   assert(atc_tunnel_start(&p,10)==-ETIMEDOUT);
   assert(!p.tunnel_saved && !p.tunnel_rate);
   assert(!memcmp(ram,before,sizeof(ram)));
   assert(fail!=1 || writes==0);
   if(fail!=1) assert(atc_tunnel_start(&p,10)==-EALREADY);
  }
- const u32 busyregs[]={0x7000,0x7000,0x7000,0x2200,0x2200,0x2200,0x2000};
- const u32 busybits[]={BIT(15),BIT(13),BIT(14),4,16,64,1};
+ const u32 busyregs[]={0x7000,0x7000,0x7000,0x2200,0x2200,0x2200,0x2000,0x7044};
+ const u32 busybits[]={BIT(15),BIT(13),BIT(14),4,16,64,1,8};
  for(unsigned int i=0;i<ARRAY_SIZE(busyregs);i++) {
   struct apple_atcphy p=fresh(); ram[busyregs[i]/4]|=busybits[i];
+  assert(atc_tunnel_start(&p,10)==-EBUSY && !writes);
+ }
+ for(unsigned int bit=0;bit<32;bit++) {
+  struct apple_atcphy p=fresh(); ram[0x7000/4]=0xe001^BIT(bit);
+  assert(atc_tunnel_start(&p,10)==-EBUSY && !writes);
+ }
+ for(unsigned int i=3;i<ARRAY_SIZE(busyregs);i++) {
+  struct apple_atcphy p=fresh(); ram[0x7000/4]=0xe001;
+  ram[busyregs[i]/4]|=busybits[i];
   assert(atc_tunnel_start(&p,10)==-EBUSY && !writes);
  }
  struct apple_atcphy p=fresh();
  assert(atc_tunnel_start(&p,0)==-EINVAL && !writes);
  assert(atc_tunnel_start(&p,9)==-EINVAL && !writes);
- puts("PASS: 4 native rate descriptors; idempotence; all 4 poll failures; rollback; 7 busy guards; invalid rates; MMIO allowlist");
+ puts("PASS: 4 rates x 2 initial states; all poll failures/rollback in both; 8 busy guards; all 32 e001 single-bit changes refused; PLL/command/lock busy with e001 refused; MMIO allowlist");
 }
 '''
 with tempfile.TemporaryDirectory(prefix='j416s-tunnel-test-') as tmp:

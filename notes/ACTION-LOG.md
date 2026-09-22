@@ -2156,3 +2156,32 @@ Keep raw captures private. Identify last preflight register/value and exact
 callback result; do not infer clock ownership from enable bits alone.
 Visible picture with eDP retained remains required for success. Keyboard
 unverified unless attached and tested. Further action requires separate log.
+
+## 2026-09-22 —0101 guard identified; request unplug for0102
+
+Logged captures completed. Right PHY+7000=0000e001 triggered the first
+busy guard; no0101 PLL writes. User no picture, eDP active, DPRX1.
+Built/RAM-tested0102 exact-state exception contingent on outputs/request/
+lock clear; see0101-result-0102-gate-state notes. Not installed. No live
+extra register access; future boots still disarmed.
+
+After this entry is committed and pushed request exactly: unplug the OWC
+hub from Mac RIGHT USB-C; leave direct adapter disconnected from Mac;
+report when unplugged. No shell command initiates physical removal.
+Current0101 saved-clock state is false, so its restore does no MMIO.
+Normal teardown resources: ATC2 core0xf03000000 size0x4c000,
+lpdptx0xf03050000 size0x8000,axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000,pipehandler0xf02a84000 size0x4000,
+crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,
+NHI0xf01f00000/ACIO0xf01ac0000. Existing crossbar controls+000,+004,
++008,+00c,+014,+018,+01c,+024,+028,+02c,+030,+034,+050,+070;
+DPIN0 base0xf01e50000 size0x4000 CONTROL+0xc requestbit0,HPD+0/ACK+0x10
+reads if owner remains available. No new mapping/manual MMIO or forbidden
+panel/39c000000 access. If eDP blacks out stop with hub unplugged.
+After unplug, verification command:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0102.py check
+```
+
+Install/reboot/hotplug each require separately committed/pushed entries.
