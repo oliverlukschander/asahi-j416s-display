@@ -3399,3 +3399,12 @@ save to the Desktop; no automatic upload/commit. Bring the resulting
 directory back to this Linux session for review (as with the earlier M4
 handoff) before drawing conclusions. No return reboot into Linux is
 scheduled or authorized by this log entry.
+
+## 2026-09-22 -0108 hub unplug confirmed (belated)
+
+Oliver confirmed the hub is unplugged from the right port following the
+0108 result and the subsequent native-analysis research (0106-0108's
+counters/registers, bandwidth-ratio dead end, bringConnectionUp DPIN0
+findings - all offline, no hardware). sysfs shows no thunderbolt devices;
+eDP remained connected before and after. No hardware action was performed
+during that research interval.
