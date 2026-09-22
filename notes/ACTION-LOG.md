@@ -3697,3 +3697,15 @@ Confirm right port, pre-clock gates off, PLL/nativeup result,034/800,
 lanes/DPRX, counter readback, and actual picture - the last decided only
 by Oliver's visual confirmation. If sequence stalls, capture and stop
 without retrying gates or changing registers.
+
+## 2026-09-22 -0110 hub unplug confirmed
+
+Oliver confirmed the hub is unplugged from the right port following the
+0110 result (explicit-guess value ran cleanly, no error, still no
+picture). sysfs shows no thunderbolt devices; eDP remained connected
+before and after. No further hardware action performed this boot
+(one-attempt guard already used). Per the agreed plan, next step is
+pursuing the actual DCP coprocessor firmware (separate from the XNU
+kernelcache used for all static analysis so far) - a new research effort,
+not a hardware action; will be logged separately if/when it leads to any
+hardware-touching step.
