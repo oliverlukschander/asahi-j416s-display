@@ -1,0 +1,102 @@
+From f1640dd4d4a6e7b5a43e837c9e90cd6883f436e2 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 14:32:33 +0200
+Subject: [PATCH] thunderbolt: diagnostic packet counter on Apple j416s right
+ DP IN hop
+
+0105 completes SET_LINK_RATE/SET_ACTIVE_LANE_COUNT/DPRX_DONE and a full
+DCP modeset/frame on the right-port USB4 hub route, but the external
+monitor still shows no picture. Frame completion and DPRX/link status
+do not establish that video packets actually left the DP IN adapter
+into the USB4 tunnel.
+
+Both ends of that tunnel already report USB4 per-hop packet counter
+support (host DP IN route0 port5 and hub DP OUT route1 port19 each
+report counters_support=1, max_counters=2, decoded offline from the
+already-captured captures/2026-09-22-0104-dpin-regs.txt and
+-dpout-regs.txt). tb_path_activate() already knows how to program a
+hop's counter (TB_CFG_HOPS dword1 counter/counter_enable) whenever
+in_counter_index != -1; tb_dp_init_video_path() just never sets it.
+
+Add a default-off, read-only module parameter, dp_video_counter, that
+assigns counter index 0 to the DP video path's DP-IN-side hop, gated
+to the exact same restrictive predicate used by prior candidates
+(Apple NHI, apple,j416s machine, right-hand USB-C port only). This
+touches only the hop's counter/counter_enable bits; it does not alter
+nfc_credits/initial_credits (hop credits), routing, or priority/weight,
+and it performs no new MMIO of its own -- it only opts an existing,
+already-safe generic code path into using a feature the hardware
+already advertises.
+
+Read back via the existing, already-in-tree debugfs
+.../port5/counters and .../port19/counters files after the same
+right-port hub attach used for 0105. A zero DP-IN counter despite a
+completed frame would newly show the fault is upstream of the tunnel
+(crossbar/DCP); a nonzero one would newly show it is downstream
+(tunnel/DP-OUT/adapter).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/tunnel.c | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index 664ca58..dd730cb 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -106,7 +106,13 @@ module_param(bw_alloc_mode, bool, 0444);
+ MODULE_PARM_DESC(bw_alloc_mode,
+ 		 "enable bandwidth allocation mode if supported (default: true)");
+ 
++static bool dp_video_counter;
++module_param(dp_video_counter, bool, 0444);
++MODULE_PARM_DESC(dp_video_counter,
++		 "diagnostic: count packets entering the DP video path's DP IN hop (Apple j416s right ACIO route only; read via debugfs port counters); default: false");
++
+ static void tb_dp_dump_apple(struct tb_tunnel *tunnel);
++static int tb_apple_nhi_typec_index(struct tb_nhi *nhi);
+ 
+ static bool tb_nhi_is_apple(const struct tb_nhi *nhi)
+ {
+@@ -1582,6 +1588,25 @@ static int tb_dp_init_video_credits(struct tb_path_hop *hop)
+ 	return 0;
+ }
+ 
++static bool tb_dp_video_counter_wanted(const struct tb_path *path)
++{
++	struct tb_port *in;
++
++	if (!dp_video_counter || !path->path_length)
++		return false;
++
++	in = path->hops[0].in_port;
++	if (!tb_port_is_dpin(in))
++		return false;
++	if (!tb_nhi_is_apple(in->sw->tb->nhi))
++		return false;
++	if (!of_machine_is_compatible("apple,j416s"))
++		return false;
++
++	/* Right-hand USB-C ports only ("f01f" NHI); see tb_apple_nhi_typec_index(). */
++	return tb_apple_nhi_typec_index(in->sw->tb->nhi) == 2;
++}
++
+ static int tb_dp_init_video_path(struct tb_path *path, bool pm_support)
+ {
+ 	struct tb_path_hop *hop;
+@@ -1593,6 +1618,12 @@ static int tb_dp_init_video_path(struct tb_path *path, bool pm_support)
+ 	path->priority = TB_DP_VIDEO_PRIORITY;
+ 	path->weight = TB_DP_VIDEO_WEIGHT;
+ 
++	if (tb_dp_video_counter_wanted(path)) {
++		path->hops[0].in_counter_index = 0;
++		tb_port_dbg(path->hops[0].in_port,
++			   "dp_video_counter: enabling counter 0 on DP IN hop\n");
++	}
++
+ 	tb_path_for_each_hop(path, hop) {
+ 		int ret;
+ 
+-- 
+2.55.0
+

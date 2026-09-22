@@ -2852,3 +2852,51 @@ DPIN0 0xf01e50000 size4000 CONTROL+cbit0,HPD+0/ACK+10reads.
 028,02c,030,034; excludes legacy050/070. Sizes/offsets hexadecimal.
 No new mapping/manualMMIO/panelaccess/moduleunload. If eDP blacks out, stop
 with hub unplugged. No shell command initiates physical removal.
+
+## 2026-09-22 —0106 built offline; DP-IN packet-counter diagnostic
+
+No speculative crossbar/gate-ordering change. Instead, offline re-decode of
+the already-captured, already-logged0104-dpin-regs.txt/0104-dpout-regs.txt
+(no new hardware read) shows host DP IN route0port5 and hub DP OUT-side
+route1port19 both report TB_CFG_PORT DWORD1 counters_support=1,max_counters=2.
+Kernel commitf1640dd adds a default-off readonly module parameter
+dp_video_counter on the core thunderbolt module: when set, drivers/
+thunderbolt/tunnel.c's tb_dp_init_video_path assigns in_counter_index=0 on
+only the DP video path's DP-IN-side hop, gated to Apple NHI+apple,j416s
+machine+right-hand USB-C port (tb_apple_nhi_typec_index==2), matching the
+existing restrictive-predicate style. This sets only the counter/
+counter_enable bits already defined in TB_CFG_HOPS dword1 for that one hop;
+it does not touch nfc_credits/initial_credits (hop credits), routing,
+priority/weight, ACIO analog, or panel registers, and adds no new
+ioremap/MMIO of its own — tb_path_activate already performs this exact write
+for every tunnel type that uses a counter. Full design in
+notes/2026-09-22-0106-dp-video-counter.md; checkpatch0errors/0warnings;
+`make` in src/thunderbolt rebuilds only thunderbolt.ko (thunderbolt_apple,
+mux, atc, appledrm are byte-identical to the currently-installed0105 build,
+verified by SHA256). Readback after connection will use the existing
+debugfs .../port5/counters and .../port19/counters files, not new code.
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0106.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0106-before (five module
+pairs — atc,mux,appledrm,thunderbolt_apple,thunderbolt — plus initramfs);
+install pinned modules/options, depmod, rebuild/verify initramfs. No live
+module reload, parameter write, MMIO, mapping or reboot. Options keep the
+0105 set active (appledrm usb4_protocol_probe=1 usb4_native_dpin=1
+usb4_tunnel_clock=1; thunderbolt_apple dpin_native=1; phy_apple_atc
+usb4_tunnel_clock=1; mux_apple_display_crossbar usb4_defer_bringup=1) and add
+thunderbolt dp_video_counter=1. Candidate hashes: thunderbolt(core)
+a70debca0d7fd8a53d8807358a6db922049f321ed24b8a6415ebf4f75b3a8898; atc
+e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9; mux
+38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24; appledrm
+9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3;
+thunderbolt_apple26703573febf2ceb4898b0cbc8faf8ac119fb2974e218b4d6edc90872d0ee198
+(last four unchanged from0105, reinstalled only for manifest symmetry).
+Future candidate uses existing right ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.
