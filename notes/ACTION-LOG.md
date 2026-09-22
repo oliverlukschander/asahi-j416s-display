@@ -1448,3 +1448,27 @@ stops tracing, writes /tmp/j416s-0097-frame-trace.txt, removes instance.
 No modeset, parameter write, MMIO, mapping, module reload or reboot initiated.
 Hardware remains right xbar0xf0304c000, ACIO0xf01ac0000, NHI0xf01f00000,
 dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff.
+
+## 2026-09-22 — 0097 no signal; prepare0098 and request hub removal
+
+Oliver confirms black/no signal despite external frame2 completion.
+Software trace completed; private evidence preserved. No additional live
+MMIO or parameter writes were performed. 0098 kernel commit92a9dee adds
+a one-shot existing-crossbar snapshot after completion, no register writes.
+Both modules build; RAM-only27-cycle teardown checks pass; hashes pinned
+in manage-0098.py and notes/2026-09-22-0098-after-frame.md.
+
+After this entry is committed and pushed, request exactly: unplug the hub
+from the RIGHT USB-C port and report when unplugged. No shell command
+initiates this physical action. Current0097 handles normal disconnect;
+0098 is not installed or loaded. No reboot or reload yet.
+
+Disconnect uses the existing right route: typec2, NHI0xf01f00000,
+ACIO0xf01ac0000, dcpext1 0x315c00000, crossbar0xf0304c000 size0x4000.
+Existing crossbar teardown touches controls+0x000,+0x004,+0x008,+0x00c,
++0x014,+0x018,+0x01c,+0x024,+0x028,+0x02c,+0x030,+0x034,+0x050,+0x070,
+and its existing status reads include+0x800,+0x820,+0x81c. Native DPIN0
+resource0xf01e50000..0xf01e53fff deactivation requests CONTROL+0xc bit0=1
+and uses existing HPD+0 and ACK+0x10 reads. No manual MMIO or panel mapping.
+If eDP blacks out, leave hub unplugged and stop. Installation and reboot
+require their own committed/pushed entries after hub absence is verified.

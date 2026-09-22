@@ -104,6 +104,7 @@ struct apple_dpxbar {
 	void __iomem *regs;
 	int selected_dispext[MUX_MAX];
 	spinlock_t lock;
+	bool frame_snapshot_done;
 };
 
 static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
@@ -462,6 +463,39 @@ static const struct mux_control_ops apple_dpxbar_ops = {
 static const struct mux_control_ops apple_dpxbar_t602x_ops = {
 	.set = apple_dpxbar_set_t602x,
 };
+
+/* Optional diagnostic, called only by the native right-port experiment. */
+int apple_dpxbar_right_frame_snapshot(struct mux_control *mux);
+int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+{
+	struct apple_dpxbar *xbar;
+	struct resource *res;
+	unsigned long flags;
+	int ret = 0;
+
+	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
+	    mux_control_get_index(mux) != MUX_DPIN0 ||
+	    !of_machine_is_compatible("apple,j416s"))
+		return -EINVAL;
+	xbar = mux_chip_priv(mux->chip);
+	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+	if (!res || res->start != 0xf0304c000ULL || resource_size(res) < 0x1000)
+		return -EINVAL;
+
+	/* Selection and disconnect use this same lock. No new mapping/writes. */
+	spin_lock_irqsave(&xbar->lock, flags);
+	if (xbar->selected_dispext[MUX_DPIN0] != 2)
+		ret = -ENODEV;
+	else if (xbar->frame_snapshot_done)
+		ret = -EALREADY;
+	else {
+		xbar->frame_snapshot_done = true;
+		t602x_dump(xbar, "after-frame");
+	}
+	spin_unlock_irqrestore(&xbar->lock, flags);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(apple_dpxbar_right_frame_snapshot);
 
 static int apple_dpxbar_probe(struct platform_device *pdev)
 {
