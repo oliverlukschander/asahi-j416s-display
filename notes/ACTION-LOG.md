@@ -1497,3 +1497,31 @@ ACK+0x10. New diagnostic reuses crossbar reads once after completed frame:
 +000,+004,+008,+00c,+014,+018,+01c,+024,+028,+02c,+030,+034,+040,+044,
 +048,+04c,+050,+060,+070,+800,+020,+820,+81c. No new register writes.
 Keep hub absent through separately logged reboot and postboot validation.
+
+## 2026-09-22 — Reboot verified0098 with hub absent
+
+Installation completed; seven-file backup verified, image module hashes
+and experiment options verified. Repeated preflight confirms hub absent.
+Installed image SHA256: 02398dd9348b414da9fcc7d5807cfdc200cc1bb9150c2f797debccabe10feeb1
+
+After commit/push execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0098.py check && sudo -n systemctl reboot
+```
+
+Keep hub unplugged through postboot checks and future-boot disarm. Normal
+crossbar probe remains unchanged. No manual mapping, MMIO or live reload.
+Right native route: xbar0xf0304c000 size0x4000, NHI0xf01f00000,
+ACIO0xf01ac0000, dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff
+(HPD+0, CONTROL+0xc, ACK+0x10). With hub absent the native activation
+and new one-shot after-frame snapshot are ineligible. Snapshot reads
+existing crossbar offsets recorded in the installation entry only after
+a later separately logged right-port connection and frame completion.
+
+Recovery, hub absent and separately logged before use:
+`sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0098.py restore`
+Restores all seven verified originals from /var/tmp/j416s-0098-before,
+removes config, depmods and syncs; no live reload/reboot. After boot verify
+loaded build IDs, eDP and flags, then log/push/execute disarm before hotplug.
+This entry records reboot intent, not successful boot or visible output.
