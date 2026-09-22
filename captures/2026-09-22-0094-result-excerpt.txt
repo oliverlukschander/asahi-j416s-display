@@ -1,0 +1,15 @@
+[  269.416386] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: target=0x8021 typec2, PHY absent, one attempt
+[  269.416973] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: validate=0
+[  269.417575] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: connect=0
+[  269.421196] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: native DPIN0: active=1 base=0x0000000f01e50000, CONTROL=0x0c ACK=0x10
+[  269.421499] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: native DPIN0: active=1 handshake=0
+[  269.421775] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: DCP active=1 result=0
+[  269.422049] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: request_display=0 modes=0
+[  269.438307] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: HPD=0 cached_lanes=4 modes=0
+[  269.474981] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: SET_LINK_RATE 0xa
+[  269.485880] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4/DPTX: SET_ACTIVE_LANE_COUNT 4
+[  269.673018] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=TimingElements bytes=205757 accepted=1 nr_modes=22
+[  269.691469] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode(color:88 timing:50) "2560x1440": 60 241500 2560 2608 2640 2720 1440 1443 1448 1481 0x48 0x0
+[  269.848029] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS changed CS0=c0090400 CS2=241021c2 CS9=41000553 CS13=00000000 COMMON=b7402134 VE=1 AE=1 HPD=1 DPRX=1 disc=0
+[  269.848364] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN DPRX_DONE=1 (ACIO AUX completed)
+[  269.915322] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode finished:8275

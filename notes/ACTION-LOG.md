@@ -969,3 +969,14 @@ Keep raw captures private/untracked. Check nonzero link rate, lane count,
 DPRX, TimingElements, dcpext1 digital-out modeset and actual compositor
 resolution, plus Oliver's confirmation of picture and keyboard operation.
 This entry schedules the test; it does not assert it has run or succeeded.
+
+## 2026-09-22 — 0094 right-port connection reaches active modeset
+
+Oliver reports hub plugged in. Executed the three previously logged
+read-only capture commands. Right-port native handshake succeeds, link
+rate 0x0a / four lanes, DPRX_DONE=1, and 22 modes arrive. dcpext1 completes
+2560x1440 modeset; encoder97 now uses CRTC88. Hyprland USB-3 is enabled
+at 2560x1440@59.951 beside enabled eDP-1 at 3456x2160@120. Physical picture
+and keyboard confirmation requested, pending. No extra hardware probe.
+See notes/2026-09-22-0094-result.md and sanitized result excerpt. Raw logs
+remain untracked with private copies. Future boots remain disarmed.
