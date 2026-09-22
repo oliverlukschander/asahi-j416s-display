@@ -1638,3 +1638,31 @@ and DPPHY: offsets000,004,008,00c,014,018,01c,024,028,02c,030,034,
 040,044,048,04c,050,060,070,800,020,820,81c. No register-write changes.
 Direct cable attachment and its normal PHY accesses will be logged
 separately after reboot verification; nothing initiates them here.
+
+## 2026-09-22 — Reboot verified0099 with no external display connection
+
+Installer succeeded, seven original files backed up/verified in
+/var/tmp/j416s-0099-before. Extracted image module hashes/options match.
+Repeated preflight confirms hub absent. Image SHA256:
+aeccc392aa61e218b188444c0021a0848f3aad2ced6246ad8a79ba317ad6b8fe
+
+After commit/push execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0099.py check && sudo -n systemctl reboot
+```
+
+Keep hub and direct adapter disconnected through boot verification and
+future-boot disarm. Crossbar probe unchanged. No manual MMIO/reload.
+No connected route means the new after-frame diagnostic is ineligible.
+Relevant right addresses: xbar0xf0304c000 size0x4000, NHI0xf01f00000,
+ACIO0xf01ac0000, dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff
+(HPD+0, CONTROL+0xc, ACK+0x10).0099 snapshot accesses are listed in
+the install entry and require a later separately logged connection.
+
+Recovery command, hub absent and separately logged before use:
+`sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0099.py restore`
+Restores seven checksummed originals, removes config, depmods and syncs;
+no reload/reboot. After return verify live build IDs and eDP, then log/push
+and execute manage-0099.py disarm before requesting DIRECT right USB-C
+adapter connection. No claim of successful boot or visible output yet.
