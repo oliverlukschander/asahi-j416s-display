@@ -3619,3 +3619,26 @@ candidate uses existing right ATC0xf03000000 size0x4c000,
 crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
 ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
 install. Hub/direct display stay unplugged; reboot separately logged.
+
+## 2026-09-22 -0110 installed and verified; request unplugged reboot
+
+Installer exited0, verified backup /var/tmp/j416s-0110-before (eleven
+files; manifest confirms all four unchanged modules match0109 exactly and
+thunderbolt_apple backup is the prior0109 build starting74d8250d...). New
+image SHA256 d9e55e3510b4ce182135b9be44371487f43d53c024566080f4ce11de26b9d0be.
+Post-install preflight passes, hub/external display absent. Recurring
+firmware/font/architecture mkinitcpio warnings only; image verification
+passed. No live reload/MMIO/parameter write occurred.
+
+After committing/pushing this entry ask Oliver to keep hub and direct
+display adapter unplugged, reboot with exactly `systemctl reboot`, then
+report back before plugging anything in. This is a user-executed reboot
+instruction; no agent reboot command executed. New boot arms0110 (same
+options as0109 - unconditional code behind the existing dpin_native=1
+gate). Hardware paths/addresses remain those recorded in the preceding
+installation entry: ATC0xf03000000 size0x4c000,crossbar0xf0304c000
+size0x4000,DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000. No new manual address access or mapping; no
+forbidden panel mapping,/dev/mem,PHY mode change or module unload. On
+return verify loaded modules/eDP and disarm future boots before separately
+logged single RIGHT-port attachment. No picture success claimed.
