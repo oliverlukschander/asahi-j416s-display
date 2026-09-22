@@ -1,0 +1,107 @@
+From 38642860255aa08983d6118c4322abe0c7af9133 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 09:20:12 +0200
+Subject: [PATCH] drm/apple: log first USB4 frame submission milestones
+
+0096 corrects the observed crossbar reset sequence but the monitor stays black with a pending page flip. Under the existing native USB4 opt-in, log once per call site at flush entry, surface preparation, start request/reply, submit acknowledgement, completion intent/completion and abort. This diagnostic changes no RPC payload, frame completion behavior or MMIO. It localizes the first-frame stall without another speculative clock change.
+---
+ drivers/gpu/drm/apple/iomfb.c          |  7 +++++++
+ drivers/gpu/drm/apple/iomfb_template.c | 22 ++++++++++++++++++++++
+ 2 files changed, 29 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/iomfb.c b/drivers/gpu/drm/apple/iomfb.c
+index 1e33d52..c2745c1 100644
+--- a/drivers/gpu/drm/apple/iomfb.c
++++ b/drivers/gpu/drm/apple/iomfb.c
+@@ -563,6 +563,13 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
+ 	 * re-runs the modeset, which marks the mode valid again, before the
+ 	 * firmware has reported the display back.
+ 	 */
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev,
++			      "USB4 frame: flush entry valid=%u connected=%u busy=%u\n",
++			      dcp->valid_mode,
++			      dcp->connector && dcp->connector->connected,
++			      dcp_channel_busy(&dcp->ch_cmd));
++
+ 	if (!dcp->valid_mode || !dcp->connector || !dcp->connector->connected) {
+ 		schedule_work(&dcp->vblank_wq);
+ 		return;
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index a09935f..e9c8519 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -125,6 +125,8 @@ static void dcpep_cb_swap_complete(struct apple_dcp *dcp,
+ {
+ 	ktime_t now = ktime_get();
+ 	trace_iomfb_swap_complete(dcp, resp->swap_id);
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev, "USB4 frame: complete id=%u\n", resp->swap_id);
+ 	dcp->last_swap_id = resp->swap_id;
+ 
+ 	dcp_drm_crtc_page_flip(dcp, now);
+@@ -1114,6 +1116,9 @@ static void
+ dcpep_cb_swap_complete_intent_gated(struct apple_dcp *dcp,
+ 				    struct dcp_swap_complete_intent_gated *info)
+ {
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev, "USB4 frame: complete intent id=%u %ux%u\n",
++			      info->swap_id, info->width, info->height);
+ 	trace_iomfb_swap_complete_intent_gated(dcp, info->swap_id,
+ 		info->width, info->height);
+ }
+@@ -1122,6 +1127,8 @@ static void
+ dcpep_cb_abort_swap_ap_gated(struct apple_dcp *dcp, u32 *swap_id)
+ {
+ 	trace_iomfb_abort_swap_ap_gated(dcp, *swap_id);
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev, "USB4 frame: abort id=%u\n", *swap_id);
+ }
+ 
+ static struct dcpep_get_tiling_state_resp
+@@ -1203,6 +1210,9 @@ static void dcp_swapped(struct apple_dcp *dcp, void *data, void *cookie)
+ {
+ 	struct DCP_FW_NAME(dcp_swap_submit_resp) *resp = data;
+ 
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev, "USB4 frame: submit ack ret=%u\n", resp->ret);
++
+ 	if (resp->ret) {
+ 		dev_err(dcp->dev, "swap failed! status %u\n", resp->ret);
+ 		dcp_drm_crtc_vblank(dcp->crtc);
+@@ -1230,6 +1240,9 @@ static void dcp_swap_started(struct apple_dcp *dcp, void *data, void *cookie)
+ 
+ 	DCP_FW_UNION(dcp->swap).swap.swap_id = resp->swap_id;
+ 
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev, "USB4 frame: start ack; submit id=%u\n",
++			      resp->swap_id);
+ 	trace_iomfb_swap_submit(dcp, resp->swap_id);
+ 	dcp_swap_submit(dcp, false, &DCP_FW_UNION(dcp->swap), dcp_swapped, NULL);
+ }
+@@ -1239,6 +1252,9 @@ static void do_swap(struct apple_dcp *dcp, void *data, void *cookie)
+ {
+ 	struct dcp_swap_start_req start_req = { 0 };
+ 
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev, "USB4 frame: start request connected=%u\n",
++			      dcp->connector && dcp->connector->connected);
+ 	if (dcp->connector && dcp->connector->connected)
+ 		dcp_swap_start(dcp, false, &start_req, dcp_swap_started, NULL);
+ 	else
+@@ -1533,6 +1549,12 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
+ 		dcp->brightness.update = false;
+ 	}
+ 
++	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
++		dev_info_once(dcp->dev,
++			      "USB4 frame: flush surface=%u enabled=0x%x ctm=%u\n",
++			      has_surface, req->swap.swap_enabled,
++			      crtc_state->color_mgmt_changed);
++
+ 	if (crtc_state->color_mgmt_changed) {
+ 		struct iomfb_set_matrix_req mat = {
+ 			.location = 9,
+-- 
+2.55.0
+

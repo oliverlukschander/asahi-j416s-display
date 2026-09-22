@@ -1297,3 +1297,20 @@ modetest -M apple -e
 Retain raw logs privately/untracked. Require actual visible picture rather
 than compositor dimensions alone; inspect lane/rate/DPRX, modeset, page-flip
 completion and eDP preservation. This entry schedules a test, not success.
+
+## 2026-09-22 — 0096 no picture; diagnostic0097 built; request unplug
+
+Logged0096 captures completed. Reset+0x024 now restores correctly and
++0x020 remains0, but visible picture absent and page flip remains pending.
+Link training/modeset success alone is insufficient. Prepared diagnostics-only
+0097 with first-frame milestones; no further hardware behavior change.
+Build/checkpatch pass. Nothing installed. See0097 first-frame notes.
+
+After commit/push request: unplug hub from RIGHT USB-C and leave it
+unplugged before diagnostic installation. No shell command initiates unplug.
+Normal loaded0096 teardown affects xbar0xf0304c000 (including corrected
+source+0x00c and reset+0x024); native DEACTIVATE may set DPIN CONTROL
+0xf01e5000c bit0=1 and poll ACK0xf01e50010 under ACIO0xf01ac0000
+power lock while powered, using existing0xf01e50000..0xf01e53fff mapping.
+NHI0xf01f00000, dcpext1 0x315c00000. No manual MMIO or reboot with
+this request. Installation/reboot must be separately logged/pushed.

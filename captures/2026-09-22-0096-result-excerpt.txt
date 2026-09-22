@@ -1,0 +1,19 @@
+[    9.415870] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[    9.416288] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[    9.416533] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[  318.129683] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  320.148455] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[  320.149439] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  320.149755] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: native DPIN0: active=1 base=0x0000000f01e50000, CONTROL=0x0c ACK=0x10
+[  320.150072] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: native DPIN0: active=1 handshake=0
+[  320.150350] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: DCP active=1 result=0
+[  320.203020] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: SET_LINK_RATE 0xa
+[  320.204138] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[  320.204948] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  320.205217] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: DCP active=1 result=0
+[  320.205516] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: link-config up rate=0xa result=0
+[  320.214566] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4/DPTX: SET_ACTIVE_LANE_COUNT 4
+[  320.376370] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN DPRX_DONE=1 (ACIO AUX completed)
+[  320.402079] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=TimingElements bytes=205757 accepted=1 nr_modes=22
+[  320.421459] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode(color:88 timing:50) "2560x1440": 60 241500 2560 2608 2640 2720 1440 1443 1448 1481 0x48 0x0
+[  320.645325] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode finished:8276
