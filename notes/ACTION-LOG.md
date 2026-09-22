@@ -1884,3 +1884,24 @@ new boot ID, eDP and loaded0100 flags; log/commit/push future-boot disarm
 before executing it. Only then separately log/commit/push one right-port
 hub connection. If the integrated display does not return, stop the test;
 do not connect the hub. No hub hotplug is authorized by this entry.
+
+## 2026-09-22 — User explicitly requests agent-executed 0100 reboot
+
+Oliver: "reboot please". Rechecked manage-0100.py check successfully:
+correct kernel/machine, hub and external display absent, candidate hashes
+match. After committing and pushing this entry execute exactly:
+
+```
+sudo -n systemctl reboot
+```
+
+This replaces the preceding user-run reboot instruction with an agent-run
+reboot. Same verified0100 image, backup and address scope: right ATC core
+0xf03000000 size0x4c000, lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000, usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000, crossbar0xf0304c000 size0x4000,
+dcpext1 0x315c00000, NHI0xf01f00000, ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000. No external connection; no new tunnel
+clock programming expected. No manual MMIO or module unload. Keep both
+external connections unplugged after boot until loaded-driver verification
+and separately logged future-boot disarm. If eDP fails, stop the test.
