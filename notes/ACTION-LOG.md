@@ -2013,3 +2013,27 @@ python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0101.py chec
 ```
 
 Installation and reboot require subsequent committed/pushed entries.
+
+## 2026-09-22 —0101 install after verified hub removal
+
+Oliver confirms unplugged. manage-0101.py check passes: kernel/machine
+correct, hub/external DRM absent, candidate hashes match. After this entry
+is committed and pushed execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0101.py install
+```
+
+Back up and verify nine files under /var/tmp/j416s-0101-before: two copies
+each of ATC/appledrm/mux/thunderbolt_apple plus initramfs. Install0101
+ATC SHA256794b47de6e3b1faab8da51532ca1e264da0cb8eb9513188e2a5ff5ae0b4d86b4;
+other modules unchanged from0100. Write0101 modprobe options, depmod,
+rebuild initramfs, verify modules/options; restore originals on failure.
+No insmod, live parameter change, MMIO, mapping, unload or reboot in this
+command. No hardware addresses accessed by installation. Later boot/test
+scope unchanged: ATC2 core0xf03000000 size0x4c000; existing preflight
+reads+7000,+2200,+2000 gain log messages only. Existing0100 write masks
+and guards retained. Crossbar0xf0304c000 size0x4000, dcpext1 0x315c00000,
+DPIN0 0xf01e50000 size0x4000, NHI0xf01f00000/ACIO0xf01ac0000.
+Both external connections remain unplugged. Reboot logged separately
+only after successful installation verification.
