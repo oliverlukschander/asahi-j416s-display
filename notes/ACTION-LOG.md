@@ -2185,3 +2185,26 @@ python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0102.py chec
 ```
 
 Install/reboot/hotplug each require separately committed/pushed entries.
+
+## 2026-09-22 —0102 installation after verified unplug
+
+Oliver confirms unplugged. manage-0102.py check passes: correct kernel/
+machine, hub and external DRM absent, candidate hashes match. Current
+boot0ec84f1a-b57c-455e-9155-bb440f5c0d24. After commit/push execute:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0102.py install
+```
+
+Installer verifies nine-file backup in /var/tmp/j416s-0102-before (two
+copies each ATC/appledrm/mux/thunderbolt_apple plus initramfs), installs
+0102 ATC SHA256e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9
+with other modules unchanged, writes0102 options, runs depmod/mkinitcpio,
+and verifies image modules/options. Failure restores verified originals.
+No live module reload, MMIO, mapping, parameter write or reboot. No
+hardware addresses accessed by this installation command. Later test
+scope: ATC2 core0xf03000000 size0x4c000, preflight7000/2200/2000/7044;
+existing0100 clock write masks unchanged as documented in0102 notes.
+Crossbar0xf0304c000 size0x4000,dcpext1 0x315c00000,DPIN0 0xf01e50000
+size0x4000,NHI0xf01f00000,ACIO0xf01ac0000. Both external connections
+stay unplugged. Reboot separately logged after successful verification.
