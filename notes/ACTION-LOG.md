@@ -1095,3 +1095,18 @@ then syncs. Current loaded flags remain Y; this only disarms future boots.
 No module reload, reboot, live parameter write or MMIO. No addresses accessed;
 experimental right path remains ACIO0xf01ac0000, NHI0xf01f00000,
 xbar0xf0304c000, dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff.
+
+## 2026-09-22 — 0095 future boots disarmed; boot failure cause unresolved
+
+manage-0095.py disarm completed successfully and verified rebuilt image.
+Disarmed image SHA256: 1910d07e0f96bdddab3055d2d9aabd63b4f9493112334ce27ac8d68848e0324d
+Current bfac7473 boot retains loaded flags Y but hub is absent; no native
+DPIN/protocol-probe activity appears. Panel modeset completes at14.502s,
+SDDM readiness gate reports eDP modes at14.443s and session starts normally.
+Current boot's systemd-pstore reports empty /sys/fs/pstore; archived pstore
+directory also empty. Previous persisted boot is17277113 (0094); its journal
+ends during orderly filesystem unmount, with no intervening failed-boot
+journal. Therefore neither a 0095 kernel regression nor a specific shutdown
+or boot failure is established. Oliver's report of two restarts is recorded,
+and clarification of screen state and cable state is pending. Hold physical
+hub test; no further reboot, module reload or hardware action scheduled.
