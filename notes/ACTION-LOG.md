@@ -1545,3 +1545,45 @@ remain enabled for one test. No live reload, parameter write, MMIO,
 mapping or reboot. Right addresses unchanged and not accessed by disarm:
 xbar0xf0304c000, NHI0xf01f00000, ACIO0xf01ac0000, dcpext1 0x315c00000,
 DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
+
+## 2026-09-22 — Schedule one0098 right-port connection
+
+Disarm completed; extracted boot image verified. Disarmed image SHA256:
+08cfa28e6b200972ad25d706816ef4393f8768d7086c666f91330a4851eba483
+Live flags remain enabled. Panel modeset completed18.904s; no native DPIN
+or USB4 frame experiment appeared before connection.
+
+After commit/push request exactly: connect hub with monitor attached to
+RIGHT USB-C once, then report visible output. No shell command initiates
+physical hotplug. If eDP blacks out, unplug immediately and stop. Do not
+reboot with hub attached or repeat hotplug. Keyboard may remain absent.
+
+Existing path: typec2, NHI0xf01f00000, ACIO0xf01ac0000, dcpext1
+0x315c00000, target0x8021, normal tunnel0:5 to1:19; no second tunnel.
+Existing crossbar0xf0304c000 size0x4000 selects at ACTIVATE and reselects
+once after first nonzero link config. Existing control accesses+0x000
+through+0x034, +0x050/+0x070 and status reads are unchanged. DPIN0
+teardown clears source bit2 at+0x00c and restores reset bit0 at+0x024.
+Native ACIO maps0xf01e50000..0xf01e53fff under cable-power lock, reads
+HPD+0, CONTROL+0xc, ACK+0x10; clears CONTROL bit0, polls ACK at most1s,
+restores original bit on failure; deactivation requests bit0=1.
+No DPIN+8 write, manual PHY/analog/panel access, or new clock selection.
+
+0098 adds one snapshot through the existing right crossbar mapping after
+external swap completion and page-flip delivery. Guarded by native opt-in,
+right route, DCP index2, DPIN0 source2 selection, hardware address and
+one-shot flags. Existing t602x_dump reads base0xf0304c000 plus offsets:
+000,004,008,00c,014,018,01c,024,028,02c,030,034,040,044,048,04c,050,060,
+070,800,020,820,81c. No new mapping or register writes.
+
+After connection capture exactly:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0098-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0098-right-kernel.log
+modetest -M apple -e
+```
+
+Raw logs remain private/untracked. Inspect after-frame snapshot and result,
+frame completion, link rate/lanes/DPRX and eDP. Physical picture must be
+confirmed by Oliver; frame completions alone do not prove signal output.
