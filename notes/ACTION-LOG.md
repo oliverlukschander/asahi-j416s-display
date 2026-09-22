@@ -2488,3 +2488,18 @@ modetest -M apple -e
 Require actual picture confirmation, not only clock4/frame/Hyprland.
 Check native-link-up result and preserve all failure evidence. Keyboard
 untested unless attached/checked. Further hardware action separately logged.
+
+## 2026-09-22 —0103 captured;0104 duplicate-completion fix prepared offline
+
+Previously logged capture commands completed. User no picture,eDP active.
+Native PLL and crossbar bring-up succeed; second identical DID_CHANGE hits
+one-attempt-EALREADY and AFK transport omits ACK by source inspection.
+Modeset times out. Hub disconnect307.207s/reconnect342.864s also recorded;
+manual versus spontaneous cause pending user clarification. Second attachment
+cannot retrigger the one-attempt experiment. See0103-result-0104-completion.
+
+Built/tested0104 caches successful same-rate completion without another
+hardware operation. Kernel fa3f3dd, patch exported; not installed. No live
+MMIO, parameter change, new hotplug or reboot requested. Future boots remain
+disarmed. Preserve present state pending clarification; next unplug/install/
+reboot/hotplug requires a separate committed/pushed action entry.

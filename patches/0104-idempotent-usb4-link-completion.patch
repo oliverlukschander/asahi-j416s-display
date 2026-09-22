@@ -1,0 +1,74 @@
+From fa3f3dd328790cf37f61001d478d0b63e292a02a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 11:38:40 +0200
+Subject: [PATCH] drm/apple: acknowledge repeated successful USB4 link
+ completion
+
+Cache the successful rate for the bounded tunnel-clock path. Identical repeated DID_CHANGE callbacks succeed without another hardware operation. Failed attempts, changed rates and invalidated clock state remain refused; clear cached success on zero rate and deactivation.
+---
+ drivers/gpu/drm/apple/dptxep.c | 15 ++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.h |  1 +
+ 2 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index e26f1bf..147bf5a 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -475,14 +475,24 @@ dptxport_call_did_change_link_config(struct apple_epic_service *service)
+ 		 * without disconnecting it. Legacy probe-only builds retain the
+ 		 * old reselect. The DPIN handshake is cached by its owner.
+ 		 */
+-		if (dptx->usb4_link_up_attempted)
++		if (dptx->usb4_link_up_attempted) {
++			/* A repeated completion does not require another hardware attempt. */
++			if (usb4_tunnel_clock && dptx->usb4_clock_phy &&
++			    dptx->usb4_link_up_rate == dptx->link_rate) {
++				dev_info(dcp->dev, "native DPIN0: repeated link-config rate=0x%x cached success\n",
++					 dptx->link_rate);
++				mdelay(10);
++				return 0;
++			}
+ 			return -EALREADY;
++		}
+ 		dptx->usb4_link_up_attempted = true;
+ 		ret = dptxport_native_dpin(service, true, usb4_tunnel_clock);
+ 		dev_info(dcp->dev, "native DPIN0: link-config up rate=0x%x result=%d\n",
+ 			 dptx->link_rate, ret);
+ 		if (ret)
+ 			return ret;
++		dptx->usb4_link_up_rate = dptx->link_rate;
+ 	}
+ 
+ 	/* assume the link config did change and wait a little bit */
+@@ -559,6 +569,8 @@ static int dptxport_call_set_link_rate(struct apple_epic_service *service,
+ 		}
+ 
+ 		dptx->link_rate = dptx->pending_link_rate = link_rate;
++		if (!link_rate)
++			dptx->usb4_link_up_rate = 0;
+ 
+ 	}
+ 
+@@ -703,6 +715,7 @@ dptxport_call_deactivate(struct apple_epic_service *service,
+ 	int ret = 0;
+ 
+ 	dev_info(dcp->dev, "DPTXPort: DEACTIVATE\n");
++	dptx->usb4_link_up_rate = 0;
+ 	if (dptx->usb4_clock_phy) {
+ 		int clock_ret = dptxport_tunnel_clock(service, 0);
+ 
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index c8b8272..555f540 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -52,6 +52,7 @@ struct dptx_port {
+ 	bool enabled, connected;
+ 	bool usb4_inactive_sink;
+ 	bool usb4_link_up_attempted;
++	u8 usb4_link_up_rate;
+ 	struct completion enable_completion;
+ 	struct completion linkcfg_completion;
+ 	struct completion usb4_lane_completion;
+-- 
+2.55.0
+
