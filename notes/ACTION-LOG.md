@@ -2539,3 +2539,26 @@ hyprctl monitors
 ```
 
 Install/reboot/next single hotplug require separately committed/pushed entries.
+
+## 2026-09-22 — install0104 after confirmed unplug
+
+Oliver reports done. Preflight passed: correct kernel/j416s, external router
+and external display absent; candidate hashes match. eDP-1 active, DPMS1,
+disabled false. Boot fad74e21-836b-45f1-9488-6b5f75a7f4be.
+After committing and pushing this entry execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0104.py install
+```
+
+Back up nine module/image files to /var/tmp/j416s-0104-before, install pinned
+0104 modules, set candidate boot options, depmod and rebuild/verify initramfs.
+No live module reload, parameter write, mapping, MMIO or reboot in this action.
+0104 only acknowledges repeated successful same-rate link completion; no new
+hardware operation on the repeated request. First-attempt hardware remains
+0103: right ATC core0xf03000000 size0x4c000, crossbar0xf0304c000 size0x4000,
+lpdptx0xf03050000 size0x8000, axi2af0xf00000000 size0x4000,
+usb2phy0xf02a90000 size0x4000, pipehandler0xf02a84000 size0x4000,
+dcpext1 0x315c00000, NHI0xf01f00000, ACIO0xf01ac0000,
+DPIN0 0xf01e50000 size0x4000. No access to these addresses during install.
+Keep hub/direct adapter disconnected. Reboot/hotplug logged separately.
