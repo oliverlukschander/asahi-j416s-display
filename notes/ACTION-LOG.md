@@ -647,3 +647,54 @@ exact commands and backups. Its only new resource would be LEFT-BACK DPIN0
 0x701e50000..0x701e53fff, reads at +0,+0x0c,+0x10 and writes only +0x0c
 bit0, controlled by the ACIO owner lock. Existing left-back crossbar is
 0x70304c000 and external DCP is 0x315c00000. None is accessed in this step.
+
+## 2026-09-22 — 0093 installation with hub unplugged
+
+Oliver confirms the hub is unplugged and asks to proceed. Read-only checks
+show no Thunderbolt devices and eDP enabled, kernel 7.1.12-2.5-1-ARCH.
+The candidate hashes match the recorded build. Existing SDDM Apple DRM
+readiness gate remains installed. No change to that gate is planned.
+
+After committing and pushing this entry and scripts/manage-0093.py,
+execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0093.py install
+```
+
+The reviewed script backs up and SHA-256-verifies these original files in
+/var/tmp/j416s-0093-before, with manifest.json, before changing any target:
+
+- /usr/lib/modules/7.1.12-2.5-1-ARCH/kernel/drivers/gpu/drm/apple/appledrm.ko
+- /usr/lib/modules/7.1.12-2.5-1-ARCH/updates/appledrm.ko
+- /usr/lib/modules/7.1.12-2.5-1-ARCH/kernel/drivers/thunderbolt/thunderbolt_apple.ko
+- /usr/lib/modules/7.1.12-2.5-1-ARCH/updates/thunderbolt_apple.ko
+- /boot/initramfs-linux-aurora.img
+
+Installs appledrm SHA256
+2e5cb7146f07aa7f23bfb4f03afd2c5e66c0e3efea81b68fc49fdfc2dafdcefc and
+thunderbolt_apple SHA256
+993526f4fef5b1c2042c5b57a0b6b397e1987893dff89552ee7dbcc184f228ad.
+Writes /etc/modprobe.d/j416s-0093-native-dpin.conf with exactly:
+
+```
+options appledrm usb4_protocol_probe=1 usb4_native_dpin=1
+options thunderbolt_apple dpin_native=1
+```
+
+Then runs depmod -a 7.1.12-2.5-1-ARCH and mkinitcpio -p linux-aurora,
+extracts the image with lsinitcpio -x into a temporary directory, and checks
+candidate module hashes and options. Automatic failure recovery restores
+all five originals from the verified manifest, removes only the new config,
+runs depmod and syncs. No live module reload, parameter write or reboot.
+
+No physical address is mapped or accessed during this installation. New
+candidate access on a later logged left-back hotplug would be DPIN0
+0x701e50000..0x701e53fff, reads +0/+0xc/+0x10 and writes +0xc bit0;
+ACIO owner 0x701ac0000, NHI 0x701f00000, existing crossbar 0x70304c000,
+dcpext1 0x315c00000. Right-port candidate access is refused. Panel DCP
+0x389c00000 and panel disp/PHY mappings are not added by the candidate.
+
+Keep the hub unplugged. Reboot and subsequent hotplug require separate
+entries, committed and pushed before either action. After candidate boot,
+disarm persistent options and verify initramfs before permitting hotplug.
