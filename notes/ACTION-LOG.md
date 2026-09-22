@@ -741,3 +741,31 @@ appledrm: 0093 also changes thunderbolt_apple.
 
 This entry records the imminent reboot, not its successful completion or
 any display result. Never reconnect the hub while the panel is black.
+
+## 2026-09-22 — 0093 boot verified; disarm future boots before testing
+
+Oliver reports back after restart. New boot ID:
+910bfa0d-a6e8-46b5-b27b-8d67922d7ad6. Running kernel is
+7.1.12-2.5-1-ARCH, eDP is enabled, and no Thunderbolt devices are present.
+Loaded appledrm usb4_protocol_probe=Y, usb4_native_dpin=Y and
+thunderbolt_apple dpin_native=Y. No native DPIN activation/probe log appears.
+The candidate has not run its hardware experiment.
+
+After committing and pushing this entry, execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0093.py disarm
+```
+
+This removes only /etc/modprobe.d/j416s-0093-native-dpin.conf, executes
+mkinitcpio -p linux-aurora, extracts the rebuilt image and verifies candidate
+module hashes and absence of that config. It does not modify loaded module
+parameters, reload drivers, reboot, map or access MMIO. The currently loaded
+flags remain Y for this single-attempt test; subsequent boots default off.
+
+Addresses for the later experiment (not accessed by disarming): left-back
+DPIN0 0x701e50000..0x701e53fff, reads +0/+0xc/+0x10 and writes +0xc bit0;
+ACIO 0x701ac0000, NHI 0x701f00000, crossbar 0x70304c000,
+dcpext1 0x315c00000. Keep hub unplugged until successful image verification
+and a separate committed/pushed hotplug entry. No hotplug is authorized by
+this entry alone.
