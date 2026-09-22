@@ -2440,3 +2440,51 @@ ATC2 core0xf03000000 size0x4c000,crossbar0xf0304c000 size0x4000,
 dcpext1 0x315c00000,DPIN0 0xf01e50000 size0x4000,NHI0xf01f00000,
 ACIO0xf01ac0000. Keep both external connections unplugged until disarm
 verification and a separate committed/pushed hotplug entry.
+
+## 2026-09-22 —0103 disarmed; first right-port sequencing test
+
+Disarm completed; initramfs verified without0103 options. Image SHA256
+a920ffb00d0af2fc7d6f8b2f4446501a1bbd20614a6de96d548b16e1e9f13d9a.
+Bootfad74e21-836b-45f1-9488-6b5f75a7f4be retains loaded test flags.
+eDP active and external connections absent at preflight.
+
+After commit/push request exactly: monitor/HDMI adapter on a DOWNSTREAM
+OWC hub USB-C port, connect hub HOST cable to Mac RIGHT USB-C once.
+Do not connect adapter directly to Mac. Report visible picture versus
+no signal and whether eDP stays on. No shell command initiates hotplug.
+If eDP goes black unplug hub immediately and stop. No reboot or retry.
+
+Normal USB4 tunnel only, no DP-alt-mode forcing. ATC2 core0xf03000000
+size0x4c000:0102 preflight7000,2200,2000,7044; same guarded writes
+008/3ffff,1b0/fff,7000/207c,2224/3,2080/ffffffff,2084/0fffffff,
+2088/007fffff,2208/001f0000,2220/80,2214/1,2200/54,2000/1ffffff9;
+status a74/7044. Other normal ATC resources:lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000. No lane mux or additional mappings.
+
+DCP315c00000; right crossbar0xf0304c000 size0x4000,source2/DPIN0.
+Initial selection/ACTIVATE unchanged controls000,004,008,00c,014,018,
+01c,024,028,02c,030,034,050,070. After successful PLL setup,0103
+DID_CHANGE now performs one bring-up without disconnect/reselect:
+clear004/bit2,014/bit2,024/bit0; wait1us; read804/bit2,810/bit2,
+81c/bit0 and refuse if any remain set. Then set008/bit2; masked018/30
+value10,028/3 value1; set000/bit2,00c/bit2,01c/bit0,034/bit0,02c/bit2.
+This operation does not assert reset, disable source clock, rewrite030,
+or write050/070. Existing dump/snapshot offsets000,004,008,00c,014,018,
+01c,024,028,02c,030,034,040,044,048,04c,050,060,070,800,020,820,81c.
+NativeDPIN0 base0xf01e50000 size0x4000,CONTROL+0xc requestbit0,
+HPD+0/ACK+0x10 reads; active result cached by existing owner after bring-up.
+NHI0xf01f00000/ACIO0xf01ac0000 driver-owned. No forbidden ACIO RC analog
+writes, panel mapping,39c000000 assignment,/dev/mem or module unload.
+
+After connection capture exactly, keeping raw outputs private:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0103-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0103-right-kernel.log
+modetest -M apple -e
+```
+
+Require actual picture confirmation, not only clock4/frame/Hyprland.
+Check native-link-up result and preserve all failure evidence. Keyboard
+untested unless attached/checked. Further hardware action separately logged.
