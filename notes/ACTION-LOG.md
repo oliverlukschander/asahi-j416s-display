@@ -999,3 +999,23 @@ stops tracing, saves /tmp/j416s-0094-frame-trace.txt, removes the instance.
 No global trace modification, modeset, live parameter write, hardware mapping
 or MMIO operation is initiated. Current hardware remains right ACIO
 0xf01ac0000 / xbar0xf0304c000 / DPIN0 0xf01e50000 / dcpext1 0x315c00000.
+
+## 2026-09-22 — 0095 built; request right-port unplug before installation
+
+0094 picture failure remains. Software trace completed and removed its
+isolated instance. Offline native analysis supports testing crossbar bring-up
+at DID_CHANGE_LINK_CONFIG, after the first nonzero link rate. 0095 kernel
+commit37c69d3 builds and passes checkpatch; patch, notes and pinned installer
+are pushed. Nothing installed or loaded. No extra MMIO reads performed.
+
+After committing and pushing this entry, request exactly this physical
+action: Oliver unplugs hub from RIGHT USB-C and leaves it disconnected.
+No shell command initiates unplug; no install/reboot accompanies it.
+The currently loaded 0094 path is dcpext1 0x315c00000, NHI 0xf01f00000,
+ACIO 0xf01ac0000 and xbar0xf0304c000. Normal driver teardown may deselect
+that crossbar; its previously logged existing register access is unchanged.
+0094 native DEACTIVATE, if called while ACIO remains powered, sets DPIN0
+CONTROL 0xf01e5000c bit0=1 and polls ACK0xf01e50010, under ACIO owner lock,
+using existing mapping0xf01e50000..0xf01e53fff. No manual register command.
+Installation/reboot of 0095 must be separately logged/pushed after absence
+is verified. Never reboot with hub attached; eDP black means unplug and stop.
