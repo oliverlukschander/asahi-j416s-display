@@ -932,3 +932,40 @@ and syncs. Loaded flags remain Y for this boot only. No live module reload,
 parameter write, mapping, MMIO or reboot. Right path addresses remain
 ACIO 0xf01ac0000, NHI 0xf01f00000, crossbar 0xf0304c000, dcpext1
 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff; none accessed by this command.
+
+## 2026-09-22 — Schedule one 0094 RIGHT-port hotplug
+
+Future-boot disarm completed with extracted image verification; current
+boot retains experiment flags. Disarmed image SHA256: 33c6ed09b72c6357c2a8f902dfdead616a52d22f09e4d1a8c7bc4d9dc1080982.
+
+After committing and pushing this entry, request exactly: Oliver connects
+the hub (monitor and keyboard attached) to the RIGHT USB-C port once.
+If eDP goes black, unplug the hub and stop. Do not reboot with hub attached.
+This is a physical action; no shell command initiates the connection.
+
+Expected live path must be confirmed from kernel messages: typec2,
+NHI 0xf01f00000, ACIO 0xf01ac0000, dcpext1 0x315c00000. Candidate
+0094 permits one native protocol request target 0x8021, core1/atc2/die0,
+unit0/mux index2, using the normal USB4-created tunnel. No second tunnel.
+Existing crossbar routing is selected at 0xf0304c000 (resource 0x4000,
+existing controls 0x000..0x034, 0x050/0x070 and status including 0x800).
+ACIO owner reserves/maps DPIN0 0xf01e50000..0xf01e53fff nonposted while
+holding cable-power lock. Reads HPD 0xf01e50000, CONTROL 0xf01e5000c,
+ACK 0xf01e50010. With HPD high, clears CONTROL bit0 and polls ACK bit0
+for at most one second; failure restores original CONTROL bit0 preserving
+other bits. DEACTIVATE requests CONTROL bit0=1 and polls ACK under the
+same power lock. No DPIN+8 write, panel mapping, manual PHY mode or added
+analog operation. The loaded test is one-attempt; no automatic retest.
+
+After Oliver reports connection, capture with these read-only commands:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0094-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0094-right-kernel.log
+modetest -M apple -e
+```
+
+Keep raw captures private/untracked. Check nonzero link rate, lane count,
+DPRX, TimingElements, dcpext1 digital-out modeset and actual compositor
+resolution, plus Oliver's confirmation of picture and keyboard operation.
+This entry schedules the test; it does not assert it has run or succeeded.
