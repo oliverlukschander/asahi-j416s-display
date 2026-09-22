@@ -1686,3 +1686,46 @@ for this boot. No live reload, parameter write, mapping, MMIO or reboot.
 Right addresses unchanged and unaccessed by disarm: xbar0xf0304c000,
 NHI0xf01f00000, ACIO0xf01ac0000, dcpext1 0x315c00000, DPIN0
 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
+
+## 2026-09-22 — Schedule0099 direct right-port reference connection
+
+Future-boot disarm completed, image hashes/options verified. Image SHA256:
+23f6dca440382b08a97138f979c49a6b690b756f160a05b8bce24e8172de1fbf
+Live experiment flags remain Y; loaded modules/eDP verified. No external
+connection or after-frame snapshot yet in boote7238bcd.
+
+After commit/push request exactly: leave OWC hub unplugged; connect the
+same USB-C-to-HDMI adapter with monitor attached DIRECTLY to the Mac's
+RIGHT USB-C port once. Report actual picture and whether laptop stays on.
+No shell command initiates the physical connection. If eDP blacks out,
+unplug adapter immediately and stop. Do not reboot or connect hub.
+
+This uses normal existing direct DP-alt-mode driver behavior, not DP mode
+on a connected USB4 hub. Right source dcpext1 0x315c00000, crossbar
+0xf0304c000 size0x4000, DPPHY output/source2. Existing crossbar controls
++000..+034,+050,+070 and existing status reads unchanged. Right ATC2
+PHY resources from t602x DTS: core0xf03000000 size0x4c000, lpdptx
+0xf03050000 size0x8000, axi2af0xf00000000 size0x4000, usb2phy
+0xf02a90000 size0x4000, pipehandler0xf02a84000 size0x4000. Normal
+Type-C orientation/DP configuration is owned by existing driver; no
+manual PHY command, panel mapping or forbidden39c000000 assignment.
+Associated ACIO0xf01ac0000/NHI0xf01f00000 have no external USB4 router.
+Native DPIN0 handshake is ineligible for this direct path.
+
+0099 reads existing crossbar mapping once after first completed frame:
+base0xf0304c000 offsets000,004,008,00c,014,018,01c,024,028,02c,030,034,
+040,044,048,04c,050,060,070,800,020,820,81c. Provider checks j416s,
+T602x, exact right resource, DPPHY selectedsource2 under lock; caller
+checks right route/DCP2/opt-in. No new mapping or register writes.
+
+After direct connection capture exactly:
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0099-right-direct.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0099-right-direct-kernel.log
+modetest -M apple -e
+```
+
+Keep raw captures private. Require after-frame-dpphy snapshot result0 and
+Oliver's visible-picture confirmation before treating this as a known-good
+reference. A later hub test requires its own log and review.
