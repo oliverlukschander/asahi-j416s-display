@@ -2946,3 +2946,44 @@ remain Y for this test. No live MMIO,mapping,module reload or parameter
 write. No addresses accessed; resource scope remains ATC0xf03000000,
 crossbar0xf0304c000,DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
 DPIN0 0xf01e50000. Hotplug will be logged separately after successful disarm.
+
+## 2026-09-22 —0106 disarmed; single right-port attachment with counter readback
+
+Disarm exited0, image verified; new SHA256
+1c391b656ff49f1ce1c9019a42998d458d62f91747e7c6b6bea74928e4366f55. Current
+0106 flags (including dp_video_counter) remain enabled for this boot only;
+future boots disarmed. After committing and pushing this entry request
+exactly: connect hub once to RIGHT USB-C port with monitor on hub; leave
+connected for capture; report visible picture and eDP status. If eDP blacks
+out, unplug hub and stop. No replug/reboot. No shell command initiates
+physical connection. Keyboard untested unless attached and checked.
+
+Scope is the existing0105 owner mappings (ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000 CONTROL+cbit0,HPD+0/ACK+10reads)
+plus the new0106 addition: when the video path's DP-IN hop is created on
+this exact route, tb_dp_init_video_path sets in_counter_index=0, and
+tb_path_activate (existing generic code, unmodified) writes only the
+counter/counter_enable bits of that hop's existing TB_CFG_HOPS dword1 via
+the normal tb_port_write control-plane path — no new ioremap/MMIO, no
+change to nfc_credits/initial_credits/routing/priority/weight, no ACIO
+analog or panel access. No forbidden operation is added by this candidate.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0106-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0106-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0106-dpin-counters.txt
+sudo -n cat /sys/kernel/debug/thunderbolt/0-1/port19/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0106-dpout-counters.txt
+```
+
+The last two are the new read-only diagnostic reads (existing debugfs
+mechanism, TB_CFG_COUNTERS via tb_port_read; no write to either file).
+Confirm right port and pre-clock gates off, then PLL/nativeup result,
+034/800, lanes/DPRX, both counter reads, and actual picture. If sequence
+stalls, capture and stop without retrying gates or changing registers. No
+visible success assumed regardless of counter values.
