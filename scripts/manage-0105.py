@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULES = Path('/usr/lib/modules') / VERSION
 IMAGE = Path('/boot/initramfs-linux-aurora.img')
 CONFIG = Path('/etc/modprobe.d/j416s-0105-native-dpin.conf')
-BACKUP = Path('/var/tmp/j416s-0105-before')
+BACKUP = Path('/var/tmp/j416s-0105-retry-before')
 OPTIONS = ('options appledrm usb4_protocol_probe=1 usb4_native_dpin=1 usb4_tunnel_clock=1\n'
            'options thunderbolt_apple dpin_native=1\n'
            'options phy_apple_atc usb4_tunnel_clock=1\n'
@@ -75,7 +75,8 @@ def verify_image(armed):
             if digest(p) != CANDIDATES['thunderbolt_apple'][1]:
                 raise RuntimeError('Wrong thunderbolt_apple in initramfs')
         muxes = list(tree.rglob('mux-apple-display-crossbar.ko'))
-        if not muxes or any(digest(p) != CANDIDATES['mux'][1] for p in muxes):
+        # Crossbar normally loads from rootfs; verify every packaged copy if present.
+        if any(digest(p) != CANDIDATES['mux'][1] for p in muxes):
             raise RuntimeError('Wrong crossbar in initramfs')
         atcs = list(tree.rglob('phy-apple-atc.ko'))
         if not atcs or any(digest(p) != CANDIDATES['atc'][1] for p in atcs):

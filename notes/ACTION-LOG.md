@@ -2713,3 +2713,27 @@ DPIN0 0xf01e50000 size0x4000. None accessed during this install.
 Initial crossbar selection writes only030; existing nativeup gates occur
 after clock setup. No new address access; prohibited operations remain
 prohibited. Hub/direct display stay unplugged; reboot separately logged.
+
+## 2026-09-22 —0105 packaging check rollback; corrected installation retry
+
+First install rebuilt image but failed the newly added requirement that mux
+be packaged inside initramfs. Crossbar is normally absent there and loads
+from rootfs. Installer automatically restored all nine originals and removed
+0105 options. Restored image hash matches prior disarmed0104 exactly:
+361dcfd6eb2a4cee098947d22087f21517741e4e64fe878555ce43f3f4c387ee.
+No live change/reboot. Keep first verified backup untouched.
+
+Corrected0105 image verification to accept absent mux, while validating any
+packaged copy and retaining checksum verification of installed rootfs module
+copies. This matches prior installers and actual packaging. New backup path
+/var/tmp/j416s-0105-retry-before avoids overwriting first backup.
+After commit/push retry exact command:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0105.py install
+```
+
+File-only install, depmod/initramfs build/verification. No hardware addresses
+accessed; resource scope remains preceding0105 entry (ATCf03000000,
+crossbarf0304c000,DPINf01e50000,NHIf01f00000,ACIOf01ac0000,DCP315c00000).
+No live reload/MMIO/parameter write, no reboot. Hub/direct adapter unplugged.

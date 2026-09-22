@@ -33,5 +33,6 @@ reselection leaves gates off; subsequent nativeup enables them; teardown
 avoids050/070; invalid source and conflicting direct route refused. Existing
 27 select/disconnect cycles and3 reset-failure cases pass. No live hardware
 tests performed during development. Installer0105 pins all candidates,
-requires mux present in image, sets readonly flag, and backs up nine files.
+verifies installed mux and any image copy, sets readonly flag, and backs up
+nine files. Crossbar normally loads from rootfs, not the initramfs.
 Mux SHA256 38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24.
