@@ -3488,3 +3488,26 @@ ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. No new manual address access
 or mapping; no forbidden panel mapping,/dev/mem,PHY mode change or module
 unload. On return verify loaded modules/eDP and disarm future boots before
 separately logged single RIGHT-port attachment. No picture success claimed.
+
+## 2026-09-22 -0109 boot verified; disarm future boots
+
+Boot55780c37-7c7d-47e4-9e0a-27aaaacd8200, preflight passes, hub and
+external display absent. eDP-1 connected. Installed thunderbolt_apple
+matches candidate74d8250de35ab42a0ef58690887eb3a21cf463663d226aa769a177c0f3743b64.
+Loaded readonly flags: thunderbolt_apple dpin_native=Y,
+mux_apple_display_crossbar usb4_defer_bringup=Y,phy_apple_atc
+usb4_tunnel_clock=Y,thunderbolt dp_video_counter=Y,dp_bw_grant=Y,appledrm
+usb4_protocol_probe/usb4_native_dpin/usb4_tunnel_clock=Y. No DP tunnel
+exists yet so the new CONNECTED-bit code has not run.
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0109.py disarm
+```
+
+Removes0109 options and rebuilds/verifies initramfs. Current readonly flags
+remain Y for this test. No live MMIO,mapping,module reload or parameter
+write. No addresses accessed; resource scope remains ATC0xf03000000,
+crossbar0xf0304c000,DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
+DPIN0 0xf01e50000. Hotplug will be logged separately after successful disarm.
