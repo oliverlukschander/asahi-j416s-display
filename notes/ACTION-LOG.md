@@ -1347,3 +1347,30 @@ ACIO0xf01ac0000, NHI0xf01f00000, dcpext1 0x315c00000,
 DPIN0 0xf01e50000..0xf01e53fff (HPD+0, CONTROL+0xc, ACK+0x10).
 0097 only adds first-frame logs; hardware behavior remains0096.
 Reboot and later physical connection require separate logged/pushed entries.
+
+## 2026-09-22 — Reboot verified diagnostic0097 with hub absent
+
+Installer completed successfully; seven original files backed up/verified,
+extracted image candidate hashes and options verified. Repeated preflight
+confirms hub absent. New image SHA256:
+54fbb8e86b79391af0d62961a8a9b2b207bd283d940c4fde50a758e2ccc6f940
+
+After commit/push execute exactly:
+
+```
+python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0097.py check && sudo -n systemctl reboot
+```
+
+Keep hub unplugged until postboot checks and future-boot disarm complete.
+No native ACTIVATE is eligible without hub. No manual MMIO/reload with
+this command. Normal crossbar probe is unchanged from0096. Experimental
+right path: xbar0xf0304c000, ACIO0xf01ac0000, NHI0xf01f00000,
+dcpext1 0x315c00000, DPIN0 0xf01e50000..0xf01e53fff (HPD+0,
+CONTROL+0xc, ACK+0x10). 0097 adds first-frame logs only.
+
+Recovery with hub absent, separately logged before use:
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0097.py restore
+This verifies/restores all seven originals from /var/tmp/j416s-0097-before,
+removes new config, depmods and syncs, without reload/reboot. After return
+verify loaded modules and eDP, then log/push/execute manage-0097.py disarm
+before asking for right-port connection. This entry is intent, not success.
