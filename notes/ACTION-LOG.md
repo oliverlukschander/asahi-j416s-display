@@ -3274,3 +3274,41 @@ remain Y for this test. No live MMIO,mapping,module reload or parameter
 write. No addresses accessed; resource scope remains ATC0xf03000000,
 crossbar0xf0304c000,DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000,
 DPIN0 0xf01e50000. Hotplug will be logged separately after successful disarm.
+
+## 2026-09-22 -0108 disarmed; single right-port attachment with bandwidth-grant test
+
+Disarm exited0, image verified; new SHA256
+411e2701e019dc4d15c15043a12adab5f44a4a6051579bea0e7a2854121115f4. Current
+0108 flags (dp_video_counter,dp_bw_grant) remain enabled for this boot only;
+future boots disarmed. After committing and pushing this entry request
+exactly: connect hub once to RIGHT USB-C port with monitor on hub; leave
+connected for capture; report visible picture and eDP status. If eDP blacks
+out, unplug hub and stop. No replug/reboot. No shell command initiates
+physical connection. Keyboard untested unless attached and checked.
+
+Scope is identical to0107 (existing0105 owner mappings unchanged) plus
+0108's addition: when tb_dp_bandwidth_alloc_mode_enable runs for this exact
+route, it grants min(non_reduced_bw,estimated_bw) instead of0 via the
+existing unmodified usb4_dp_port_allocate_bandwidth() helper - one field
+(DP_STATUS allocated-bandwidth) on the DP IN adapter, bounded by what the
+connection manager already reserved for this tunnel. No new ioremap/MMIO,
+no change to hop credits/routing/priority/weight, no ACIO analog or panel
+access.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0108-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0108-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0108-dpin-counters.txt
+```
+
+The downstream-hop counter and the DP IN/DP OUT STAT (allocated-bandwidth)
+registers are read the same way0107 identified them (scan/decode, not
+assumed) once the actual route/port is confirmed from this attempt's log.
+Confirm right port, pre-clock gates off, PLL/nativeup result,034/800,
+lanes/DPRX, counter/bandwidth readback, and actual picture - the last of
+these decided only by Oliver's visual confirmation, not by any register or
+log line. If sequence stalls, capture and stop without retrying gates or
+changing registers.
