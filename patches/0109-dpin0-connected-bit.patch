@@ -1,0 +1,108 @@
+From 15045d6d4922cee2df7060426a84a987fd35c3e5 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 16:20:25 +0200
+Subject: [PATCH] thunderbolt: apple: set the CONNECTED bit native firmware
+ also sets on DPIN0
+
+0102-0108 established the crossbar/tunnel/bandwidth path all work as
+designed on the Apple j416s right-port USB4 hub route, yet the
+monitor stays dark. Static analysis of the same macOS 13.5
+kernelcache already used for 0093-0105 (offline, no new hardware
+access) traced the real native tunnel bring-up code,
+AppleCIODPTX::bringConnectionUp, and found it unconditionally sets
+bit 1 on both the HPD and CONTROL registers of this exact DPIN0
+block when bringing a connection up -- a bit this driver has never
+set. The CONTROL-register write is confirmed unconditional by
+reading the callee (AppleDPTX::setBitsInReg) directly: mask=0,
+value=2, a pure OR with no dependency on any runtime-computed field.
+The HPD-register write is additionally gated in native code on a
+single/multi-stream check; every DPIN0 topology this driver drives is
+a single external monitor (SST), so it applies unconditionally here.
+
+Add APPLE_DPIN_CONNECTED (bit 1) and set it on both registers when
+activating, mirroring native behavior exactly. On a failed handshake,
+restore both bits this code now owns (INACTIVE and CONNECTED) to
+their pre-handshake values, rather than only INACTIVE as before --
+otherwise a failed activation would leave CONNECTED stuck set. HPD's
+new bit is not rolled back on failure: native's teardown path for it
+was never traced, so no rollback is invented for a register this
+driver did not touch before this change. Updated
+scripts/test-dpin-handshake.c (ASan/UBSan, 9 scenarios) to match; two
+scenarios needed their expected register values updated, the rest
+were unaffected, including a helpful confirmation that the two-bit
+rollback formula reduces to the original single-bit one whenever the
+saved state's bit 1 was already 0.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/apple-dpin-handshake.h | 30 ++++++++++++++++++----
+ 1 file changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple-dpin-handshake.h b/drivers/thunderbolt/apple-dpin-handshake.h
+index 8dd74da..cc562f9 100644
+--- a/drivers/thunderbolt/apple-dpin-handshake.h
++++ b/drivers/thunderbolt/apple-dpin-handshake.h
+@@ -10,6 +10,19 @@
+ #define APPLE_DPIN_HPD_LEVEL (1U << 2)
+ #define APPLE_DPIN_INACTIVE 1U
+ 
++/*
++ * Set unconditionally by native AppleCIODPTX::bringConnectionUp on both the
++ * HPD and CONTROL registers of this exact DPIN0 block when bringing a
++ * connection up (single-lane-group case, which is what this port is). The
++ * HPD-register write is additionally gated there on a single/multi-stream
++ * check; every topology this driver drives through DPIN0 is a single
++ * external monitor (SST), so it is unconditional here too. Neither write
++ * clears any other bit (native masks both with 0, a pure OR). Not written
++ * on deactivate: native's teardown path was not traced, so this preserves
++ * the existing "do not invent resets" behavior there.
++ */
++#define APPLE_DPIN_CONNECTED (1U << 1)
++
+ /* Caller owns powered register access and provides a bounded wait. */
+ struct apple_dpin_io {
+ 	unsigned int (*read)(void *ctx, unsigned int offset);
+@@ -18,7 +31,6 @@ struct apple_dpin_io {
+ 	void *ctx;
+ };
+ 
+-/* Only CONTROL bit 0 is written; HPD and ACK are read-only here. */
+ static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
+ 				      int active)
+ {
+@@ -35,7 +47,9 @@ static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
+ 	saved = io->read(io->ctx, APPLE_DPIN_CONTROL);
+ 	if (saved == ~0U)
+ 		return -EIO;
+-	value = active ? saved & ~APPLE_DPIN_INACTIVE :
++	if (active)
++		io->write(io->ctx, APPLE_DPIN_HPD, hpd | APPLE_DPIN_CONNECTED);
++	value = active ? (saved & ~APPLE_DPIN_INACTIVE) | APPLE_DPIN_CONNECTED :
+ 			 saved | APPLE_DPIN_INACTIVE;
+ 	io->write(io->ctx, APPLE_DPIN_CONTROL, value);
+ 	for (;;) {
+@@ -58,12 +72,18 @@ static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
+ 		if (ret)
+ 			break;
+ 	}
+-	/* Restore only our bit; do not invent resets on a failed handshake. */
++	/*
++	 * Restore only the bits we own (INACTIVE, and CONNECTED now that we
++	 * set it above); do not invent resets on a failed handshake. HPD is
++	 * left as-is here: native's teardown path for it was not traced, so
++	 * no rollback is invented for a register this driver otherwise never
++	 * wrote before this change.
++	 */
+ 	ack = io->read(io->ctx, APPLE_DPIN_CONTROL);
+ 	if (ack != ~0U)
+ 		io->write(io->ctx, APPLE_DPIN_CONTROL,
+-			  (ack & ~APPLE_DPIN_INACTIVE) |
+-			  (saved & APPLE_DPIN_INACTIVE));
++			  (ack & ~(APPLE_DPIN_INACTIVE | APPLE_DPIN_CONNECTED)) |
++			  (saved & (APPLE_DPIN_INACTIVE | APPLE_DPIN_CONNECTED)));
+ 	return ret;
+ }
+ #endif
+-- 
+2.55.0
+

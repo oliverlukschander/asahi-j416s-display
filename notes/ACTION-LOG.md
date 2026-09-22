@@ -3408,3 +3408,60 @@ counters/registers, bandwidth-ratio dead end, bringConnectionUp DPIN0
 findings - all offline, no hardware). sysfs shows no thunderbolt devices;
 eDP remained connected before and after. No hardware action was performed
 during that research interval.
+
+## 2026-09-22 -0109 built offline; set native CONNECTED bit on DPIN0
+
+Continuing offline native analysis (no hardware access): traced the real
+tunnel bring-up code AppleCIODPTX::bringConnectionUp (not the bandwidth-
+ratio dead end) to four DPIN0 register writes native macOS performs that
+this driver never has. One is fully confirmed unconditional (verified by
+reading the callee AppleDPTX::setBitsInReg directly: mask=0/2,value=2, no
+runtime dependency): sets bit1 on both HPD(+0x0) and CONTROL(+0xc) -
+CONTROL's write is pure/unconditional; HPD's is gated in native code on a
+single-stream check that is unconditionally true for every DPIN0 topology
+this driver drives (one external monitor, never DP MST). Kernel commit
+15045d6 adds APPLE_DPIN_CONNECTED(bit1) to drivers/thunderbolt/apple-dpin-
+handshake.h, set on both registers when activating; failure rollback now
+restores both INACTIVE and CONNECTED on CONTROL (previously only
+INACTIVE) so a failed attempt does not leave CONNECTED stuck; HPD is not
+rolled back (native teardown for it untraced, and this driver never wrote
+HPD before this change). scripts/test-dpin-handshake.c updated and passes
+(ASan/UBSan,9 scenarios). This touches only DPIN0 (0xf01e50000), already
+safely used via apple_usb4_right_dpin0_set_active; no crossbar, ACIO
+analog, lpdptxphy or other forbidden-register access. Full design,
+confidence breakdown for each of the four found writes, and the plan for
+resolving the remaining two (+0x14,+0x1c, which depend on runtime
+DisplayPort negotiation data not present in the static kernelcache) are in
+notes/2026-09-22-0109-dpin0-connected-bit.md.
+
+Also fixed in passing: src/thunderbolt/apple-dpin-handshake.h was a stale
+plain copy (not a symlink like every other file there), so the kernel-repo
+edit was silently ignored by the module build until this was found and
+fixed; verified the rebuilt thunderbolt_apple.ko hash only changed after
+symlinking it. checkpatch on the header diff:0errors/0warnings. `make` in
+src/thunderbolt rebuilds only apple.o/thunderbolt_apple.ko; the other four
+modules, including core thunderbolt.ko, are unchanged from0108 (verified
+by SHA256).
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0109.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0109-before (same five
+module pairs as0106-0108 plus initramfs); install pinned modules/options,
+depmod, rebuild/verify initramfs. No live module reload, parameter write,
+MMIO, mapping or reboot. Options unchanged from0108 (this is unconditional
+code behind the existing dpin_native=1 gate, not a new module parameter).
+Candidate hashes: thunderbolt_apple
+74d8250de35ab42a0ef58690887eb3a21cf463663d226aa769a177c0f3743b64;
+thunderbolt(core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7;
+mux38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24;
+atce47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9;
+appledrm9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.

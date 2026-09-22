@@ -6,7 +6,7 @@
 
 struct model {
 	unsigned int control, ack, hpd;
-	unsigned int writes, waits, reads;
+	unsigned int writes, hpd_writes, waits, reads;
 	int ack_after, drop_after, change_other_bits;
 };
 
@@ -27,8 +27,15 @@ static void model_write(void *ctx, unsigned int offset, unsigned int value)
 {
 	struct model *m = ctx;
 
+	if (offset == APPLE_DPIN_HPD) {
+		/* Only the CONNECTED bit may change; never invents HPD_LEVEL. */
+		assert(((value ^ m->hpd) & ~APPLE_DPIN_CONNECTED) == 0);
+		m->hpd = value;
+		m->hpd_writes++;
+		return;
+	}
 	assert(offset == APPLE_DPIN_CONTROL);
-	assert(((value ^ m->control) & ~1U) == 0);
+	assert(((value ^ m->control) & ~(APPLE_DPIN_INACTIVE | APPLE_DPIN_CONNECTED)) == 0);
 	m->control = value;
 	m->writes++;
 }
@@ -68,18 +75,35 @@ int main(void)
 	assert(run(&m, 1) == -EIO && m.writes == 0);
 	m = (struct model){ .hpd = 4, .control = ~0U };
 	assert(run(&m, 1) == -EIO && m.writes == 0);
-	/* Delayed firmware acknowledgement; unrelated control bits survive. */
+	/*
+	 * Delayed firmware acknowledgement. A successful activation also sets
+	 * CONNECTED on HPD and CONTROL (native bringConnectionUp, not rolled
+	 * back since the handshake succeeded); unrelated control bits survive.
+	 */
 	m = (struct model){ .hpd = 4, .control = 0xa5, .ack = 1, .ack_after = 3 };
-	assert(run(&m, 1) == 0 && m.control == 0xa4 && m.waits == 3);
-	/* Deactivation does not require HPD high and waits for inactive ACK. */
+	assert(run(&m, 1) == 0 && m.control == 0xa6 && m.waits == 3);
+	assert(m.hpd == 6 && m.hpd_writes == 1);
+	/* Deactivation does not require HPD high, never writes HPD, and waits
+	 * for inactive ACK.
+	 */
 	m = (struct model){ .control = 0xa4, .ack_after = 2 };
 	assert(run(&m, 0) == 0 && m.control == 0xa5 && m.waits == 2);
-	/* Deadline is bounded; rollback preserves hardware changes to other bits. */
+	assert(m.hpd_writes == 0);
+	/*
+	 * Deadline is bounded; rollback restores both bits this driver owns
+	 * (INACTIVE and CONNECTED) to their pre-handshake values while
+	 * preserving hardware changes to other control bits. HPD is not
+	 * rolled back (native teardown for it was never traced), so its
+	 * CONNECTED bit stays set even though activation failed.
+	 */
 	m = (struct model){ .hpd = 4, .control = 0xa5, .ack = 1,
 		.change_other_bits = 1 };
 	assert(run(&m, 1) == -ETIMEDOUT);
 	assert(m.waits == 10 && m.writes == 2 && m.control == 0x1a5);
-	/* A dropped sink interrupts polling; no synthetic HPD or reset writes. */
+	assert(m.hpd == 6 && m.hpd_writes == 1);
+	/* A dropped sink interrupts polling; no synthetic reset writes beyond
+	 * the owned-bits rollback.
+	 */
 	m = (struct model){ .hpd = 4, .control = 0xa5, .ack = 1, .drop_after = 2 };
 	assert(run(&m, 1) == -ENOLINK && m.waits == 2 && m.control == 0xa5);
 	/* An already acknowledged state needs no polling. */
