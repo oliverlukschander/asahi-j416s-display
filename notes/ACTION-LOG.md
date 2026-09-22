@@ -3347,3 +3347,55 @@ macOS, plug the same hub+adapter+monitor, capture IORegistry/log telemetry)
 rather than continue guessing at further Linux-side USB4/tunnel theories.
 That is a separate investigation track requiring its own preflight and
 action entries before any macOS-side capture or reboot.
+
+## 2026-09-22 -prepared native macOS DP-bandwidth comparison, user-operated
+
+Oliver chose to compare against real macOS on this M2 rather than continue
+guessing at further Linux-side USB4/tunnel theories, after0106-0108 ruled
+out three separate, independently-verified hypotheses with hard evidence
+(crossbar not emitting;tunnel not reaching the hub;zero allocated
+bandwidth). The existing macos-captures (disconnected-074155,
+hub-074227 right,hub-074252 left-back, all working video) only contain
+generic topology (ioreg service tree without properties,system_profiler);
+per notes/2026-09-22-macos-working-hub.md's own stated limits they contain
+no register trace,firmware RPC order or bandwidth-allocation detail, so
+they cannot answer whether native macOS uses the same0-then-request
+bandwidth-allocation-mode dance our0108 evidence shows Linux stuck in.
+
+New read-only collector scripts/collect-macos-dp-bandwidth.sh (committed
+below) targets that gap: full ioreg properties (not just class tree) for
+AppleATCDPINAdapterPort,IODPPortService,AppleT602XATCDPXBAR,
+AppleT602XDisplayCrossbar,DCPDPDeviceProxy,IOThunderboltPort,
+IOThunderboltSwitch,AppleThunderboltIP,AppleDPTXDisplayPort; a5-minute
+unified-log window filtered to thunderbolt/displayport-related messages
+(no sudo,no private-data unlock,no dtrace/settings change); and a
+Thunderbolt/Displays topology snapshot. No sudo required by any command in
+this script. Machine-checked (Mac14,10) before writing.
+
+After this entry and the script are committed and pushed, this is a
+user-operated sequence (not an unattended action), matching the earlier
+0090 native-comparison precedent: unplug the OWC hub and all display
+adapters from the M2; shut down the M2 using the desktop power menu; hold
+its power button to reach Startup Options and select its existing macOS
+installation. No new OS install or boot/security setting change. Normal
+shutdown/boot touches normal system hardware; no manual register access is
+requested. Known M2 Linux addresses for context only (not accessed by this
+step): panel DCP0x389c00000,external DCPs0x289c00000/0x315c00000,right hub
+path NHI0xf01f00000/ACIO0xf01ac0000/crossbar0xf0304c000.
+
+In macOS, reconnect the known-working OWC hub with keyboard,VMM7100 and
+monitor to the SAME RIGHT USB-C port used throughout0102-0108, confirm the
+picture appears (as it has every time before), then in Terminal run:
+
+```
+curl -fL https://raw.githubusercontent.com/oliverlukschander/asahi-j416s-display/main/scripts/collect-macos-dp-bandwidth.sh -o /tmp/collect-macos-dp-bandwidth.sh
+bash /tmp/collect-macos-dp-bandwidth.sh
+```
+
+This is normal native macOS hotplug on a setup already confirmed working
+there; no Linux experimental parameter,manual tunnel or MMIO request. If
+anything behaves unexpectedly, stop and report before continuing. Reports
+save to the Desktop; no automatic upload/commit. Bring the resulting
+directory back to this Linux session for review (as with the earlier M4
+handoff) before drawing conclusions. No return reboot into Linux is
+scheduled or authorized by this log entry.
