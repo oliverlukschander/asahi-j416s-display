@@ -988,3 +988,14 @@ link training and accepted modeset did not achieve video output. Read-only
 DRM state shows CRTC88 active with a Hyprland framebuffer; compositor logs
 show pending-page-flip / EBUSY. Investigating frame completion and native
 crossbar/link-change implementation offline. No new hardware action.
+
+## 2026-09-22 — Bounded software frame-callback trace
+
+Execute after commit/push: sudo -n python3 /tmp/j416s-0094-trace.py
+Script creates isolated tracing instance /sys/kernel/tracing/instances/j416s0094,
+enables only dcp iomfb_swap_submit, iomfb_swap_complete,
+iomfb_swap_complete_intent_gated and iomfb_abort_swap_ap_gated for 10 seconds,
+stops tracing, saves /tmp/j416s-0094-frame-trace.txt, removes the instance.
+No global trace modification, modeset, live parameter write, hardware mapping
+or MMIO operation is initiated. Current hardware remains right ACIO
+0xf01ac0000 / xbar0xf0304c000 / DPIN0 0xf01e50000 / dcpext1 0x315c00000.
