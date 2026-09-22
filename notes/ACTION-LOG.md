@@ -580,3 +580,45 @@ The final lanes=4 diagnostic is merely the cached maximum set by
 GET_MAX_LANE_COUNT, not active-lane training. No success is claimed.
 The one-attempt guard is consumed; future-boot opt-in was already removed.
 No additional hardware action was performed or scheduled after this result.
+
+## 2026-09-22 — prepared native macOS 26 comparison, user-operated
+
+The M4 is reachable as an SSH host. Oliver confirms both Macs can be cabled
+and the M2 also has macOS 26. Native macOS reporting is selected before any
+hypervisor setup. The M4 workspace and collector preparation changed only
+user-owned files; no hardware connection, reboot or boot configuration change.
+
+After this entry and collector are committed and pushed, provide this exact
+user-operated sequence (not an unattended action): unplug the OWC hub and
+all display adapters from the M2; shut down the M2 using the desktop power
+menu; hold its power button to reach Startup Options and select its existing
+macOS installation. Leave the inter-Mac USB cable disconnected for this
+native-report step. No new OS install or boot/security setting change.
+
+Normal shutdown/boot touches normal system hardware; no manual register
+access is requested. Known M2 Linux addresses for context are panel DCP
+0x389c00000, external DCPs 0x289c00000/0x315c00000, left-back hub path NHI
+0x701f00000 / ACIO 0x701ac0000 / crossbar 0x70304c000. The collector uses
+macOS registry APIs, not these physical addresses.
+
+In a native M2 macOS Terminal, download the reviewed collector and take a
+disconnected baseline using these exact commands:
+
+```
+curl -fL https://raw.githubusercontent.com/oliverlukschander/asahi-j416s-display/main/scripts/collect-macos-display.sh -o /tmp/collect-macos-display.sh
+bash /tmp/collect-macos-display.sh disconnected
+```
+
+Then reconnect the known-working OWC hub, with keyboard, VMM7100 and monitor,
+to the same left-back M2 port, wait for the picture, and run:
+
+```
+bash /tmp/collect-macos-display.sh hub
+```
+
+This is normal native macOS hotplug on a setup Oliver confirmed works there;
+no Linux experimental parameter, manual tunnel or MMIO request. If the panel
+blacks out or the system behaves unexpectedly, unplug the hub and stop.
+Keep reports on the M2 Desktop for review; no automatic upload/commit.
+No return reboot is scheduled or authorized by this log entry. This records
+the proposed physical sequence before instructions, not its execution.
