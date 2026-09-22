@@ -2737,3 +2737,24 @@ File-only install, depmod/initramfs build/verification. No hardware addresses
 accessed; resource scope remains preceding0105 entry (ATCf03000000,
 crossbarf0304c000,DPINf01e50000,NHIf01f00000,ACIOf01ac0000,DCP315c00000).
 No live reload/MMIO/parameter write, no reboot. Hub/direct adapter unplugged.
+
+## 2026-09-22 —0105 installed/verified; request unplugged reboot
+
+Retry succeeded, verified backup /var/tmp/j416s-0105-retry-before and pinned
+rootfs modules/initramfs options. New image SHA256
+7aadcd5f52258afb7161af973cc2cf59a9d61937b83dd7a7d478446858d6eb3e.
+Post-install preflight passes; hub/external display absent. Build/tests and
+checkpatch pass (0errors/0warnings). Kernel commitf79519f, display patches
+and notes pushed. No live module loaded, no hardware result yet.
+
+After committing/pushing request user command exactly `systemctl reboot`,
+with hub and direct display adapter kept unplugged. No agent reboot command.
+Boot uses0105 existing owner resources: ATCf03000000 size4c000,
+crossbarf0304c000 size4000,lpdptxf03050000 size8000,
+axi2aff00000000 size4000,usb2phyf02a90000 size4000,
+pipehandlerf02a84000 size4000,DCP315c00000,NHIf01f00000,
+ACIOf01ac0000,DPINf01e50000 size4000 (all hexadecimal addresses).
+No manual MMIO or new mapping; no panel mapping,39c000000 assignment,
+USB4 lane mode override, module unload or forbidden operation.
+After reboot verify loaded hashes, eDP and mux readonly flag, then separately
+log/push disarm and single right-port attachment. Do not connect yet.
