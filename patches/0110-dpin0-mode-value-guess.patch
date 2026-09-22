@@ -1,0 +1,99 @@
+From 4b1450fc52014bd1f7c214e089f586b0082f727d Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Tue, 22 Sep 2026 17:05:23 +0200
+Subject: [PATCH] thunderbolt: apple: test explicit-guess values for the two
+ remaining DPIN0 writes
+
+0109 confirmed and replicated the one unconditional native register
+write (CONNECTED) found in AppleCIODPTX::bringConnectionUp, but it
+did not restore video. Two further writes native performs on this
+same DPIN0 block (offsets 0x14 and 0x1c) remain: a three-agent
+parallel static-analysis pass exhaustively confirmed the exact
+bit-packing formula for both (instruction-for-instruction, from three
+independent traces) but could not pin the underlying per-connection
+value -- it is a verbatim copy of a packed attributes value supplied
+by a caller that appears to live outside this XNU kernelcache
+entirely (likely the separate DCP coprocessor firmware).
+
+The rate-class subfield was bounded to 5 valid values and matches,
+bit-for-bit, the same RBR=0/HBR=1/HBR2=2/HBR3=3 ordinal this driver
+already uses (drivers/thunderbolt/tb_regs.h); this link negotiates
+HBR2, giving high confidence in that half. A second subfield's exact
+meaning could not be determined; the closest available reading for a
+4-lane link resolves it to 1. This candidate writes the resulting
+value (9) explicitly labeled as an informed estimate, not a confirmed
+constant, to see whether it changes the outcome. Same DPIN0 resource
+already used safely by this driver; no new addresses, no forbidden
+register access. scripts/test-dpin-handshake.c updated (ASan/UBSan,
+9 scenarios, all passing) to cover the new offsets.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/apple-dpin-handshake.h | 43 +++++++++++++++++++++-
+ 1 file changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/thunderbolt/apple-dpin-handshake.h b/drivers/thunderbolt/apple-dpin-handshake.h
+index cc562f9..e413f32 100644
+--- a/drivers/thunderbolt/apple-dpin-handshake.h
++++ b/drivers/thunderbolt/apple-dpin-handshake.h
+@@ -23,6 +23,33 @@
+  */
+ #define APPLE_DPIN_CONNECTED (1U << 1)
+ 
++/*
++ * Two further offsets native AppleCIODPTX::bringConnectionUp writes on
++ * this exact DPIN0 block, in between the HPD and CONTROL writes above
++ * (native order: HPD, then MODE_B, then MODE_A, then CONTROL). Unlike
++ * CONNECTED, the exact values here are NOT confirmed from the native
++ * binary: native computes them from a per-connection attributes value
++ * (rate class and an unidentified secondary field) that is copied
++ * verbatim from this connection's negotiation and is not itself built
++ * anywhere in the traced kernel/kext code -- its origin could not be
++ * pinned down statically. MODE_VALUE below is therefore an informed,
++ * explicitly-labeled estimate, not a confirmed constant:
++ *   - bits 4-7 of the field select a rate class using the same RBR=0/
++ *     HBR=1/HBR2=2/HBR3=3 ordinal already used elsewhere in this driver
++ *     (drivers/thunderbolt/tb_regs.h DP_COMMON_CAP_RATE_*); this link
++ *     negotiates HBR2, so 2.
++ *   - a secondary bit, native-gated on lane_count>=2 (true here: 4) and
++ *     on the same "which DPIN0 sub-instance" selector already confirmed
++ *     unconditional-0 for this single, non-split port, is set from a
++ *     nearby field that other native code also treats as a small
++ *     enumeration; the closest available reading of it for a 4-lane
++ *     link resolves to that bit being set (1).
++ * MODE_VALUE = rate_class(2) * lane_count(4) + secondary_bit(1) = 9.
++ */
++#define APPLE_DPIN_MODE_A 0x14
++#define APPLE_DPIN_MODE_B 0x1c
++#define APPLE_DPIN_MODE_VALUE 9U
++
+ /* Caller owns powered register access and provides a bounded wait. */
+ struct apple_dpin_io {
+ 	unsigned int (*read)(void *ctx, unsigned int offset);
+@@ -47,8 +74,22 @@ static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
+ 	saved = io->read(io->ctx, APPLE_DPIN_CONTROL);
+ 	if (saved == ~0U)
+ 		return -EIO;
+-	if (active)
++	if (active) {
++		unsigned int mode_a, mode_b;
++
+ 		io->write(io->ctx, APPLE_DPIN_HPD, hpd | APPLE_DPIN_CONNECTED);
++
++		mode_b = io->read(io->ctx, APPLE_DPIN_MODE_B);
++		if (mode_b != ~0U)
++			io->write(io->ctx, APPLE_DPIN_MODE_B,
++				  mode_b | (APPLE_DPIN_MODE_VALUE << 7));
++
++		mode_a = io->read(io->ctx, APPLE_DPIN_MODE_A);
++		if (mode_a != ~0U)
++			io->write(io->ctx, APPLE_DPIN_MODE_A,
++				  (mode_a & ~0xffU) |
++				  (1U << APPLE_DPIN_MODE_VALUE));
++	}
+ 	value = active ? (saved & ~APPLE_DPIN_INACTIVE) | APPLE_DPIN_CONNECTED :
+ 			 saved | APPLE_DPIN_INACTIVE;
+ 	io->write(io->ctx, APPLE_DPIN_CONTROL, value);
+-- 
+2.55.0
+

@@ -3567,3 +3567,55 @@ Oliver confirmed the hub is unplugged from the right port; sysfs shows no
 thunderbolt devices, eDP remained connected before and after. No further
 hardware action performed this boot (one-attempt guard). No speculative
 register write or reboot performed.
+
+## 2026-09-22 -0110 built offline; explicit-guess test of remaining DPIN0 writes
+
+Oliver chose to test a bounds-based estimate for the two remaining DPIN0
+writes (+0x14,+0x1c) before pursuing DCP firmware extraction. A 3-agent
+parallel static-analysis pass (top-down attributes-construction trace,
+bottom-up field-setter search across the full __TEXT_EXEC, crossbar-
+validation/log-string cross-check) confirmed the exact bit-packing formula
+instruction-for-instruction from three independent traces, but could not
+pin the underlying runtime value: it is a verbatim copy of a packed
+attributes value supplied by a caller not locatable in this XNU
+kernelcache, most likely the separate DCP coprocessor firmware. Bounded
+finding used for this test: the rate-class subfield matches, bit-for-bit,
+the same RBR=0/HBR=1/HBR2=2/HBR3=3 ordinal already used in this driver
+(drivers/thunderbolt/tb_regs.h) - this link negotiates HBR2, giving
+rate_class=2 with reasonable confidence; a second subfield's meaning is
+weaker evidence, resolving to1 for a4-lane link. Kernel commit4b1450f
+writes the resulting value (w20=9) to+0x1c(pure OR,shift7) and
++0x14(clears low byte,sets bit9), in native's own call order (HPD,+0x1c,
++0x14,CONTROL), explicitly labeled in code/commit/notes as an informed
+estimate, not a confirmed constant. Same DPIN0 resource(0xf01e50000)
+already safely used by this driver; no new addresses,no forbidden register
+access; read-before-write on both new offsets matching existing discipline;
+no rollback added (matching the existing HPD precedent - native teardown
+for either was never traced). scripts/test-dpin-handshake.c updated and
+passes (ASan/UBSan,9 scenarios). checkpatch on the accumulated header
+diff:0errors/0warnings. `make` in src/thunderbolt rebuilds only
+apple.o/thunderbolt_apple.ko; the other four modules, including core
+thunderbolt.ko, are unchanged from0109 (verified by SHA256). Full design
+in notes/2026-09-22-0110-mode-value-guess.md.
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0110.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0110-before (same five
+module pairs as prior candidates plus initramfs); install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module reload,
+parameter write, MMIO, mapping or reboot. Options unchanged from0109.
+Candidate hashes: thunderbolt_apple
+7e1dd94484e5d258696de1032bb9aded75b28195748c3e476c3c0fe69f78e102;
+thunderbolt(core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7;
+mux38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24;
+atce47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9;
+appledrm9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC0xf03000000 size0x4c000,
+crossbar0xf0304c000 size0x4000,DCP0x315c00000,NHI0xf01f00000,
+ACIO0xf01ac0000,DPIN0 0xf01e50000 size0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.
