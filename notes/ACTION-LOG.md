@@ -2606,3 +2606,44 @@ ATC0xf03000000 size0x4c000, crossbar0xf0304c000 size0x4000,
 lpdptx0xf03050000,axi2af0xf00000000,usb2phy0xf02a90000,
 pipehandler0xf02a84000,dcpext1 0x315c00000,NHI0xf01f00000,
 ACIO0xf01ac0000,DPIN0 0xf01e50000. Hotplug separately logged after success.
+
+## 2026-09-22 —0104 disarmed successfully; single RIGHT-port hub test
+
+Disarm exited0 and verified image; SHA256
+361dcfd6eb2a4cee098947d22087f21517741e4e64fe878555ce43f3f4c387ee.
+Current boot retains loaded experiment; future boots disarmed.
+After committing and pushing this entry request exactly: connect OWC hub once
+to Mac RIGHT USB-C port with monitor attached to hub, leave connected for
+capture, report actual picture/no signal and whether eDP remains on. Do not
+replug/reboot. If eDP blacks out, unplug hub and stop. Keyboard untested unless
+attached and checked. No shell command initiates physical attachment.
+
+Driver-owned first-attempt scope unchanged from0103. ATC core0xf03000000
+size0x4c000 offsets/masks008/3ffff,1b0/fff,7000/207c,2224/3,
+2080/ffffffff,2084/0fffffff,2088/007fffff,2208/001f0000,2220/80,
+2214/1,2200/54,2000/1ffffff9; preflight7000,2200,2000,7044;
+statusa74/7044. Owner-mapped lpdptx0xf03050000 size0x8000,
+axi2af0xf00000000 size0x4000,usb2phy0xf02a90000 size0x4000,
+pipehandler0xf02a84000 size0x4000. Crossbar0xf0304c000 size0x4000,
+source2 toDPIN0: normalcontrols000,004,008,00c,014,018,01c,024,028,
+02c,030,034,050,070. Nativeup clears004bit2,014bit2,024bit0;
+reads804bit2,810bit2,81cbit0; sets008bit2,018bits5:4=1,028bits1:0=1,
+000bit2,00cbit2,01cbit0,034bit0,02cbit2. No selector rewrite or
+clock-disable/reset-assertion in nativeup. Snapshots000,004,008,00c,014,
+018,01c,024,028,02c,030,034,040,044,048,04c,050,060,070,800,020,820,81c.
+DCP0x315c00000,NHI0xf01f00000,ACIO0xf01ac0000;
+DPIN0 0xf01e50000 size0x4000 CONTROL+c requestbit0,HPD+0/ACK+10reads.
+0104 same-rate repeat returns cached success without another hardware attempt.
+No forbidden ACIO analog, panel mappings,39c000000 assignment,/dev/mem,
+PHY mode override, manual tunnel or module unload.
+
+After user connects, capture exactly (private raw output, not committed):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0104-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-22-0104-right-kernel.log
+modetest -M apple -e
+```
+
+Confirm live right port in logs, repeated completion ACK and frame/modeset
+outcome; actual visible picture required regardless of Hyprland/clock status.
