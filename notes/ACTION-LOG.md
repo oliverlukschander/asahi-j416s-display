@@ -5314,3 +5314,13 @@ After committing/pushing execute exactly:
 ```
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0120.py install
 ```
+
+## 2026-09-23 -0120 installed
+
+Ran `sudo -n python3 scripts/manage-0120.py install` with hub connected.
+Succeeded, backup verified to /var/tmp/j416s-0120-before, both module
+hashes re-verified, initramfs rebuilt and verified. State: 0120 staged for
+next boot; current running kernel still has 0119 loaded. Next: reboot,
+verify boot, watch for "USB4: enable DP AUX on route->phy: 0", then
+whether SET_LINK_RATE/SET_ACTIVE_LANE_COUNT fire and DPRX locks. Also
+verify hub-connected USB peripherals (keyboard) still work post-boot.
