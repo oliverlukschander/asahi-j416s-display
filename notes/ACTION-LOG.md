@@ -4885,3 +4885,54 @@ No register/timing/retry change made in response; stopped per
 protocol pending a proper design note for whatever's investigated
 next (setPowerState powerstate==0 path or the _displayRequested-flag
 origin, per notes/2026-09-23-xnu-power-state-trace.md).
+
+## 2026-09-23 -0116 built offline: fix the deadlock that caused 0114's -110s
+
+Root cause found for the -110 (ETIMEDOUT) request_display failures
+from the 0114+0115 left-port test, entirely via kernelcache
+decompilation and re-reading our own AFK/EPIC transport code -- no
+hardware action needed to find it. Full evidence chain and reasoning
+in notes/2026-09-23-0114-deadlock-found.md; summary: 0114 called
+dptxport_request_display() (a blocking afk_service_call()) from
+inside dptxport_call_activate(), which runs as service->ops->call()
+dispatched inline on afkep->wq, an *ordered* (single-concurrency)
+workqueue (afk.c:69, alloc_ordered_workqueue). That same queue is what
+runs the work item that completes any outbound afk_service_call(),
+including this nested one and the pre-existing outer
+request_display() call already pending in dcp_dptx_connect() when DCP
+sent this ACTIVATE APCALL. A call issued from inside this handler can
+never observe its own completion (confirmed by reading
+afk_recv_handle_std_service()/afk_service_call_timeout()'s actual
+completion wiring in afk.c) -- it is a deterministic, always-fires
+deadlock, not a flaky timing issue -- and it delays the ACTIVATE reply
+DCP needs by the full one-second timeout, starving the outer call's
+own independent timeout too. This fully explains both -110s observed
+in the left-port test without needing any new theory about DCP
+firmware state or port-target encoding (both remain open questions,
+but this bug was actively preventing us from observing them).
+
+Kernel commit c554afe reverts dptxport_call_activate() to do only the
+native DPIN0 hardware activation and return immediately (matching
+pre-0114 behavior), so the outer request_display() call gets an
+uncontended chance at DCP's real reply. Patch:
+patches/0116-drm-apple-dptx-stop-deadlocking-the-AFK-ordered-work.patch.
+Only drivers/gpu/drm/apple/dptxep.c changed; new appledrm.ko SHA256:
+ec1a940a3482a804f08ea8f59a7062cb948b7047acaa5cc7eab4b7c3120b14ce (mux/
+atc/thunderbolt/thunderbolt_apple hashes unchanged from 0115).
+scripts/manage-0116.py derived from manage-0115.py (candidate number
+and the one hash only), syntax-checked. Stale-symlink sweep re-run,
+clean (same two pre-existing deferred files as 0115, no new
+regression).
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0116.py install
+```
+
+Backs up currently-installed 0115 modules/initramfs to
+/var/tmp/j416s-0116-before, installs the new appledrm.ko, rebuilds and
+verifies the initramfs. No live module reload, register write, or
+reboot. Same OPTIONS string as every candidate since 0109 (this is a
+behavior fix, not a new module parameter). Per Oliver's standing
+preference, hub may stay connected for install and reboot.
