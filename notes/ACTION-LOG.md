@@ -4690,3 +4690,42 @@ parameter write. No addresses accessed; resource scope remains ATC
 0xf03000000, crossbar 0xf0304c000, DCP 0x315c00000, NHI 0xf01f00000,
 ACIO 0xf01ac0000, DPIN0 0xf01e50000. Hotplug will be logged separately
 after successful disarm.
+
+## 2026-09-23 -0114 disarmed; single right-port attachment
+
+Disarm exited 0, image verified; new SHA256
+20cd0e9dc3f298a0f6ea887ff0f6810303d54952931cdc78266e7e0a7d6a8170.
+This differs from the 411e2701... baseline seen for every 0108-0113
+disarmed image, as expected: 0114 is the first candidate to change
+appledrm.ko itself (not just thunderbolt_apple.ko), so the disarmed
+initramfs now embeds the new appledrm.ko even with options removed.
+Current 0114 flags remain enabled for this boot only; future boots
+disarmed.
+
+After committing and pushing this entry request exactly: connect hub
+once to RIGHT USB-C port with monitor on hub; leave connected for
+capture; report visible picture and eDP status. If eDP blacks out,
+unplug hub and stop. No replug/reboot. No shell command initiates
+physical connection.
+
+Scope is identical to 0113 plus 0114's change: dptxport_call_activate()
+now resends dptxport_request_display() once the native DPIN0 activate
+succeeds, mirroring real macOS's setPowerState resend pattern (see
+notes/2026-09-23-0114-resend-request-display.md). No new register,
+address, or APCALL -- only an additional call to an already-used,
+already-safe AFK/EPIC method.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0114-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0114-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0114-dpin-counters.txt
+```
+
+Confirm right port, native DPIN0 handshake result, the new "resend
+request_display" log line and its return code, crossbar/link-config
+result, DPRX completion, and actual picture - the last decided only by
+Oliver's visual confirmation. If sequence stalls, capture and stop
+without retrying gates or changing registers.
