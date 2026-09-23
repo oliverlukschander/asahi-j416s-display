@@ -4548,3 +4548,52 @@ active ordinal (0x21) this pipe's swap-completion path depends on.
 Not a new finding -- direct physical confirmation of the existing one.
 
 No hardware register write in the course of this entry.
+
+## 2026-09-23 XNU-side power-state trace: request_display resend pattern found
+
+Rebuilt the decompiler infrastructure after the reboot (same steps as
+notes/2026-09-23-power-state-gate-traced.md) and re-extracted the
+kernelcache (same SHA256 as every prior extraction:
+9615a486511c7a60b141d7f4291361c5212e908546d6568890029bb90b5431e7).
+Unlike the DCP firmware, this binary retains full mangled C++ symbols,
+resolvable directly via llvm-nm (Ghidra's own Mach-O loader does not
+apply them -- confirmed by both exact and wildcard symbol lookups
+returning zero matches while llvm-nm reads them instantly; noted for
+future reference).
+
+Traced AppleDCPDPTXRemotePortProxy (the Type-C/dcpext-routed DPTX proxy
+class -- confirmed the right class for our scenario, as opposed to
+AppleCIODPTX which is used for direct/fixed-PHY ports and uses an
+entirely different, unrelated power mechanism). Found:
+synchronousChangeDPTXPowerStateTo(1) is called by a "requestDisplay"
+handler (sets a _displayRequested flag), and (0) by a "displayRelease"
+handler; both are top-level externally-invokable methods (work-loop
+trampolines matching both a plain C++ entry and an IOUserClient
+external-method entry), i.e. invoked by macOS's window server/graphics
+stack, the functional counterpart of our own Hyprland atomic-commit
+step. The actual work happens in setPowerState's gated implementation:
+when powerstate transitions to 1 AND _displayRequested is already set,
+it sends an IPC message using AFK/EPIC method index 6 -- the exact
+same method our own dptxport_request_display() already uses. The
+release path uses method index 7, matching dptxport_release_display().
+
+This means real macOS (re-)sends request_display specifically at the
+moment the IOKit power domain transitions to active, not merely once,
+unconditionally, at initial connect time the way our
+dcp_dptx_connect() does it -- a concrete, mechanically-grounded,
+cheaply-testable structural difference (does not yet prove causality).
+initialPowerStateForDomainState unconditionally returns 0 (no special
+"already on" assumption). Full trace, including the additional context
+gathered (AppleCIODPTX's separate mechanism, the dispatch-trampoline
+confirmation, and the llvm-nm-over-Ghidra-symbols lesson), in
+notes/2026-09-23-xnu-power-state-trace.md.
+
+Suggested next hardware test (not yet run, no design note/candidate
+built yet): add a second dptxport_request_display() call after the
+native DPIN0 crossbar handshake completes, mirroring this exact
+resend-on-power-up pattern. Uses only an already-safe, already-used
+AFK/EPIC method; no new register or address.
+
+No hardware register write in the course of this investigation --
+purely offline kernelcache decompilation. Hub remains connected from
+earlier; no picture.
