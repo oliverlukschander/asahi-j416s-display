@@ -5696,3 +5696,36 @@ echo 1 | sudo tee /sys/module/thunderbolt_apple/parameters/dpin_aux
 ```
 Reversible via `echo 0 | sudo tee ...`; unplug also clears the relevant state
 independent of this value (`apple_nhi_dp_tunnel_deactivate()`).
+
+## 2026-09-23 -0125 result: confirms 0054-0056, doesn't stick even now
+
+Ran the write. `apple_dpin_aux_set()` fired as designed: log showed
+`DP IN analog +0x00=80000000 +0x18=80000000 +0x20=00000000 pulse=1` followed
+immediately by `DP IN analog after start +0x00=80000000 +0x18=80000000
++0x20=00000000` -- identical before/after values. The delayed-work poll loop
+(`apple_dp_aux_work`, checks every `APPLE_DP_AUX_POLL_MS`) produced zero
+further log lines in the following 6+ seconds (it only logs when a capability
+register actually changes), meaning DPRX never asserted. Oliver confirmed:
+monitor still on standby. Reverted `dpin_aux` to 0 (the documented-safe
+default) immediately after.
+
+This settles the open question from 0124: the 0054-0056 "doesn't stick"
+characterization is NOT a stale artifact of since-fixed sequencing issues --
+it reproduces identically with crossbar routing, native DPIN0, the role bit,
+and a fully clean AFK/DCP protocol trace all confirmed correct. The AUX write
+genuinely does not take effect at the hardware level through this exact path
+(OWC Thunderbolt 5 hub -> Synaptics VMM7100 -> BenQ). Whatever holds the ACIO
+DP IN analog block's AUX/DPCD serializer from actually driving the line is
+not something `dpin_aux`'s one-shot MMIO pulse can unstick, on this hardware
+chain, at this point in this project's understanding.
+
+Everything software-sequenceable through DCP's own AFK protocol is now
+confirmed correct and produces zero errors (0124). The two remaining
+directions are (a) further DCP firmware-internal reverse engineering of
+whatever gates the AUX read that Linux-side instrumentation cannot see at
+all (since DCP itself never reports back during the silent window), or (b)
+suspecting a genuine compatibility limit somewhere in the OWC hub / Synaptics
+VMM7100 adapter chain specifically for the *tunneled* path (direct HDMI and
+direct USB-C to the same monitor both work). Flagged to Oliver; no further
+hardware action planned until he decides which direction, if either, to take
+next.
