@@ -4261,3 +4261,16 @@ DPRX completion, and actual picture - the last decided only by Oliver's
 visual confirmation. If this is also inconclusive, unplug, verify via
 kernel log that the deactivate this time reaches "active=0 handshake=..."
 (not -19), then proceed to mode_value=1.
+
+## 2026-09-23 -0113 mv0 result: real test, clean, no picture; unplug requested
+
+Oliver confirms no picture with dpin_mode_value=0 (the genuine retest,
+now confirmed to have actually run the handshake -- see kernel log
+excerpt in notes/2026-09-23-0113-mv0-result.md). eDP-1 remained
+connected. Full write-up in that note.
+
+Requested Oliver unplug the hub. Once confirmed, verify via kernel log
+that the deactivate this time reaches "native DPIN0: active=0
+handshake=..." (not the -19 early-return the 0113 fix addresses), then
+set dpin_mode_value=1 (CORE=2 case) and request the next single
+right-port attachment.
