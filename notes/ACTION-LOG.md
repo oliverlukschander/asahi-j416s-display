@@ -4289,3 +4289,35 @@ committing and pushing this entry request exactly: connect hub once to
 RIGHT USB-C port with monitor on hub; leave connected for capture;
 report visible picture and eDP status. Capture the same set as before
 under a 2026-09-23-0113-mv1-* prefix.
+
+## 2026-09-23 -0113 mv1 attempt invalid (DCP never detected the display); sweep script added
+
+Investigation of the dpin_mode_value=1 attempt's kernel log found it
+invalid for a reason unrelated to the 0113 latch fix (confirmed working
+for mv0's deactivate, result=0): DCP's own hotplug detection never
+fired ("cb_hotplug() connected:1" absent) and dcp_dptx_connect() was
+never called at all -- our own DPIN0 code never got a chance to run.
+Only "DP IN analog: leaving PHY alone until DPRX timeout" appears, with
+no follow-up, suggesting AUX/DPRX-level flakiness upstream of our code
+on this specific physical replug. Not a data point for mode_value=1;
+needs a clean retry. eDP and hub bus state were otherwise fine
+throughout (checked live, ~100s after the attempt with no further
+activity).
+
+Oliver asked for a shell script to automate the remaining sweep
+(set value, wait for connect, capture, ask about the picture, log) so
+this doesn't require a manual round trip per value. Added
+scripts/sweep-mode-value.sh: walks a list of dpin_mode_value candidates
+(default: 1,2,3,4,5,6,7,11,12,13,14,15 -- the values not yet cleanly
+tested), and for each one verifies via kernel log grep that the native
+DPIN0 handshake actually ran, DCP's hotplug detection fired, and
+dcp_dptx_connect() was called before accepting a "no picture" answer as
+real data -- exactly the validity check this mv1 attempt and the
+earlier 0112 latch bug both would have failed, so an invalid attempt
+now prompts a retry instead of silently being logged as a clean
+negative. Each result is appended to
+notes/mode-value-sweep-results.md and committed+pushed automatically.
+The script stops immediately and asks for confirmation, without further
+writes, if a picture is ever reported. No hardware action from adding
+the script itself; it must be run by Oliver interactively (physical
+plug/unplug and the picture question cannot be automated).
