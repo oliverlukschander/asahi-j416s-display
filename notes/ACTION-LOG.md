@@ -4108,3 +4108,67 @@ Next: set dpin_mode_value=0 (CORE=1, our connection's actual first-try
 route, highest confidence) via the existing 0112 runtime parameter and
 request a single right-port attachment. mode_value=1 (CORE=2 case) is
 the immediate fallback if 0 is inconclusive. No reboot needed.
+
+## 2026-09-23 -0113 built offline; fix dpin_attempted latch bug found in 0112
+
+Investigation of the dpin_mode_value=0 test's kernel log (requested in
+the prior entry) showed it never actually ran the native DPIN0
+handshake: no "native DPIN0: active=1 handshake=..." line appears at
+all for that attempt, only route-selection/crossbar messages from
+other code, followed by "DPRX timeout, keeping DP tunnel". Root cause
+found by direct code inspection, confirmed by the exact -19 (-ENODEV)
+result already logged for the prior (mode_value=10) deactivate: a real
+physical unplug clears acio->current_cable_info before the DCP-issued
+DEACTIVATE APCALL reaches apple_usb4_right_dpin0_set_active(), tripping
+its very first guard and returning -ENODEV before ever calling
+apple_dpin_handshake(). This means the entire 0112 same-boot re-test
+mechanism (register clear + dpin_attempted reset) never actually
+executed on real hardware across any of the 0112 tests (8,9,10) -- only
+in the offline mock, which has no notion of current_cable_info and
+could not catch this. Consequence: dpin_attempted stayed latched true
+from the boot's first activate, silently blocking the mode_value=0
+attempt via -EALREADY before it ever reached the handshake. That test
+is invalidated, not a real data point about mode_value=0.
+
+Kernel commit 4240ae7 fixes this: when the early cable-state guard
+trips on a deactivate request and acio->dpin_base is already mapped
+(real state of ours to clean up), fall through to the same
+handshake/cleanup path instead of bailing out with state stuck; still
+bail immediately when there is genuinely nothing to do. Same DPIN0
+resource, same guard structure; only widens which paths reach the
+already-reviewed handshake call. Full design in
+notes/2026-09-23-0113-fix-dpin-attempted-latch.md.
+
+`make` in src/thunderbolt rebuilds only apple.o/thunderbolt_apple.ko;
+the other four modules are byte-identical to 0112 (verified by SHA256).
+No offline mock test added: this bug lives in apple.c's cable-state
+wrapper, a layer scripts/test-dpin-handshake.c does not model.
+
+This candidate needs one more reboot to load (module code path change).
+After that: retest dpin_mode_value=0, then =1 if inconclusive, and
+confirm via kernel log that a post-unplug deactivate now reaches
+"native DPIN0: active=0 handshake=..." instead of silently returning
+-19.
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0113.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0113-before (same
+five module pairs as prior candidates plus initramfs); install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module
+reload, parameter write, MMIO, mapping or reboot. Options unchanged
+from 0109-0112 (unconditional code behind the existing dpin_native=1
+gate). Candidate hashes: thunderbolt_apple
+cb636968b5f50919fae72cb7c304b4f92f666d04a727de683266240e95dc8096;
+thunderbolt (core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7;
+mux 38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24;
+atc e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9;
+appledrm 9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC 0xf03000000 size 0x4c000, crossbar
+0xf0304c000 size 0x4000, DCP 0x315c00000, NHI 0xf01f00000, ACIO
+0xf01ac0000, DPIN0 0xf01e50000 size 0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.

@@ -1,0 +1,71 @@
+From 4240ae728e7ce931c9be5049878fdfd4cc7e0d79 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 10:12:32 +0200
+Subject: [PATCH] thunderbolt: apple: fix dpin_attempted latching after real
+ unplug
+
+The 0112 same-boot re-test infrastructure (register clear + latch
+reset on a clean deactivate) never actually ran on real hardware: a
+physical unplug clears acio->current_cable_info (and often nhi_pdev)
+before the DCP-issued DEACTIVATE APCALL reaches
+apple_usb4_right_dpin0_set_active(), tripping the existing early-return
+guard with the function's default -ENODEV before ever calling
+apple_dpin_handshake(). Confirmed directly: the dpin_mode_value=10
+test's own deactivate logged exactly this -19 (-ENODEV), and the very
+next activate attempt (mode_value=0) never produced any handshake log
+line at all -- silently blocked by dpin_attempted, which that skipped
+deactivate never got to reset.
+
+DPIN0's registers are on-die SoC hardware, not torn down by cable
+removal, so when this guard trips on a deactivate request and we
+previously activated (dpin_base already mapped), fall through to the
+same cleanup path instead of bailing out with our own state stuck.
+Only bail immediately when there is truly nothing of ours to clean up
+(activating with no cable/session, or deactivating with nothing ever
+mapped).
+
+This was a mock-test blind spot, not caught by
+scripts/test-dpin-handshake.c: that harness only covers
+apple_dpin_handshake() itself, not this wrapper's cable-state guards,
+since the mock has no notion of current_cable_info at all.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/apple.c | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 016afb6..bea230f 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -1852,8 +1852,25 @@ int apple_usb4_right_dpin0_set_active(bool active)
+ 		goto unlock_device;
+ 	}
+ 	if (!acio->current_cable_info || !acio->nhi_pdev ||
+-	    acio->rc_res->start != 0xf01ac0000ULL)
+-		goto unlock_cio;
++	    acio->rc_res->start != 0xf01ac0000ULL) {
++		/*
++		 * A real physical unplug clears current_cable_info (and often
++		 * nhi_pdev) before the DCP-issued DEACTIVATE APCALL reaches
++		 * us, so this trips on every ordinary disconnect, not just a
++		 * stale or unrelated call -- confirmed by seeing exactly this
++		 * -ENODEV on a real deactivate during the 0112 sweep, which
++		 * silently skipped both the MODE_A/MODE_B register clear and
++		 * the dpin_attempted reset below, permanently latching out
++		 * every activate for the rest of that boot. DPIN0's registers
++		 * are on-die SoC hardware, not torn down by cable removal, so
++		 * if we previously activated (dpin_base already mapped), fall
++		 * through to the same deactivate/cleanup path as normal
++		 * instead of leaving our own state stuck. Only bail out here
++		 * when there is truly nothing of ours to clean up.
++		 */
++		if (active || !acio->dpin_base)
++			goto unlock_cio;
++	}
+ 	if (active == acio->dpin_active) {
+ 		ret = 0;
+ 		goto unlock_cio;
+-- 
+2.55.0
+
