@@ -5455,3 +5455,50 @@ loaded. Next: reboot, verify boot, watch for SET_LINK_RATE and deferred native
 DPIN0 activation (now tagged from DidChangeLinkConfig, not Activate), then
 whether DPRX locks. Also verify hub-connected USB peripherals unaffected
 (expected, since neither AUX/PLL registers nor the shared eDP PHY are touched).
+
+## 2026-09-23 -0121 result: worse than 0119 -- removing Activate's crossbar call entirely also removed the required wake
+
+Rebooted into 0121 with hub connected (left port, hub confirmed present,
+no regression this time -- neither AUX/PLL registers nor eDP PHY touched).
+Log: GET_SUPPORTS_HPD back to 1 (reverted as designed), request_display
+still returns 0. But after APCALL 0 (ACTIVATE), NOTHING further happened
+at all -- no native DPIN0 lines, no APCALL 20/INACTIVE_SINK_DETECTED, no
+SET_LINK_RATE -- straight to the 12s DPRX timeout. Worse than 0119, which
+at least reached INACTIVE_SINK_DETECTED.
+
+Root cause: 0121 removed the ENTIRE dptxport_native_dpin() call from
+Activate (both the ACIO wake AND crossbar select together), but the
+reference implementation's own comment says the wake specifically IS
+required at Activate ("waking it earlier hangs the machine" describes it
+as necessary, not optional) -- only the CROSSBAR part needed deferring.
+dptxport_native_dpin() had no way to do "wake only" since it couples both
+together whenever active=true.
+
+## 2026-09-23 -0122 built offline: split the wake from the crossbar select
+
+Kernel commit 047e3e1 adds a `crossbar` bool parameter to
+dptxport_native_dpin() (drivers/gpu/drm/apple/dptxep.c), gating just the
+mux-selection branches while the ACIO wake always still runs when
+active=true. dptxport_call_activate() now calls
+dptxport_native_dpin(service, true, false, false) -- wake only, matching
+the reference implementation's Activate handler exactly.
+dptxport_call_did_change_link_config()'s call becomes (service, true,
+usb4_tunnel_clock, true) -- unchanged behavior (both), still gated on
+dptx->link_rate. dptxport_call_deactivate() becomes (service, false,
+false, true) -- no behavior change (active=false skips both branches
+regardless). Full reasoning in
+notes/2026-09-23-0122-split-wake-from-crossbar.md.
+
+Only dptxep.o recompiled. New appledrm.ko SHA256:
+ed41d69d6e59debd3906a542f1800f6243705e67fcbb83d6646a578047bf6335.
+phy-apple-atc.ko untouched (still 0119-identical). Stale-symlink sweep
+clean, test-dpin-handshake.c 13/13 pass. Patch:
+patches/0122-drm-apple-dptx-split-the-native-DPIN0-wake-from-the-.patch.
+scripts/manage-0122.py derived from manage-0121.py (candidate number +
+hash only).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0122.py install
+```

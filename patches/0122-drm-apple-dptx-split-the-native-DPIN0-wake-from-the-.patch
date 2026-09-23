@@ -1,0 +1,129 @@
+From 047e3e1ba320bca9c5013e6d3388a93879132b25 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 21:53:50 +0200
+Subject: [PATCH] drm: apple: dptx: split the native DPIN0 wake from the
+ crossbar select
+
+0121 removed the eager crossbar/DPIN0 activation from Activate
+entirely, but tested with it fully absent DCP did NOTHING at all --
+not even INACTIVE_SINK_DETECTED fired, worse than 0119. The reference
+implementation's own comment explains why: "waking it earlier hangs
+the machine" describes the DP IN adapter wake as *required* at
+Activate, it just must not be bundled with crossbar mux selection.
+
+dptxport_native_dpin() previously coupled the ACIO wake
+(apple_usb4_dpin0_set_active) and the crossbar mux_control_select()
+into one call whenever active=true, with no way to do one without the
+other. Add a `crossbar` parameter so Activate can call just the wake
+(crossbar=false), while dptxport_call_did_change_link_config()'s
+already-correct, already-gated call keeps doing both (crossbar=true),
+matching the reference implementation's own division of labor between
+Activate and DidChangeLinkConfiguration exactly.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dptxep.c | 41 ++++++++++++++++------------------
+ 1 file changed, 19 insertions(+), 22 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index f236c76..7b03307 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -458,7 +458,8 @@ dptxport_call_will_change_link_config(struct apple_epic_service *service)
+ 	return 0;
+ }
+ 
+-static int dptxport_native_dpin(struct apple_epic_service *service, bool active, bool bring_up);
++static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
++				bool bring_up, bool crossbar);
+ 
+ static int
+ dptxport_call_did_change_link_config(struct apple_epic_service *service)
+@@ -487,7 +488,7 @@ dptxport_call_did_change_link_config(struct apple_epic_service *service)
+ 			return -EALREADY;
+ 		}
+ 		dptx->usb4_link_up_attempted = true;
+-		ret = dptxport_native_dpin(service, true, usb4_tunnel_clock);
++		ret = dptxport_native_dpin(service, true, usb4_tunnel_clock, true);
+ 		dev_info(dcp->dev, "native DPIN0: link-config up rate=0x%x result=%d\n",
+ 			 dptx->link_rate, ret);
+ 		if (ret)
+@@ -633,7 +634,8 @@ static int dptxport_call_set_tiled_display_hint(void *reply_,
+ extern int apple_usb4_dpin0_set_active(unsigned int typec_index, bool active);
+ extern int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux);
+ 
+-static int dptxport_native_dpin(struct apple_epic_service *service, bool active, bool bring_up)
++static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
++				bool bring_up, bool crossbar)
+ {
+ 	struct apple_dcp *dcp = service->ep->dcp;
+ 	struct apple_dcp_typec_route *route = dcp->active_typec_route;
+@@ -666,7 +668,7 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
+ 	set_active = symbol_get(apple_usb4_dpin0_set_active);
+ 	if (!set_active)
+ 		return -EOPNOTSUPP;
+-	if (active && bring_up) {
++	if (active && crossbar && bring_up) {
+ 		int (*up)(struct mux_control *mux);
+ 
+ 		if (!usb4_tunnel_clock || !dptx->usb4_clock_phy || !dptx->link_rate) {
+@@ -682,7 +684,7 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
+ 		symbol_put(apple_dpxbar_right_dpin0_bring_up);
+ 		if (ret)
+ 			goto out;
+-	} else if (active) {
++	} else if (active && crossbar) {
+ 		/* macOS connects the crossbar here, after DCP power/reset. */
+ 		mux_control_deselect(route->usb4_xbar);
+ 		ret = mux_control_select(route->usb4_xbar, route->mux_index);
+@@ -708,27 +710,22 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 	/* The native USB4 candidate must never configure a physical DP PHY. */
+ 	if (usb4_native_dpin && dcp_is_usb4_output(dcp)) {
+ 		/*
+-		 * Do NOT bring up the crossbar/native DPIN0 handshake here.
+ 		 * A real, hardware-validated reference implementation of the
+ 		 * equivalent Thunderbolt DP tunnel mechanism on a different
+ 		 * SoC (aurora-silicon/linux#8, tested on t8103) confirmed
+-		 * this must wait until DCP has actually set a real link
+-		 * rate: its Activate handler only wakes the DP IN adapter,
+-		 * and defers the crossbar mux selection to
++		 * Activate must wake the DP IN adapter (its own comment:
++		 * "waking it earlier hangs the machine" -- i.e. this step is
++		 * required here, not optional) but must NOT select the
++		 * crossbar mux yet: that's deferred to
+ 		 * DidChangeLinkConfiguration, gated on a link rate already
+-		 * being set by SetLinkRate. dptxport_call_did_change_link_config()
+-		 * below already does exactly this, already correctly gated
+-		 * on dptx->link_rate ("ACTIVATE alone precedes clock
+-		 * configuration" -- see its own comment). Bringing up the
+-		 * crossbar eagerly here, before any pixel clock exists,
+-		 * leaves it routing a real analog signal path with nothing
+-		 * valid behind it -- consistent with everything observed
+-		 * this session: DCP's own AUX probe finds nothing coherent
+-		 * (INACTIVE_SINK_DETECTED) and never proceeds to
+-		 * SET_LINK_RATE, so dptxport_tunnel_clock() (already wired
+-		 * up in dptxport_call_set_link_rate() for this exact case)
+-		 * never even gets a chance to run.
++		 * being set by SetLinkRate. Confirmed empirically too: doing
++		 * neither here (an earlier version of this candidate) left
++		 * DCP with nothing at all -- not even INACTIVE_SINK_DETECTED
++		 * fired. dptxport_call_did_change_link_config() below already
++		 * brings the crossbar up itself, correctly gated on
++		 * dptx->link_rate, once SET_LINK_RATE actually arrives.
+ 		 */
++		ret = dptxport_native_dpin(service, true, false, false);
+ 	} else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+@@ -758,7 +755,7 @@ dptxport_call_deactivate(struct apple_epic_service *service,
+ 			dev_warn(dcp->dev, "USB4 tunnel clock cleanup failed: %d\n", clock_ret);
+ 	}
+ 	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		ret = dptxport_native_dpin(service, false, false);
++		ret = dptxport_native_dpin(service, false, false, true);
+ 	else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_INVALID, 0);
+-- 
+2.55.0
+
