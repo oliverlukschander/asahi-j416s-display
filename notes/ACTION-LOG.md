@@ -4597,3 +4597,49 @@ AFK/EPIC method; no new register or address.
 No hardware register write in the course of this investigation --
 purely offline kernelcache decompilation. Hub remains connected from
 earlier; no picture.
+
+## 2026-09-23 -0114 built offline; resend request_display after native DPIN0 activate
+
+First candidate built from XNU/kernelcache tracing rather than DPIN0
+register guessing (notes/2026-09-23-xnu-power-state-trace.md). Real
+macOS's AppleDCPDPTXRemotePortProxy::setPowerState resends
+request_display (AFK/EPIC method 6, the exact method
+dptxport_request_display() already uses) specifically when the IOKit
+power domain confirms active, not merely once unconditionally at
+connect time. Kernel commit f7a9a7b adds exactly that: in
+dptxport_call_activate() (drivers/gpu/drm/apple/dptxep.c), once
+dptxport_native_dpin()'s activate call succeeds (our closest
+equivalent of "this tunneled target's power domain is up"), call
+dptxport_request_display(service) again. Uses only the existing,
+already-safe AFK/EPIC method already sent once in every prior
+candidate; no new register, address, or APCALL. Full design in
+notes/2026-09-23-0114-resend-request-display.md.
+
+`make` in src/appledrm rebuilds only dptxep.o/appledrm.ko; the other
+four modules are byte-identical to 0113 (verified by SHA256). No
+offline mock test added -- this is a single additional call to an
+already-used function, not new register-level state-machine logic.
+
+Hub confirmed unplugged via sysfs before this entry. After
+committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0114.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0114-before (same
+five module pairs as prior candidates plus initramfs); install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module
+reload, parameter write, MMIO, mapping or reboot. Options unchanged
+from 0109-0113 (unconditional code behind the existing dpin_native=1
+gate). Candidate hashes: appledrm
+c29b0cb13c4bc6415a7299b3970582fb8043af1692c9710b94eca4321256e504;
+thunderbolt_apple cb636968b5f50919fae72cb7c304b4f92f666d04a727de683266240e95dc8096;
+thunderbolt (core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7;
+mux 38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24;
+atc e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC 0xf03000000 size 0x4c000, crossbar
+0xf0304c000 size 0x4000, DCP 0x315c00000, NHI 0xf01f00000, ACIO
+0xf01ac0000, DPIN0 0xf01e50000 size 0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.
