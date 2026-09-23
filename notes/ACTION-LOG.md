@@ -4438,3 +4438,49 @@ in notes/2026-09-23-swap-complete-never-fires.md.
 
 No hardware register write in the course of this investigation. Hub
 still connected at time of writing.
+
+## 2026-09-23 exact stuck mechanism identified: DCP run_mode 2->4 never completes
+
+Targeted disassembly of the real DCP firmware (re-extracted via pzb,
+SHA256 f3d919d62979408b5643a0f1e07df3a17e734dc5666ee27a873766a3adb35430,
+matches earlier session's extraction) located
+IOMobileFramebuffer::swap_submit_dcp (vmaddr 0x723b4, confirmed by
+14-argument parameter marshaling matching its real C++ signature).
+Found a third, previously unknown silent-drop path distinct from the
+two known "swallowed swap" checks: slot acquisition from a
+sub-object fails, jumping to a bail-out that logs (via a logger
+throttled to 15 occurrences then silent) "IOMFB_SWAP_SUBMIT_LOST,
+transaction->swapID/enabled/completed" and returns without programming
+hardware. Neither of the two known "swallowed" strings fires during our
+actual stall; this one structurally matches "frames vanish, zero
+visible errors" far better. Callers of the likely completion-marking
+function ("batched_swap_complete_ap_gated") could not be resolved
+statically -- blocked by chained-fixup DATA pointers and vtable/RTTI
+recovery needs, both requiring a working decompiler this environment
+does not have (confirmed absent again).
+
+Correlated directly against our own kernel log's own DCP-firmware
+run_mode state tracing (PPipeDCP_H13P.cpp): every connection attempt
+for our controller (315c00000.dcp) reaches "set_run_mode_safe:
+deferring: 2 -> 4" / "ready_for_run_mode_change(...): initiating
+deferred run mode change" and then NOTHING FURTHER, ever, in dozens of
+captured attempts. Verified LIVE, not inferred: left the hub connected
+and completely untouched for over 40 minutes (connection start ~t=15.6s
+this boot, rechecked at uptime 2571s); the run_mode log tail is
+byte-identical to its state at t=15.6s, and the crtc's CRC/frame-index
+debugfs read still blocks indefinitely (no new frames). This rules out
+"just needs more time" -- the transition is permanently stuck, not
+slow. Full writeup in
+notes/2026-09-23-run-mode-4-permanently-stuck.md.
+
+This is now the best-verified statement of the actual blocker: not any
+register value tested this session (0093-0113, full mode-value sweep),
+not the monitor/adapter (confirmed working elsewhere), not the USB4
+tunnel itself (solidly established) -- a specific DCP-firmware
+readiness check for entering continuous-scanout run mode 4 that this
+exact dcpext+USB4-tunnel pipeline shape never satisfies. Going further
+requires either a working decompiler with vtable/RTTI recovery (not
+available in this environment) or hardware-level register comparison
+against a known-working pipeline, which this project cannot currently
+do. No hardware register write in the course of this investigation.
+Hub still connected; no picture.
