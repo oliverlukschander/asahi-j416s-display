@@ -85,6 +85,39 @@ right lever, not just an ineffective one.
 
 No hardware action is currently pending.
 
+## 2026-09-23 -0126: stop switching the USB4 tunnel PHY to DP mode
+
+Found while scoping a full aurora-silicon/linux#8 port (two parallel Opus
+5.5 agents did a full function-by-function comparison; see
+notes/2026-09-23-0126-stop-phy-mode-dp-switch.md for the trigger chain).
+`dcp_dptx_connect()`'s analog-DPIN branch has unconditionally switched the
+tunnel's ATC PHY to `PHY_MODE_DP` at connect time since candidate 0118 --
+present in every candidate since. Both the reference PR and our own
+tunnel-clock code require the PHY to stay in USB4/TBT mode for a genuine
+tunnel. Also traced that DPRX is checked by a generic, non-Apple-specific
+mechanism already in our own tunnel.c (`tb_dp_dprx_start`/`tb_dp_wait_dprx`,
+polling the real hardware bit `DP_COMMON_CAP_DPRX_DONE`) -- downstream of
+DCP's protocol, so forcing the tunnel PHY out of USB4 mode before that can
+complete is a plausible direct cause. One-line, low-risk removal, tested
+before committing to the much larger PR#8 architectural port (still
+scoped and ready to build if this alone isn't sufficient -- see
+`/tmp/dcp-fw2/agent-portA-dcp-side.md`/`agent-portB-tb-side.md`, scratch
+analysis, not committed to this repo).
+
+Only dcp.o recompiled. New appledrm.ko SHA256:
+a3ea4d4eed1d763fc696f89098d373bbd27b5331382eb6bdf1fe59c2aacac209. Other
+four modules unchanged (verified). Stale-symlink sweep clean,
+test-dpin-handshake.c 13/13 pass. Patch:
+patches/0126-drm-apple-dcp-stop-switching-usb4-tunnel-phy-to-dp-mode.patch.
+scripts/manage-0126.py derived from manage-0124.py (candidate number + hash
+only).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0126.py install
+```
+
 ## Last actions
 
 - **0124** (instrumentation, no behavior change): closed several silent
