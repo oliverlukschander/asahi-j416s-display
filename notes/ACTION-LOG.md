@@ -3849,3 +3849,27 @@ Confirm right port, pre-clock gates off, PLL/nativeup result, 034/800,
 lanes/DPRX, counter readback, and actual picture - the last decided only
 by Oliver's visual confirmation. If sequence stalls, capture and stop
 without retrying gates or changing registers.
+
+## 2026-09-23 -0111 result: lower-bound guess ran cleanly, no picture
+
+Oliver confirms "connected, nothing happening on the external monitor" --
+same no-signal outcome as 0102-0110. eDP-1 remained connected throughout
+(verified via sysfs immediately after). Captured
+scripts/capture-display.sh output, kernel log, and DPIN counters (private,
+untracked). Kernel log shows the identical clean sequence as 0110: native
+DPIN0 handshake succeeds (active=1 handshake=0), crossbar bring-up
+result=0, link-config up rate=0xa result=0, DP IN DPRX_DONE=1. DP-IN
+packet counter nonzero (0x5b78). One unrelated log line ("ACIO RC dpin0
+analog DPRX done") was checked and confirmed to dump a numerically
+coincidental but physically different register window
+(apple_dp_dump_analog() at acio->rc_base+APPLE_CIO_DPIN0_ANALOG, not our
+0xf01e50000-based MODE_A/MODE_B block) -- does not bear on this result.
+Full write-up in notes/2026-09-23-0111-result.md.
+
+This is the second of three bounded mode-value candidates to run cleanly
+with no picture (0110=9, 0111=8). One value remains: secondary_bit=2
+(MODE_VALUE=10), planned as 0112.
+
+Requested Oliver unplug the hub from the right port; awaiting
+confirmation before any further hardware action (one-attempt-per-boot
+guard already used this boot).
