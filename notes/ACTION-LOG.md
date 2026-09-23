@@ -4040,3 +4040,27 @@ only by Oliver's visual confirmation. If sequence stalls, capture and
 stop without retrying gates or changing registers. If this is also
 inconclusive, the plan is to unplug, then (thanks to 0112) sweep
 further values without another reboot rather than stopping here.
+
+## 2026-09-23 -0112 result: full bounded sweep (8,9,10) complete, all clean, no picture
+
+Oliver confirms "nothing" on the external monitor with dpin_mode_value=10.
+eDP-1 remained connected throughout (verified via sysfs immediately
+after). Captured scripts/capture-display.sh output, kernel log, and
+DPIN counters (private, untracked). Kernel log shows the identical
+clean sequence as 0110/0111: "native DPIN0: active=1 handshake=0
+mode_value=10", crossbar bring-up result=0, link-config up rate=0xa
+result=0, DP IN DPRX_DONE=1. No reboot was needed to reach this test --
+ran via the 0112 sysfs parameter write plus a single unplug/replug on
+the same disarmed boot. Full write-up in notes/2026-09-23-0112-result.md.
+
+All three values in the bounded formula's only free parameter
+(secondary_bit=0/1/2, mode_value=8/9/10) have now been tested; all ran
+cleanly with no picture. This exhausts the bounded sweep as originally
+scoped. Balance of evidence shifts toward this MODE_A/MODE_B write pair,
+as currently formulated, not being the missing piece -- not a certainty,
+since the underlying enumeration/formula could itself be wrong in a way
+not covered by this 3-value sweep.
+
+Requested Oliver unplug the hub from the right port. Given 0112's
+reboot-free infrastructure, next steps (if any) can be evaluated and,
+if warranted, tested without a reboot cycle.
