@@ -4729,3 +4729,73 @@ request_display" log line and its return code, crossbar/link-config
 result, DPRX completion, and actual picture - the last decided only by
 Oliver's visual confirmation. If sequence stalls, capture and stop
 without retrying gates or changing registers.
+
+## 2026-09-23 -0115 built offline; generalize native DPIN0 to any Type-C port
+
+Oliver is now at a different location where only the left port is
+usable; the entire native DPIN0 mechanism turned out hardcoded to the
+right port only (typec_index==2, address prefix 0xf) across five call
+sites in four drivers, left over from when this was a single-port
+proof of concept. Confirmed against this machine's own device tree
+(usb4-<N>-acio, atcphy<N> aliases): j416s has one ACIO/ATC instance per
+port, addresses differing only by a top-nibble prefix (0x7/0xb/0xf for
+typec_index 0/1/2). Kernel commit 49bd82e generalizes all five sites to
+compute/accept the correct per-port address: apple.c's
+apple_usb4_right_dpin0_set_active() renamed to
+apple_usb4_dpin0_set_active(typec_index, active) with a new
+apple_usb4_typec_acio_base() table; dcp.c's dcp_usb4_native_route()
+now accepts typec_index<=2 not just ==2; dptxep.c's call site updated
+to pass route->typec_index through (this is what makes port selection
+automatic, no new module param needed); three crossbar checks in
+apple-display-crossbar.c and one ATC PHY check in atc.c (gating
+usb4_tunnel_clock, enabled in every candidate) generalized via shared
+per-file helpers. Deliberately left alone:
+dcp_usb4_protocol_connect()'s own unrelated "atc" target-address
+encoding (unconfirmed for other ports, and demonstrably NOT simply
+typec_index given the main path's own atc default is 0 not 2 even on
+the right port) -- scoped that one-shot experimental probe to stay
+right-port-only and let other ports fall through to the now-generic
+main path instead of guessing at its encoding.
+
+Also found and fixed a second instance of the exact stale-symlink
+build bug found earlier this project for apple-dpin-handshake.h:
+src/mux/apple-display-crossbar.c and src/phy/atc.c were stale plain
+copies, not symlinks -- edits were being silently ignored by `make`
+until a suspicious zero-rebuild caught it mid-session. Fixed the same
+way (removed, re-symlinked). A broader sweep of the whole src/ tree
+found two more non-symlinked files, both pre-existing and unrelated to
+today's change, deliberately left uninvestigated for now:
+src/phy/dptx.c/dptx.h (a real divergence -- the display-repo copy has
+an entire extra module-param feature not present anywhere in the
+current kernel tree) and src/dispclk/apple-dispclk.c (no corresponding
+file exists in the kernel tree at all). Full design in
+notes/2026-09-23-0115-any-port-generalization.md.
+
+`scripts/test-dpin-handshake.c` re-run (13 scenarios, ASan/UBSan) to
+confirm apple-dpin-handshake.h's own logic, untouched today, still
+passes. All four affected modules rebuilt and hash-verified; no new
+module option needed (port is now auto-detected from
+route->typec_index at runtime, so the existing OPTIONS string arms
+either port).
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0115.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0115-before (same
+five module pairs as prior candidates plus initramfs); install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module
+reload, parameter write, MMIO, mapping or reboot. Options unchanged
+from 0109-0114 (unconditional code behind the existing dpin_native=1
+gate). Candidate hashes: appledrm
+a9476d34ed835b9c94a72aa310992f8c82419ae42376484e4e1eb42d9a995f30;
+thunderbolt_apple 7d20ca29a9589aa5e6b6903d77e094d149e9a2131f7103a4ba44ccfa2955ecd2;
+mux 0abc55f24b93afb3ef4b6cf042cf517e9654bfcd8c3d53e7663cd0a36fd2fead;
+atc fb748d4ba55e467dad4eaca6f4045059200aea46eccbd8a1bd2165025a95cf7f;
+thunderbolt (core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7
+(last one unchanged, reinstalled only for manifest symmetry). Per the
+just-established preference, hub may stay physically connected across
+this reboot -- no unplug request for the reboot itself. Left port is
+the target for this test given today's physical location.

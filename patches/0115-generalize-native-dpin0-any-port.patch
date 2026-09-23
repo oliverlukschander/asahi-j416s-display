@@ -1,0 +1,318 @@
+From 49bd82ed8e428d99a86788738610285be51f143f Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 17:38:42 +0200
+Subject: [PATCH] thunderbolt: apple, drm: apple, phy: apple, mux: generalize
+ native DPIN0 to any Type-C port
+
+Every native-DPIN0-path address check across five call sites in four
+drivers was hardcoded to the right port (typec_index==2, base address
+prefix 0xf) only, left over from when this was a single-port proof of
+concept:
+
+- drivers/thunderbolt/apple.c: apple_usb4_right_dpin0_set_active()
+  hardcoded the DPIN0 resource (0xf01e50000) and its devicetree lookup
+  path ("/soc/cio@f01ac0000"). Renamed to apple_usb4_dpin0_set_active(),
+  now takes typec_index and computes both from a per-port base address
+  table (apple_usb4_typec_acio_base()): 0=0x701ac0000, 1=0xb01ac0000,
+  2=0xf01ac0000 -- confirmed against this machine's own device tree
+  (/sys/firmware/devicetree/base/aliases/usb4-<N>-acio). The cable-info
+  guard's address comparison is generalized the same way.
+- drivers/gpu/drm/apple/dcp.c: dcp_usb4_native_route() required
+  typec_index==2 exactly; now accepts any port with a real ACIO
+  instance (<=2). dcp_dptx_connect()'s one-shot experimental
+  dcp_usb4_protocol_connect() probe used an unrelated, unconfirmed
+  "atc" target-address encoding validated only against the right port;
+  rather than guess at generalizing that encoding, it now stays scoped
+  to the right port and other ports fall through to the (now
+  port-generic) native DPIN0 path below it.
+- drivers/gpu/drm/apple/dptxep.c: updated the symbol_get() call site to
+  match the renamed function and pass route->typec_index through.
+- drivers/mux/apple-display-crossbar.c: three call sites
+  (apple_dpxbar_right_frame_snapshot, apple_dpxbar_right_dpin0_bring_up,
+  and the crossbar probe's defer_dpin0_bringup flag) all required the
+  crossbar resource to start at 0xf0304c000 exactly; generalized to
+  accept any of the three per-port crossbar addresses via a shared
+  apple_dpxbar_is_typec_crossbar() helper.
+- drivers/phy/apple/atc.c: apple_atc_right_usb4_tunnel_rate() required
+  the ATC PHY core resource to start at 0xf03000000 exactly (used by
+  the USB4 tunnel clock configuration, which is enabled in every
+  candidate's options); generalized via apple_atc_is_typec_core().
+
+Also fixes a build-tracking bug: src/mux/apple-display-crossbar.c and
+src/phy/atc.c in the display project's symlink farm were stale plain
+copies, not symlinks to this kernel tree -- the same class of bug
+found and fixed for apple-dpin-handshake.h earlier this project.
+Edits to both files were silently not being picked up by `make` until
+this was caught by an unexpected zero-rebuild during today's work.
+
+Function/parameter/log-string names still say "right" in several
+places; only the address-comparison logic needed fixing for
+correctness; a pure renaming pass is left for later.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c          | 28 +++++++++++++++++--
+ drivers/gpu/drm/apple/dptxep.c       | 10 +++----
+ drivers/mux/apple-display-crossbar.c | 22 ++++++++++++---
+ drivers/phy/apple/atc.c              | 16 ++++++++++-
+ drivers/thunderbolt/apple.c          | 41 ++++++++++++++++++++++------
+ 5 files changed, 97 insertions(+), 20 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 42c3f2b..3f583b6 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -199,9 +199,19 @@ static bool dcp_typec_route_fixed_output_busy(struct apple_dcp_typec_route *rout
+ 	return false;
+ }
+ 
++/*
++ * Every typec_index with its own ACIO/USB4 controller instance
++ * (0 and 1 on the left, 2 on the right on j416s) works identically
++ * here -- there is nothing right-port-specific about the native DPIN0
++ * mechanism itself, only the physical base address differs per port
++ * (see apple_usb4_typec_acio_base() in drivers/thunderbolt/apple.c).
++ * Originally bounded to typec_index==2 only while this was a
++ * single-port proof of concept; generalized once a second port needed
++ * testing.
++ */
+ bool dcp_usb4_native_route(unsigned int typec_index)
+ {
+-	return usb4_native_dpin && usb4_protocol_probe && typec_index == 2;
++	return usb4_native_dpin && usb4_protocol_probe && typec_index <= 2;
+ }
+ 
+ static bool dcp_typec_route_available(struct apple_dcp_typec_route *route)
+@@ -1531,7 +1541,21 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 		 dcp->active_typec_route ? "borrowed" : "fixed",
+ 		 dcp->connector_type, dcp->dptxport[port].connected);
+ 
+-	if (dcp_is_usb4_output(dcp) && usb4_protocol_probe)
++	/*
++	 * dcp_usb4_protocol_connect()'s own "atc" target-address field uses
++	 * a hardcoded encoding (usb4_native_dpin ? 2 : 0) that was only ever
++	 * validated against the right port (typec_index==2, where it
++	 * happened to match); its actual relationship to typec_index for
++	 * other ports is not established, unlike the address-level fixes in
++	 * dcp_usb4_native_route()/apple_usb4_dpin0_set_active()/the crossbar
++	 * and ATC PHY checks, which are a confirmed, regular per-port
++	 * pattern. Rather than guess at that encoding, scope this one-shot
++	 * experimental probe to the right port only, same as before, and
++	 * let any other port fall through to the main native-DPIN0 path
++	 * below, which is fully port-generic.
++	 */
++	if (dcp_is_usb4_output(dcp) && usb4_protocol_probe &&
++	    dcp->active_typec_route && dcp->active_typec_route->typec_index == 2)
+ 		return dcp_usb4_protocol_connect(dcp, port);
+ 
+ 	if (dcp_is_usb4_output(dcp) && !usb4_force_dptx) {
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index cdd5b6a..6928dbf 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -630,7 +630,7 @@ static int dptxport_call_set_tiled_display_hint(void *reply_,
+ }
+ 
+ /* Optional symbol: keep the default DRM module independent of USB4. */
+-extern int apple_usb4_right_dpin0_set_active(bool active);
++extern int apple_usb4_dpin0_set_active(unsigned int typec_index, bool active);
+ extern int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux);
+ 
+ static int dptxport_native_dpin(struct apple_epic_service *service, bool active, bool bring_up)
+@@ -638,7 +638,7 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
+ 	struct apple_dcp *dcp = service->ep->dcp;
+ 	struct apple_dcp_typec_route *route = dcp->active_typec_route;
+ 	struct dptx_port *dptx = service->cookie;
+-	int (*set_active)(bool active);
++	int (*set_active)(unsigned int typec_index, bool active);
+ 	int ret;
+ 
+ 	if (!dcp_usb4_protocol_probe_enabled() || !route ||
+@@ -649,7 +649,7 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
+ 	    dcp->fw_compat != DCP_FIRMWARE_V_13_5 ||
+ 	    usb4_dpin_index != 1 || dptx->atcphy)
+ 		return -EINVAL;
+-	set_active = symbol_get(apple_usb4_right_dpin0_set_active);
++	set_active = symbol_get(apple_usb4_dpin0_set_active);
+ 	if (!set_active)
+ 		return -EOPNOTSUPP;
+ 	if (active && bring_up) {
+@@ -675,9 +675,9 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
+ 		if (ret)
+ 			goto out;
+ 	}
+-	ret = set_active(active);
++	ret = set_active(route->typec_index, active);
+ out:
+-	symbol_put(apple_usb4_right_dpin0_set_active);
++	symbol_put(apple_usb4_dpin0_set_active);
+ 	dev_info(dcp->dev, "native DPIN0: DCP active=%u result=%d\n", active, ret);
+ 	return ret;
+ }
+diff --git a/drivers/mux/apple-display-crossbar.c b/drivers/mux/apple-display-crossbar.c
+index be1eabd..a564019 100644
+--- a/drivers/mux/apple-display-crossbar.c
++++ b/drivers/mux/apple-display-crossbar.c
+@@ -507,7 +507,21 @@ static const struct mux_control_ops apple_dpxbar_t602x_ops = {
+ 	.set = apple_dpxbar_set_t602x,
+ };
+ 
+-/* Optional diagnostic, called only by the native right-port experiment. */
++/*
++ * j416s has one display crossbar instance per Type-C port at
++ * 0x70304c000 (left), 0xb0304c000 (left), 0xf0304c000 (right) --
++ * the same top-byte pattern as the ACIO/DPIN0 addresses in
++ * drivers/thunderbolt/apple.c. Originally these three call sites only
++ * accepted the right port's address while this was a single-port
++ * proof of concept; generalized once a second port needed testing.
++ */
++static bool apple_dpxbar_is_typec_crossbar(u64 base)
++{
++	return base == 0x70304c000ULL || base == 0xb0304c000ULL ||
++	       base == 0xf0304c000ULL;
++}
++
++/* Optional diagnostic, called only by the native DPIN0 experiment. */
+ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux);
+ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+ {
+@@ -525,7 +539,7 @@ int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+ 		return -EINVAL;
+ 	xbar = mux_chip_priv(mux->chip);
+ 	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+-	if (!res || res->start != 0xf0304c000ULL || resource_size(res) < 0x1000)
++	if (!res || !apple_dpxbar_is_typec_crossbar(res->start) || resource_size(res) < 0x1000)
+ 		return -EINVAL;
+ 
+ 	/* Selection and disconnect use this same lock. No new mapping/writes. */
+@@ -559,7 +573,7 @@ int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux)
+ 		return -EINVAL;
+ 	xbar = mux_chip_priv(mux->chip);
+ 	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+-	if (!res || res->start != 0xf0304c000ULL || resource_size(res) < 0x1000)
++	if (!res || !apple_dpxbar_is_typec_crossbar(res->start) || resource_size(res) < 0x1000)
+ 		return -EINVAL;
+ 	spin_lock_irqsave(&xbar->lock, flags);
+ 	if (xbar->selected_dispext[MUX_DPIN0] != 2)
+@@ -597,7 +611,7 @@ static int apple_dpxbar_probe(struct platform_device *pdev)
+ 
+ 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+ 	dpxbar->defer_dpin0_bringup = usb4_defer_bringup && res &&
+-		res->start == 0xf0304c000ULL && resource_size(res) >= 0x1000 &&
++		apple_dpxbar_is_typec_crossbar(res->start) && resource_size(res) >= 0x1000 &&
+ 		of_machine_is_compatible("apple,j416s") &&
+ 		of_device_is_compatible(dev->of_node, "apple,t6020-display-crossbar");
+ 	dpxbar->dev = dev;
+diff --git a/drivers/phy/apple/atc.c b/drivers/phy/apple/atc.c
+index e391b85..c96acd7 100644
+--- a/drivers/phy/apple/atc.c
++++ b/drivers/phy/apple/atc.c
+@@ -2337,6 +2337,20 @@ static const struct phy_ops apple_atc_dp_phy_ops = {
+ 	.set_mode = atcphy_dpphy_set_mode,
+ };
+ 
++/*
++ * j416s has one ATC PHY core per Type-C port at 0x703000000 (left),
++ * 0xb03000000 (left), 0xf03000000 (right) -- the same top-byte pattern
++ * as the ACIO/DPIN0 and crossbar addresses in drivers/thunderbolt/apple.c
++ * and drivers/mux/apple-display-crossbar.c. Originally this only
++ * accepted the right port's core while this was a single-port proof
++ * of concept; generalized once a second port needed testing.
++ */
++static bool apple_atc_is_typec_core(u64 base)
++{
++	return base == 0x703000000ULL || base == 0xb03000000ULL ||
++	       base == 0xf03000000ULL;
++}
++
+ int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate);
+ int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate)
+ {
+@@ -2348,7 +2362,7 @@ int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate)
+ 		return -EOPNOTSUPP;
+ 	atcphy = phy_get_drvdata(phy);
+ 	if (!of_device_is_compatible(atcphy->np, "apple,t6020-atcphy") ||
+-	    atcphy->res.core->start != 0xf03000000ULL ||
++	    !apple_atc_is_typec_core(atcphy->res.core->start) ||
+ 	    resource_size(atcphy->res.core) < 0x7048)
+ 		return -EINVAL;
+ 	guard(mutex)(&atcphy->lock);
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index bea230f..1d98738 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -1809,12 +1809,36 @@ static int apple_dpin_wait(void *ctx)
+ 	return 0;
+ }
+ 
+-int apple_usb4_right_dpin0_set_active(bool active);
+-int apple_usb4_right_dpin0_set_active(bool active)
++/*
++ * j416s has one ACIO/USB4 controller instance per Type-C port, each at
++ * a base address that differs only in the top byte: 0=left/0x7,
++ * 1=left/0xb, 2=right/0xf (confirmed against this machine's own device
++ * tree: /sys/firmware/devicetree/base/aliases/usb4-<N>-acio). DPIN0's
++ * offset within each instance's window is fixed, so the same top byte
++ * that selects the ACIO node also selects the matching DPIN0 range.
++ * Originally hardcoded to the right port only (0xf...) while this was
++ * a single-port proof of concept; generalized once a second port
++ * needed testing.
++ */
++static u64 apple_usb4_typec_acio_base(unsigned int typec_index)
+ {
++	switch (typec_index) {
++	case 0: return 0x701ac0000ULL;
++	case 1: return 0xb01ac0000ULL;
++	case 2: return 0xf01ac0000ULL;
++	default: return 0;
++	}
++}
++
++int apple_usb4_dpin0_set_active(unsigned int typec_index, bool active);
++int apple_usb4_dpin0_set_active(unsigned int typec_index, bool active)
++{
++	u64 acio_base = apple_usb4_typec_acio_base(typec_index);
++	u64 dpin0_base = (acio_base & 0xf00000000ULL) | 0x01e50000ULL;
++	char path[32];
+ 	struct resource res = {
+-		.start = 0xf01e50000ULL,
+-		.end = 0xf01e53fffULL,
++		.start = dpin0_base,
++		.end = dpin0_base + 0x3fffULL,
+ 		.flags = IORESOURCE_MEM | IORESOURCE_MEM_NONPOSTED,
+ 		.name = "j416s-native-dpin0",
+ 	};
+@@ -1830,9 +1854,10 @@ int apple_usb4_right_dpin0_set_active(bool active)
+ 	struct apple_cio *acio;
+ 	int ret = -ENODEV;
+ 
+-	if (!dpin_native || !of_machine_is_compatible("apple,j416s"))
++	if (!dpin_native || !of_machine_is_compatible("apple,j416s") || !acio_base)
+ 		return -EOPNOTSUPP;
+-	np = of_find_node_by_path("/soc/cio@f01ac0000");
++	snprintf(path, sizeof(path), "/soc/cio@%llx", acio_base);
++	np = of_find_node_by_path(path);
+ 	if (!np)
+ 		return -ENODEV;
+ 	pdev = of_find_device_by_node(np);
+@@ -1852,7 +1877,7 @@ int apple_usb4_right_dpin0_set_active(bool active)
+ 		goto unlock_device;
+ 	}
+ 	if (!acio->current_cable_info || !acio->nhi_pdev ||
+-	    acio->rc_res->start != 0xf01ac0000ULL) {
++	    acio->rc_res->start != acio_base) {
+ 		/*
+ 		 * A real physical unplug clears current_cable_info (and often
+ 		 * nhi_pdev) before the DCP-issued DEACTIVATE APCALL reaches
+@@ -1917,7 +1942,7 @@ int apple_usb4_right_dpin0_set_active(bool active)
+ 	put_device(&pdev->dev);
+ 	return ret;
+ }
+-EXPORT_SYMBOL_GPL(apple_usb4_right_dpin0_set_active);
++EXPORT_SYMBOL_GPL(apple_usb4_dpin0_set_active);
+ 
+ static struct platform_driver * const apple_cio_drivers[] = {
+ 	&apple_nhi_driver,
+-- 
+2.55.0
+
