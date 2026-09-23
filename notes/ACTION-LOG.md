@@ -4993,3 +4993,40 @@ completion requires an internal DCP power-state transition
 succeeding is necessary but was evidently not the only missing piece.
 No hardware register write made in response; captured and stopped
 per protocol.
+
+## 2026-09-23 -0117: fire the existing usb4_dptx_train real-PHY test (explicit exception)
+
+No new kernel module or install. Comparing today's 0116 result against
+an old working baseline capture found the working connection used a
+DIFFERENT DCP instance (289c00000, not 315c00000, the one every
+USB4/hub candidate has targeted) and answered GET_SUPPORTS_HPD with 0,
+not 1, before getting real link training (SET_LINK_RATE,
+SET_ACTIVE_LANE_COUNT). Our driver already documents why it answers 1:
+candidate 0078 found instantiating the shared lpdptxphy (phy@39c000000,
+same physical engine eDP uses) for this path blanks eDP; 0079 reverted
+that; every candidate since has run with no real PHY for this path at
+all. Full reasoning and citations in
+notes/2026-09-23-0117-usb4-dptx-train-real-phy-test.md.
+
+Found that drivers/gpu/drm/apple/dcp.c already contains a complete,
+unused, self-reverting test harness for exactly this experiment:
+usb4_dptx_train, a runtime-writable (0644) module parameter that was
+explicitly flagged "dangerous"/"prohibited" in
+notes/2026-09-21-0090-protocol-audit.md pending new justification.
+Oliver gave that explicit justification/approval today after being
+told the specific known risk (eDP blanking, per 0078) --
+"yes, we can absolutely retry that, thanks for bringing that up!" --
+and separately asked this be logged clearly enough to recover from if
+something goes wrong (hub disconnect + reboot, or an unplanned
+reboot). Full recovery instructions are in the note above; summary:
+writing 1 triggers a real dcp_dptx_connect() with a real PHY
+(usb4_lpdptx_phy) attached, auto-reverts after 10s regardless of
+outcome (usb4_restore_edp_work: usb4_force_dptx=false,
+phy_set_mode_ext(..., PHY_MODE_DP, 0)); writing 0 forces that same
+restore immediately if the auto-revert doesn't happen; this test
+touches no installed file, initramfs, or modprobe.d config, so any
+reboot (planned or not) returns to the already-verified 0116 state
+with nothing to undo.
+
+Command about to run:
+sudo -n sh -c 'echo 1 > /sys/module/appledrm/parameters/usb4_dptx_train'
