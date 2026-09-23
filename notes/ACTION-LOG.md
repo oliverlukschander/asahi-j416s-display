@@ -4484,3 +4484,43 @@ available in this environment) or hardware-level register comparison
 against a known-working pipeline, which this project cannot currently
 do. No hardware register write in the course of this investigation.
 Hub still connected; no picture.
+
+## 2026-09-23 decompiler working; full chain traced to a power-state gate
+
+Set up a working ARM64 decompiler for Ghidra 12.1.4 (which ships no
+linux_arm_64 decompile binary at all): installed qemu-user/qemu-user-
+binfmt, built a minimal x86_64 sysroot from four Debian .deb packages
+(libc6, libstdc++6, libgcc-s1, their bundled ld-linux-x86-64.so.2),
+and wired the real linux_x86_64 decompile binary in as a wrapper script
+at the linux_arm_64 path Ghidra expects. Confirmed working with real
+decompiled C output (not just disassembly) against t602xdcp.bin.
+
+Traced the full chain from swap_submit_dcp (0x723b4) through to its
+ultimate gate, entirely in decompiled firmware C:
+swap_submit_dcp's per-transaction "completed" flag is only ever set by
+batched_swap_complete_ap_gated (FUN_00078ae0); that function's
+registration (not just its invocation) is gated on three conditions in
+FUN_000788d0, the load-bearing one being a global (DAT_0062d975, not
+per-pipe); that global is set/cleared by exactly one function
+(FUN_0005d2b0), which is a power-state transition handler: entering
+internal state 0x21 from state 8 sets it true, the reverse clears it;
+that handler is registered as part of FUN_00129574, which sets up the
+core "iomfb_ap_link" AP<->DCP RPC channel -- confirming this is generic
+firmware infrastructure, not anything specific to DPIN0/USB4-tunnel
+routing.
+
+Conclusion: continuous frame completion requires DCP's own internal
+power-state machine to transition this pipe from state 8 to state 0x21
+(33), and nothing this project has ever called (dcp_set_display_device
+handle 0 or 2 -- both already tried, 0087 predating this session --
+any DPTX APCALL, any DPIN0/crossbar write) has been shown to trigger
+it. This is an IOKit-style numbered power-state ordinal, a concept
+Linux's own power-management model has no direct equivalent request
+for. This precisely explains, at the mechanism level, 0087's older
+empirical finding ("handle 0 does not power this dcpext"). Full trace
+with decompiled code in notes/2026-09-23-power-state-gate-traced.md,
+including the decompiler setup steps for reuse in future sessions
+(built under /tmp, will not survive a reboot).
+
+No hardware register write in the course of this investigation --
+purely offline firmware decompilation. Hub still connected; no picture.
