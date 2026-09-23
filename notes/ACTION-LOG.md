@@ -118,6 +118,32 @@ After committing/pushing execute exactly:
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0126.py install
 ```
 
+## 2026-09-23 -0126 result: clean negative, byte-for-byte identical to 0124
+
+Rebooted into 0126 with hub connected. Captured
+captures/2026-09-23-0126-boot-kernel.log. User confirmed: no picture.
+
+Trace is byte-for-byte identical to 0124's (and its clean-reboot
+re-verification): same call counts (validate/connect/request_display each
+#1, zero errors), same APCALL sequence (18, 10, 0), same "USB4: reselect
+dpin after nub: 0", same DPRX=0 the whole way through, same 12s-later "DPRX
+timeout, keeping DP tunnel" with identical register values. Removing the
+PHY_MODE_DP switch alone did not change observable behavior at all.
+
+Conclusion: this fix was a real correctness improvement (the tunnel PHY no
+longer gets forced out of USB4/TBT mode) but not, on its own, sufficient to
+unstick DPRX. Keeping it -- there is no reason to revert a fix that matches
+both the reference implementation and our own tunnel-clock code's stated
+requirement, even though it didn't resolve the symptom alone. Consistent
+with the working theory: DCP's software protocol is fully clean (0124), and
+the remaining gap is either something only the full PR#8 mechanism actually
+exercises (real tunnel-established trigger, HPD_PROPAGATE pulse, NO_AUTO_LT
+on the dock's DP OUT, proper crossbar-deferred-to-DidChangeLinkConfig
+sequencing) or something deeper in DCP firmware/hardware not reachable from
+Linux-side changes at all. Next: proceed with the full architectural port
+scoped earlier (see /tmp/dcp-fw2/agent-portA-dcp-side.md and
+agent-portB-tb-side.md for the complete function-by-function plan).
+
 ## Last actions
 
 - **0124** (instrumentation, no behavior change): closed several silent
