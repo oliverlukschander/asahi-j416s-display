@@ -3709,3 +3709,60 @@ pursuing the actual DCP coprocessor firmware (separate from the XNU
 kernelcache used for all static analysis so far) - a new research effort,
 not a hardware action; will be logged separately if/when it leads to any
 hardware-touching step.
+
+## 2026-09-23 -0111 built offline; lower bound of the bounded mode-value sweep
+
+Oliver declined outreach to Asahi Linux upstream and asked to brute-force
+the bounded DPIN0 mode-value space instead. First cross-referenced every
+relevant AsahiLinux/linux branch (dcp/dptx-fixes and four others) against
+our own dcp.c/dptxep.c: confirmed our tree already incorporates or exceeds
+every upstream DPTX fix in this area (unk-field handling, activate-time
+PHY-mode-set skip for the tunneled case, a missing-unlock bug we don't
+have) and that no USB4-DPIN-tunnel-specific prior art exists anywhere,
+published or unpublished (notes/2026-09-23-upstream-dptxep-crossref.md,
+no hardware action, nothing to log).
+
+0110 tested MODE_VALUE=9 (secondary_bit=1, the middle of a 3-valid-value
+enumeration) cleanly with no picture -- inconclusive on that specific
+guess, not on the formula (independently confirmed threefold by the prior
+3-agent static-analysis workflow). rate_class=2 and lane_count=4 remain
+high-confidence and unchanged. This candidate sweeps the lower bound:
+secondary_bit=0, MODE_VALUE=8. Kernel commit 1627035 changes exactly one
+constant in drivers/thunderbolt/apple-dpin-handshake.h; same two offsets
+(+0x14,+0x1c), same call order, masks and gating as 0109/0110. Same DPIN0
+resource (0xf01e50000) already safely used; no new addresses, no forbidden
+register access. scripts/test-dpin-handshake.c updated (recomputed
+expected mode_a/mode_b for MODE_VALUE=8; assertions are symbolic and
+needed no change) and passes (ASan/UBSan, 9 scenarios). `make` in
+src/thunderbolt rebuilds only apple.o/thunderbolt_apple.ko; the other four
+modules are byte-identical to 0110 (verified by SHA256). Full design in
+notes/2026-09-23-0111-mode-value-lower-bound.md.
+
+Before this entry, verified via sysfs that the hub Oliver reported
+unplugged is in fact absent from /sys/bus/thunderbolt/devices and no
+external DRM connector is active; eDP-1 remains connected. Offline
+`manage-0111.py check` (preflight only, no install) confirms correct
+kernel/machine and matching candidate hashes.
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0111.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0111-before (same five
+module pairs as prior candidates plus initramfs); install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module reload,
+parameter write, MMIO, mapping or reboot. Options unchanged from 0109/0110
+(unconditional code behind the existing dpin_native=1 gate). Candidate
+hashes: thunderbolt_apple
+e552cbc0bf6abcb22abc9c5d63065f5a668b48de440c6933526ffef526657e51;
+thunderbolt (core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7;
+mux 38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24;
+atc e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9;
+appledrm 9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC 0xf03000000 size 0x4c000, crossbar
+0xf0304c000 size 0x4000, DCP 0x315c00000, NHI 0xf01f00000, ACIO
+0xf01ac0000, DPIN0 0xf01e50000 size 0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.

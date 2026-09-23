@@ -99,7 +99,7 @@ int main(void)
 	m = (struct model){ .hpd = 4, .control = 0xa5, .ack = 1, .ack_after = 3 };
 	assert(run(&m, 1) == 0 && m.control == 0xa6 && m.waits == 3);
 	assert(m.hpd == 6 && m.hpd_writes == 1);
-	assert(m.mode_a == 0x200 && m.mode_b == 0x480 && m.mode_writes == 2);
+	assert(m.mode_a == 0x100 && m.mode_b == 0x400 && m.mode_writes == 2);
 	/* Deactivation does not require HPD high, never writes HPD, and waits
 	 * for inactive ACK.
 	 */
@@ -118,21 +118,21 @@ int main(void)
 	assert(run(&m, 1) == -ETIMEDOUT);
 	assert(m.waits == 10 && m.writes == 2 && m.control == 0x1a5);
 	assert(m.hpd == 6 && m.hpd_writes == 1);
-	assert(m.mode_a == 0x200 && m.mode_b == 0x480 && m.mode_writes == 2);
+	assert(m.mode_a == 0x100 && m.mode_b == 0x400 && m.mode_writes == 2);
 	/* A dropped sink interrupts polling; no synthetic reset writes beyond
 	 * the owned-bits rollback.
 	 */
 	m = (struct model){ .hpd = 4, .control = 0xa5, .ack = 1, .drop_after = 2 };
 	assert(run(&m, 1) == -ENOLINK && m.waits == 2 && m.control == 0xa5);
-	assert(m.mode_a == 0x200 && m.mode_b == 0x480 && m.mode_writes == 2);
+	assert(m.mode_a == 0x100 && m.mode_b == 0x400 && m.mode_writes == 2);
 	/* An already acknowledged state needs no polling. */
 	m = (struct model){ .hpd = 4, .control = 0xa4 };
 	assert(run(&m, 1) == 0 && m.waits == 0);
-	assert(m.mode_a == 0x200 && m.mode_b == 0x480 && m.mode_writes == 2);
+	assert(m.mode_a == 0x100 && m.mode_b == 0x400 && m.mode_writes == 2);
 	/* Invalid ACK is an error, never a fabricated successful activation. */
 	m = (struct model){ .hpd = 4, .control = 0xa5, .ack = ~0U };
 	assert(run(&m, 1) == -EIO && m.control == 0xa5);
-	assert(m.mode_a == 0x200 && m.mode_b == 0x480 && m.mode_writes == 2);
+	assert(m.mode_a == 0x100 && m.mode_b == 0x400 && m.mode_writes == 2);
 	puts("9 native DP-IN handshake scenarios passed (mock registers only)");
 	return 0;
 }
