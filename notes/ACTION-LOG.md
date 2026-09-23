@@ -4080,3 +4080,31 @@ rate_class field (0=RBR,1=HBR,2=HBR2,3=HBR3) and a 2-bit secondary field
 (RBR), 4,5,6,7 (HBR), 11 (HBR2/secondary=3), 12,13,14,15 (HBR3). Same
 DPIN0 resource, same one-value-per-attach discipline, hub confirmed
 unplugged via sysfs before starting.
+
+## 2026-09-23 -0112 widened-sweep plan superseded; formula correction found
+
+Background research (no hardware access) located the real
+IODPTXPortAttributes ObjC type-encoding layout from Apple binaries
+(blacktop/ipsw-diffs), showing our assumed bit boundaries didn't match
+the real struct packing. A focused re-disassembly of
+AppleCIODPTX::connectTo/bringConnectionUp against the corrected layout
+found the entire prior formula was reading the wrong field: what we
+called "rate_class" (bits 4-7 of "w26") is actually the ATC field of the
+IODPTXPortAddress routing struct already sent to dptxport_connect() --
+not a display-mode/rate descriptor at all. With ATC=0 (confirmed: our
+own connection always uses ATC=0), the real formula collapses to
+mode_value = w11, a single 0-or-1 boolean derived from the CORE field
+(CORE=1 -> 0, CORE=2 -> 1). The dpin_mode_value=8/9/10 sweep (0110-0112)
+and the planned 0-15 widening were both testing outside the real
+candidate space. Full write-up in
+notes/2026-09-23-mode-value-formula-correction.md. This does not change
+the MODE_A/MODE_B write mechanics (already native-confirmed), only the
+numeric value to pass. No hardware action in this entry; hub remains
+unplugged (verified via sysfs). Withdrawing the 0-15 widened-sweep plan
+logged in the previous entry -- superseded by this narrower, better-
+grounded target.
+
+Next: set dpin_mode_value=0 (CORE=1, our connection's actual first-try
+route, highest confidence) via the existing 0112 runtime parameter and
+request a single right-port attachment. mode_value=1 (CORE=2 case) is
+the immediate fallback if 0 is inconclusive. No reboot needed.
