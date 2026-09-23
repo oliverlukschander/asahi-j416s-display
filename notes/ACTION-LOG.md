@@ -4321,3 +4321,21 @@ The script stops immediately and asks for confirmation, without further
 writes, if a picture is ever reported. No hardware action from adding
 the script itself; it must be run by Oliver interactively (physical
 plug/unplug and the picture question cannot be automated).
+
+## 2026-09-23 -0113 sweep complete: full 0-15 value space exhausted, all clean negatives
+
+scripts/sweep-mode-value.sh completed a full run over values 1,2,3,4,5,
+6,7,11,12,13,14,15 (results in notes/mode-value-sweep-results.md, each
+auto-committed/pushed by the script). Every attempt verified valid
+(handshake ran, hotplug detected, dcp_dptx_connect called); all report
+no picture. Combined with 0110/0111/0112/0113's mv0 (values 9,8,10,0),
+every value 0-15 -- the full range these registers' write formulas can
+express -- has now been tested. All 16 are clean negatives. Consolidated
+conclusion in notes/2026-09-23-mode-value-sweep-exhausted.md: combined
+with the formula correction (MODE_A/MODE_B's driving value is actually
+an already-known routing-address field, not an independently-derived
+rate/mode descriptor), the balance of evidence now points to these two
+writes not being the mechanism that turns on the picture at all,
+regardless of value. No further speculative MODE_A/MODE_B writes
+planned. Hub remains connected from the value=15 attempt; unplug to be
+confirmed separately.
