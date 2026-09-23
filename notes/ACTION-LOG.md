@@ -5559,3 +5559,11 @@ After committing/pushing execute exactly:
 ```
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0123.py install
 ```
+
+## 2026-09-23 -0123 installed
+
+Ran `sudo -n python3 scripts/manage-0123.py install` with hub connected.
+Succeeded, backup verified, hash re-verified, initramfs rebuilt and verified.
+State: 0123 staged for next boot. Next: reboot, verify boot, watch for
+"DPTX connect target=... unk=0x101" (role bit now present) and whether
+SET_LINK_RATE finally follows INACTIVE_SINK_DETECTED.
