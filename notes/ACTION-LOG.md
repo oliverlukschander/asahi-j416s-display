@@ -5567,3 +5567,52 @@ Succeeded, backup verified, hash re-verified, initramfs rebuilt and verified.
 State: 0123 staged for next boot. Next: reboot, verify boot, watch for
 "DPTX connect target=... unk=0x101" (role bit now present) and whether
 SET_LINK_RATE finally follows INACTIVE_SINK_DETECTED.
+
+## 2026-09-23 -0123 result: no picture, DCP still never sends SET_LINK_RATE
+
+Same outcome as 0118-0122 despite the role bit now being sent correctly
+(confirmed in the log). User confirmed no picture after reboot. Six
+candidates in a row hitting the identical externally-visible outcome
+despite substantially different bits/ordering each time means further
+blind bit-flipping is not productive. Pivoted, with explicit user
+direction, to (1) three parallel Opus 5.5 subagents auditing the driver's
+own silent-failure paths for runtime observability gaps, run alongside
+(2) hands-on firmware decompilation to ground-truth the `connectTo()`
+gating logic this project has relied on since 0118. Full findings and the
+resulting design in notes/2026-09-23-0124-instrumentation.md.
+
+## 2026-09-23 -0124 built offline: log DCP retcodes, apcall payloads, call counts
+
+Pure logging change, no behavioral change anywhere. Kernel commit 25ae525
+(drivers/gpu/drm/apple/afk.c, dptxep.c, dptxep.h). Closes: DCP's real
+per-call retcode being silently discarded in `afk_service_call_timeout()`;
+a magic/group/command echo mismatch being silently discarded in the same
+function; every apcall handler failure resulting in literally no reply
+sent back to DCP (`afk_recv_handle_std_service()`); `request_display`/
+`release_display` having no logging at all; the three remaining silent
+`-EINVAL` returns on reply mismatches in validate_connection/connect/
+set_hpd_timeout; and every inbound APCALL's payload bytes never being
+logged (only their length was). Also adds per-port call counters
+(validate/connect/request/release) with `%pS` caller, to directly test
+whether `connect()`/`validate_connection()` fire more than once per boot
+(a hypothesis Agent B raised from code analysis; Agent C's read of the
+actual 0118-0123 journals found no evidence of it happening on those
+specific boots, but the counters make this provable rather than inferred
+on every future boot too). Full reasoning in
+notes/2026-09-23-0124-instrumentation.md.
+
+Only afk.o/dcp.o/dptxep.o recompiled. New appledrm.ko SHA256:
+74e2d3cf57480937efd8b3064d750b9ba9e439007e17c83bed39a80fb5ed048d.
+phy-apple-atc.ko, mux-apple-display-crossbar.ko, thunderbolt_apple.ko and
+thunderbolt.ko all untouched (still 0119/0123-identical, re-verified by
+direct SHA256 comparison). Stale-symlink sweep clean, test-dpin-handshake.c
+13/13 pass. Patch:
+patches/0124-drm-apple-dptx-afk-log-DCP-retcodes-apcall-payloads.patch.
+scripts/manage-0124.py derived from manage-0123.py (candidate number +
+hash only, verified via diff to be a purely mechanical change).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0124.py install
+```

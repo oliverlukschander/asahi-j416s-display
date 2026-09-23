@@ -1,0 +1,269 @@
+From 25ae52599581b7cfcf5d468e3b10cb3070f44da2 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 22:46:45 +0200
+Subject: [PATCH] drm: apple: dptx/afk: log DCP retcodes, apcall payloads, call
+ counts
+
+Six candidates (0118-0123) each changed a different bit or ordering and
+hit the identical externally-visible outcome: DCP reaches
+INACTIVE_SINK_DETECTED, never sends SET_LINK_RATE, DPRX timeout, no
+picture. That consistency across genuinely different inputs means we've
+been testing blind rather than guessing productively -- several
+silent-failure paths meant we never actually saw what DCP or our own
+driver were doing when something went wrong.
+
+afk_service_call_timeout() (afk.c) receives DCP's real per-call retcode
+and a magic/group/command echo check, and discarded both with zero
+logging on failure, collapsing everything into a generic -EINVAL. Log
+both now, plus every transport-level failure (ENOMEM/ENOSPC/ETIMEDOUT).
+
+afk_recv_handle_std_service() sends DCP literally no reply at all when
+an apcall handler returns non-zero (e.g. dptxport_call_did_change_link_config()
+returning -EALREADY on a repeated call) -- log this instead of staying
+silent.
+
+dptxport_validate_connection()/connect()/request_display()/release_display()
+now carry per-port call counters with %pS caller, closing another blind
+spot: request_display/release_display previously had no logging at all.
+Also closed the remaining silent -EINVAL returns on reply mismatches in
+validate_connection/connect/set_hpd_timeout.
+
+Every inbound APCALL's payload is now hex-dumped, not just its length --
+covers INACTIVE_SINK_DETECTED, ACTIVATE, FORCE_HOTPLUG_DETECT and
+SET_TILED_DISPLAY_HINTS, none of which log their payload today.
+
+No behavioral change: no function signature changed, no control flow
+changed for any successful path. Full reasoning in
+notes/2026-09-23-0124-instrumentation.md (asahi-j416s-display repo),
+including a correction to this project's own bit-8 hypothesis carried
+since 0118: connectTo()'s (uVar4>>8&1) gate operates on target's bit 8
+(the die index, constant for a single-die SoC), not on unk/supportsHPD
+as previously assumed.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/afk.c    | 30 +++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.c | 66 +++++++++++++++++++++++++++++-----
+ drivers/gpu/drm/apple/dptxep.h |  2 ++
+ 3 files changed, 88 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/afk.c b/drivers/gpu/drm/apple/afk.c
+index 3a0585e..9124f9e 100644
+--- a/drivers/gpu/drm/apple/afk.c
++++ b/drivers/gpu/drm/apple/afk.c
+@@ -481,6 +481,10 @@ static void afk_recv_handle_std_service(struct apple_dcp_afkep *ep, u32 channel,
+ 					 payload + sizeof(*call), call_size,
+ 					 reply + sizeof(*call), call_size);
+ 		if (ret) {
++			dev_warn(ep->dcp->dev,
++				 "AFK[ep:%02x]: %s (chan:%u) apcall %u handler returned %d, sending NO reply\n",
++				 ep->endpoint, service->ops->name, channel,
++				 le32_to_cpu(call->type), ret);
+ 			kfree(reply);
+ 			return;
+ 		}
+@@ -972,6 +976,10 @@ int afk_send_command_timeout(struct apple_epic_service *service, u8 type,
+ 			service->cmds[idx].completion = NULL;
+ 			service->cmds[idx].free_on_ack = true;
+ 			spin_unlock_irqrestore(&service->lock, flags);
++			dev_warn(ep->dcp->dev,
++				 "AFK[ep:%02x]: %s (chan:%u) command type 0x%x tag 0x%04x timed out after %u ms\n",
++				 ep->endpoint, service->ops->name, service->channel,
++				 type, tag, timeout_ms);
+ 			return -ETIMEDOUT;
+ 		}
+ 		spin_unlock_irqrestore(&service->lock, flags);
+@@ -1033,18 +1041,38 @@ int afk_service_call_timeout(struct apple_epic_service *service, u16 group,
+ 	ret = afk_send_command_timeout(service, EPIC_SUBTYPE_STD_SERVICE, bfr,
+ 				       bfr_len, bfr, bfr_len, &retcode,
+ 				       timeout_ms);
+-	if (ret)
++	if (ret) {
++		dev_warn(service->ep->dcp->dev,
++			 "AFK[ep:%02x]: %s (chan:%u) service call group %u cmd %u failed to complete: %d\n",
++			 service->ep->endpoint, service->ops->name,
++			 service->channel, group, command, ret);
+ 		goto out;
++	}
+ 	if (retcode) {
++		dev_warn(service->ep->dcp->dev,
++			 "AFK[ep:%02x]: %s (chan:%u) service call group %u cmd %u returned retcode 0x%08x (reply data_len %u)\n",
++			 service->ep->endpoint, service->ops->name,
++			 service->channel, group, command, retcode,
++			 le32_to_cpu(call->data_len));
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+ 	if (le32_to_cpu(call->magic) != EPIC_SERVICE_CALL_MAGIC ||
+ 	    le16_to_cpu(call->group) != group ||
+ 	    le32_to_cpu(call->command) != command) {
++		dev_warn(service->ep->dcp->dev,
++			 "AFK[ep:%02x]: %s (chan:%u) service call reply mismatch: sent magic 0x%08x group %u cmd %u, got magic 0x%08x group %u cmd %u\n",
++			 service->ep->endpoint, service->ops->name,
++			 service->channel, EPIC_SERVICE_CALL_MAGIC, group,
++			 command, le32_to_cpu(call->magic),
++			 le16_to_cpu(call->group), le32_to_cpu(call->command));
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
++	dev_dbg(service->ep->dcp->dev,
++		"AFK[ep:%02x]: %s (chan:%u) service call group %u cmd %u ok (reply data_len %u)\n",
++		service->ep->endpoint, service->ops->name, service->channel,
++		group, command, le32_to_cpu(call->data_len));
+ 
+ 	retlen = le32_to_cpu(call->data_len);
+ 	if (output_len < retlen)
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 800a962..753051d 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -7,6 +7,7 @@
+ #include <linux/phy/phy.h>
+ #include <linux/delay.h>
+ #include <linux/jiffies.h>
++#include <linux/printk.h>
+ 
+ /* Extra bits OR'd into DPTX remote-port target for USB4 (bit 12 = guess for DPIN). */
+ unsigned int usb4_target_or;
+@@ -170,9 +171,11 @@ int dptxport_validate_connection(struct apple_epic_service *service, u8 core,
+ 	u32 attrs = 0x100 | (dcp_is_usb4_output(service->ep->dcp) ? 1 : 0);
+ 
+ 	trace_dptxport_validate_connection(dptx, core, atc, die);
++	dptx->validate_calls++;
+ 	dev_info(service->ep->dcp->dev,
+-		 "DPTX validate target=0x%x core=%u atc=%u die=%u or=0x%x\n",
+-		 target, core, atc, die, usb4_target_or);
++		 "DPTX validate: call #%u this boot target=0x%x core=%u atc=%u die=%u or=0x%x attrs=0x%x caller=%pS\n",
++		 dptx->validate_calls, target, core, atc, die, usb4_target_or,
++		 attrs, __builtin_return_address(0));
+ 
+ 	cmd.target = cpu_to_le32(target);
+ 	cmd.unk = cpu_to_le32(attrs);
+@@ -181,12 +184,20 @@ int dptxport_validate_connection(struct apple_epic_service *service, u8 core,
+ 	if (ret)
+ 		return ret;
+ 
+-	if (le32_to_cpu(resp.target) != target)
++	if (le32_to_cpu(resp.target) != target) {
++		dev_warn(service->ep->dcp->dev,
++			 "validate_connection: target reply 0x%x (sent 0x%x)\n",
++			 le32_to_cpu(resp.target), target);
+ 		return -EINVAL;
++	}
+ 	if (le32_to_cpu(resp.unk) != attrs) {
+ 		/* only the Thunderbolt DP IN role is allowed to differ */
+-		if (!dcp_is_usb4_output(service->ep->dcp))
++		if (!dcp_is_usb4_output(service->ep->dcp)) {
++			dev_warn(service->ep->dcp->dev,
++				 "validate_connection: attrs reply 0x%x (sent 0x%x), rejecting\n",
++				 le32_to_cpu(resp.unk), attrs);
+ 			return -EINVAL;
++		}
+ 		dev_info(service->ep->dcp->dev,
+ 			 "validate_connection: attrs reply 0x%x (sent 0x%x)\n",
+ 			 le32_to_cpu(resp.unk), attrs);
+@@ -207,8 +218,11 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 	u32 target = dptxport_remote_target(service->ep->dcp, core, atc, die);
+ 
+ 	trace_dptxport_connect(dptx, core, atc, die);
++	dptx->connect_calls++;
+ 	dev_info(service->ep->dcp->dev,
+-		 "DPTX connect target=0x%x unk=0x%x\n", target, unk_field);
++		 "DPTX connect: call #%u this boot target=0x%x unk=0x%x caller=%pS\n",
++		 dptx->connect_calls, target, unk_field,
++		 __builtin_return_address(0));
+ 
+ 	cmd.target = cpu_to_le32(target);
+ 	cmd.unk = cpu_to_le32(unk_field);
+@@ -217,8 +231,12 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 	if (ret)
+ 		return ret;
+ 
+-	if (le32_to_cpu(resp.target) != target)
++	if (le32_to_cpu(resp.target) != target) {
++		dev_warn(service->ep->dcp->dev,
++			 "connect: target reply 0x%x (sent 0x%x)\n",
++			 le32_to_cpu(resp.target), target);
+ 		return -EINVAL;
++	}
+ 	if (le32_to_cpu(resp.unk) != unk_field)
+ 		dev_notice(service->ep->dcp->dev, "unexpected unk field in reply: 0x%x (0x%x)\n",
+ 			  le32_to_cpu(resp.unk), unk_field);
+@@ -228,12 +246,34 @@ int dptxport_connect(struct apple_epic_service *service, u8 core, u8 atc,
+ 
+ int dptxport_request_display(struct apple_epic_service *service)
+ {
+-	return afk_service_call(service, 0, 6, NULL, 0, 16, NULL, 0, 16);
++	struct dptx_port *dptx = service->cookie;
++	int ret;
++
++	dptx->request_calls++;
++	dev_info(service->ep->dcp->dev,
++		 "DPTX request_display: call #%u this boot caller=%pS\n",
++		 dptx->request_calls, __builtin_return_address(0));
++	ret = afk_service_call(service, 0, 6, NULL, 0, 16, NULL, 0, 16);
++	dev_info(service->ep->dcp->dev,
++		 "DPTX request_display: call #%u result=%d\n",
++		 dptx->request_calls, ret);
++	return ret;
+ }
+ 
+ int dptxport_release_display(struct apple_epic_service *service)
+ {
+-	return afk_service_call(service, 0, 7, NULL, 0, 16, NULL, 0, 16);
++	struct dptx_port *dptx = service->cookie;
++	int ret;
++
++	dptx->release_calls++;
++	dev_info(service->ep->dcp->dev,
++		 "DPTX release_display: call #%u this boot caller=%pS\n",
++		 dptx->release_calls, __builtin_return_address(0));
++	ret = afk_service_call(service, 0, 7, NULL, 0, 16, NULL, 0, 16);
++	dev_info(service->ep->dcp->dev,
++		 "DPTX release_display: call #%u result=%d\n",
++		 dptx->release_calls, ret);
++	return ret;
+ }
+ 
+ int dptxport_set_hpd_timeout(struct apple_epic_service *service, bool hpd,
+@@ -251,8 +291,12 @@ int dptxport_set_hpd_timeout(struct apple_epic_service *service, bool hpd,
+ 				       &resp, sizeof(resp), 12, timeout_ms);
+ 	if (ret)
+ 		return ret;
+-	if (le32_to_cpu(resp.unk) != hpd)
++	if (le32_to_cpu(resp.unk) != hpd) {
++		dev_warn(service->ep->dcp->dev,
++			 "set_hpd: unk reply 0x%x (sent hpd=%d)\n",
++			 le32_to_cpu(resp.unk), hpd);
+ 		return -EINVAL;
++	}
+ 	return 0;
+ }
+ 
+@@ -802,6 +846,10 @@ static int dptxport_call(struct apple_epic_service *service, u32 idx,
+ 	trace_dptxport_apcall(dptx, idx, data_size);
+ 	dev_info(service->ep->dcp->dev, "DPTXPort: APCALL %u (%zu bytes)\n",
+ 		 idx, data_size);
++	if (data_size)
++		print_hex_dump(KERN_INFO, "DPTXPort: apcall data: ",
++			       DUMP_PREFIX_OFFSET, 16, 1, data,
++			       min(data_size, (size_t)64), true);
+ 
+ 	switch (idx) {
+ 	case DPTX_APCALL_WILL_CHANGE_LINKG_CONFIG:
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index 555f540..dbd40f1 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -65,6 +65,8 @@ struct dptx_port {
+ 	u32 lane_count;
+ 	u32 link_rate, pending_link_rate;
+ 	u32 drive_settings[2];
++	/* diagnostic call counters, see notes/2026-09-23-0124-*.md */
++	u32 validate_calls, connect_calls, request_calls, release_calls;
+ };
+ 
+ int dptxport_validate_connection(struct apple_epic_service *service, u8 core,
+-- 
+2.55.0
+
