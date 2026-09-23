@@ -5209,3 +5209,14 @@ committing/pushing execute exactly:
 ```
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0119.py install
 ```
+
+## 2026-09-23 -0119 installed
+
+Ran `sudo -n python3 scripts/manage-0119.py install` with hub connected.
+Succeeded, backup verified to /var/tmp/j416s-0119-before (pre-0119 appledrm
+hash 69ef18690a67d277ffaa0eac63bc3126fd3e2b41cdfb0e109373ec72122b4469, i.e.
+0118), new appledrm.ko re-verified, initramfs rebuilt and verified. State:
+0119 staged for next boot; current running kernel still has 0118 loaded.
+Next: reboot, verify boot, watch for native DPIN0 activation lines
+alongside GET_SUPPORTS_HPD=0/request_display=0, then whether DCP proceeds
+to SET_LINK_RATE and DPRX actually locks.
