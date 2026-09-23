@@ -80,24 +80,50 @@ monitor's own OSD: correct HDMI input selected, "no signal detected").
      or exceeds the most advanced known Asahi Linux community work on
      the direct-DP-alt-mode path; nothing there addresses this specific
      USB4-tunnel power-state gap either.
+  6. `notes/2026-09-23-xnu-power-state-trace.md` -- **the actual XNU-
+     side trace this handoff exists to continue.** Already found: the
+     right class is `AppleDCPDPTXRemotePortProxy` (Type-C/dcpext-routed,
+     confirmed distinct from `AppleCIODPTX`, which is for direct/fixed
+     ports and uses an unrelated mechanism). `setPowerState`'s gated
+     implementation sends AFK/EPIC method 6 (`request_display` -- the
+     exact same method our own `dptxport_request_display()` already
+     uses) specifically when the power domain transitions to active
+     and a `_displayRequested` flag is set -- i.e. real macOS
+     (re-)sends `request_display` at the moment of power-up, not just
+     once unconditionally at connect time the way our driver does. A
+     concrete, cheap, not-yet-tried next hardware experiment is
+     recorded there: add a second `dptxport_request_display()` call
+     after the native DPIN0 crossbar handshake completes. **If a fresh
+     session is starting from here, build and test that first** before
+     doing more kernelcache archaeology -- it's the most concrete lead
+     in hand and costs nothing new (same AFK/EPIC method already used
+     safely in every prior candidate).
 
 ## The actual task
 
-**Find what, on the real macOS/XNU side, triggers this exact power-
-state transition (some internal ordinal 8 -> 0x21) for a dcpext-class
-display pipe**, so we know what our Linux driver needs to request that
-it currently doesn't. This is almost certainly an IOKit
-`registerPowerDriver`/`changePowerStateTo`/`setPowerState`-style call
-on a `IOMobileFramebufferAP`-adjacent class (possibly
-`AppleDCPDPTXRemotePortProxy`, `AppleCIODPTX`, or a class specifically
-tied to `dcpext`/Type-C-routed pipes -- these class names are
-speculative, confirm them from the actual binary). This requires a
-**fresh pass over the XNU kernelcache** (a different binary from the
-DCP coprocessor firmware already analyzed above) specifically looking
-for host-side power-management calls tied to display pipes, since all
-of this session's earlier kernelcache work focused on
-`AppleCIODPTX::bringConnectionUp`/`connectTo` (the DPIN0 handshake),
-not power state management.
+**Updated after this handoff note was first written**: the XNU-side
+search described below was already done and found a concrete lead
+(see item 6 above and `notes/2026-09-23-xnu-power-state-trace.md`).
+**The task now is: build and hardware-test that lead first** --
+a second `dptxport_request_display()` call issued after the native
+DPIN0 crossbar handshake completes, following this project's normal
+protocol (design note, `ACTION-LOG.md` entry, commit+push before any
+hardware action, one candidate, one boot, user-executed plug/unplug,
+never claim success without the user's own visual confirmation). Only
+if that specific test is inconclusive should you go back to more
+kernelcache archaeology, picking up from `setPowerState`'s
+`powerstate == 0` (deactivate) path and whatever sets the
+`_displayRequested` flag in the first place (neither traced yet -- see
+the end of `2026-09-23-xnu-power-state-trace.md`).
+
+The original (now-completed) framing of this search, kept for context:
+find what, on the real macOS/XNU side, triggers the DCP-internal power-
+state transition (ordinal 8 -> 0x21) for a dcpext-class display pipe,
+so we know what our Linux driver needs to request that it currently
+doesn't -- an IOKit `registerPowerDriver`/`changePowerStateTo`/
+`setPowerState`-style call, which turned out to live on
+`AppleDCPDPTXRemotePortProxy` (confirmed the right class; `AppleCIODPTX`
+is for direct/fixed ports and uses an unrelated mechanism).
 
 ### Getting the kernelcache
 
@@ -180,18 +206,34 @@ CXX=/usr/bin/g++ CC=/usr/bin/gcc pip install --quiet pyghidra jpype1
 ```
 
 Then drive it with `pyghidra` (see the worked examples in
-`2026-09-23-power-state-gate-traced.md` for the exact Python patterns
+`2026-09-23-power-state-gate-traced.md` and
+`2026-09-23-xnu-power-state-trace.md` for the exact Python patterns
 that worked: `pyghidra.start()`, `GhidraProject.openProject()` /
-`openProgram()` for re-opening an already-analyzed project,
-`pyghidra.open_program(..., analyze=True)` for a first-time import,
-`DecompInterface` for actual decompilation, and
-`mem.findBytes()`-based string search + `getReferencesTo()` for finding
-functions by the strings they reference, since there's no symbol table
-in either binary). **Run long analyses as detached background
-processes and poll for completion** -- full auto-analysis on the DCP
-firmware took several minutes; the kernelcache is larger and will take
-longer. Note everything under `/tmp` does not survive a reboot; if a
-reboot happens mid-session, redo the setup (takes ~10-15 minutes).
+`openProgram()` for re-opening an already-analyzed project -- note the
+project path is `<project_location>/<project_name>/<project_name>`,
+one level deeper than you'd guess -- `pyghidra.open_program(...,
+analyze=True)` for a first-time import, `DecompInterface` for actual
+decompilation, and `mem.findBytes()`-based string search +
+`getReferencesTo()` for finding functions by the strings they
+reference in the DCP firmware, which has no symbol table at all).
+**Run long analyses as detached background processes and poll for
+completion** -- full auto-analysis took several minutes for the DCP
+firmware and closer to 20 minutes for the much larger kernelcache.
+Note everything under `/tmp` does not survive a reboot; if a reboot
+happens mid-session, redo the setup (takes ~10-15 minutes).
+
+**Important, kernelcache-specific gotcha**: the kernelcache (unlike the
+DCP firmware) actually has a full mangled C++ symbol table, but
+**Ghidra's own Mach-O loader does not apply it** -- confirmed by both
+an exact-name `SymbolTable.getSymbols(name)` lookup and a wildcard
+`getSymbolIterator("*SomeClass*", true)` search both returning zero
+matches, despite `getNumSymbols()` reporting 800000+ symbols present.
+Do not waste time on Ghidra-side name search for the kernelcache.
+Instead, resolve addresses with `llvm-nm /tmp/kernelcache.macho | grep
+<mangled-or-partial-name>` (works instantly, real addresses, real
+demangled-adjacent names) and feed the resulting hex address straight
+into `AddressFactory.getAddress()` /
+`FunctionManager.getFunctionContaining()` in your Ghidra script.
 
 ## Mandatory safety/process rules for this project (do not skip)
 
