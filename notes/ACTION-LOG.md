@@ -4339,3 +4339,54 @@ writes not being the mechanism that turns on the picture at all,
 regardless of value. No further speculative MODE_A/MODE_B writes
 planned. Hub remains connected from the value=15 attempt; unplug to be
 confirmed separately.
+
+## 2026-09-23 -0113 re-armed for frame/vblank investigation (no new module build)
+
+After the mode-value sweep concluded (all 16 values clean negatives),
+investigation shifted to what happens after DPRX_DONE/set_digital_out_mode
+succeed -- specifically, whether any real frame/vblank activity reaches
+the external connector once a mode is set, since that layer has not been
+checked this session. Grepping DCP's own RTKit syslog messages across all
+captures found "swap_submit_dcp: swallowed swap ID N as
+fControllerPowerState is 0"/"timings are not enabled" for our exact
+controller (315c00000.dcp) -- initially promising, but verified (by
+checking every instance's timing relative to hotplug connect/disconnect)
+to occur exclusively immediately after a disconnect event, never during
+the active connected window. This is a harmless teardown artifact, not
+the active blocker; ruled out.
+
+Oliver rebooted and reconnected to continue investigating live frame/
+vblank activity, but that boot came up with 0113 disarmed (dpin_native=N,
+the safe default from the prior disarm), so the native DPIN0 path never
+ran at all -- that attempt's DPRX timeout is expected baseline behavior
+with the gate off, not new data. My mistake for not flagging this before
+the attempt was made.
+
+Re-arming without a new module build: verified the currently-installed
+thunderbolt_apple.ko still matches the 0113 candidate hash
+(cb636968b5f50919fae72cb7c304b4f92f666d04a727de683266240e95dc8096) on
+both kernel/ and updates/ paths (unaffected by disarm, which only removes
+the modprobe.d options file). dpin_native is 0444 (load-time only), so
+re-enabling it requires a fresh boot; no live module reload/unload
+performed (forbidden). Hub confirmed unplugged via sysfs before this
+change. After committing/pushing execute exactly:
+
+```
+sudo -n install -m 0644 /dev/stdin /etc/modprobe.d/j416s-0113-dpin0-mode-guess.conf << 'CONF'
+options appledrm usb4_protocol_probe=1 usb4_native_dpin=1 usb4_tunnel_clock=1
+options thunderbolt_apple dpin_native=1
+options phy_apple_atc usb4_tunnel_clock=1
+options mux_apple_display_crossbar usb4_defer_bringup=1
+options thunderbolt dp_video_counter=1 dp_bw_grant=1
+CONF
+sudo -n mkinitcpio -p linux-aurora
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0113.py check
+```
+
+This recreates byte-for-byte the same options file manage-0113.py's
+install() would write (verified identical via direct import), then
+rebuilds/verifies the initramfs. No module files touched (already
+correct), no MMIO, no live reload. After verification, ask Oliver to
+reboot with `systemctl reboot`, hub still unplugged, then disarm again
+after boot verification per the usual discipline before the next
+attachment.
