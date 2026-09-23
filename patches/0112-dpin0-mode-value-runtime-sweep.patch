@@ -1,0 +1,208 @@
+From 8fa45e4f3e07cc1b05f3a0cd15be3fb466abb77b Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 08:47:30 +0200
+Subject: [PATCH] thunderbolt: apple: make the DPIN0 mode-value sweep
+ reboot-free
+
+Every prior candidate in the bounded mode-value sweep (0110=9,
+0111=8) required a full rebuild-reinstall-reboot cycle because the
+value was a compile-time constant and the surrounding module
+parameters are all 0444 (load-time only). That cost dominated wall
+clock time for no safety benefit: the value only affects two DPIN0
+offsets this driver already owns.
+
+Turn it into dpin_mode_value, a 0644 module parameter read fresh on
+each activate, bounded to APPLE_DPIN_MODE_VALUE_MAX (15) and rejected
+outright (-EINVAL, no register access at all) if out of range.
+
+This alone would not make same-boot retesting valid: MODE_B's write is
+a pure OR and MODE_A's write only ever sets one bit, so a second
+activate without a real reset would land on top of the first attempt's
+leftover bits instead of a clean value. Add a deactivate-path clear,
+bounded to exactly the bits any in-range mode_value write could have
+set (MODE_A bits 0-15, MODE_B bits 7-10), so a clean deactivate leaves
+provably clean state for the next activate. This is new behavior, not
+a claim about native teardown (never traced, same as the existing HPD
+precedent) -- it exists only to make our own experiment isolable.
+
+apple_usb4_right_dpin0_set_active() also had a latent one-shot latch
+(dpin_attempted) that would have silently blocked every activate after
+the first for the rest of the boot; reset it on a successful
+deactivate so retesting is actually reachable, not just theoretically
+safe.
+
+scripts/test-dpin-handshake.c: updated for the new function signature,
+added round-trip coverage (activate value A, clean deactivate, activate
+value B, assert no contamination -- this is the scenario the whole
+change exists to make valid), out-of-range rejection, and a check that
+the deactivate clear never touches bits outside its documented range.
+ASan/UBSan, 13 scenarios, all passing.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/apple-dpin-handshake.h | 62 ++++++++++++++++------
+ drivers/thunderbolt/apple.c                | 33 ++++++++++--
+ 2 files changed, 76 insertions(+), 19 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple-dpin-handshake.h b/drivers/thunderbolt/apple-dpin-handshake.h
+index 603fe8d..6988521 100644
+--- a/drivers/thunderbolt/apple-dpin-handshake.h
++++ b/drivers/thunderbolt/apple-dpin-handshake.h
+@@ -33,29 +33,36 @@
+  * verbatim from this connection's negotiation and is not itself built
+  * anywhere in the traced kernel/kext code -- its origin could not be
+  * pinned down statically (most likely the separate DCP coprocessor
+- * firmware; see notes/2026-09-22-0110-mode-value-guess.md). MODE_VALUE
+- * below is therefore an informed, explicitly-labeled estimate, not a
+- * confirmed constant:
++ * firmware; see notes/2026-09-22-0110-mode-value-guess.md). The value
++ * used is therefore an informed, explicitly-labeled estimate, not a
++ * confirmed constant, and is passed in by the caller (mode_value below)
++ * rather than fixed at compile time, so the bounded formula's one free
++ * parameter can be swept across a live connection without reinstalling
++ * or rebooting between values -- see 2026-09-23-0112-runtime-sweep.md:
+  *   - bits 4-7 of the field select a rate class using the same RBR=0/
+  *     HBR=1/HBR2=2/HBR3=3 ordinal already used elsewhere in this driver
+  *     (drivers/thunderbolt/tb_regs.h DP_COMMON_CAP_RATE_*); this link
+- *     negotiates HBR2, so 2 -- high confidence, unchanged across this
+- *     bounded sweep.
++ *     negotiates HBR2, so 2 -- high confidence, unchanged across the
++ *     whole sweep.
+  *   - a secondary bit, native-gated on lane_count>=2 (true here: 4) and
+  *     on the same "which DPIN0 sub-instance" selector already confirmed
+  *     unconditional-0 for this single, non-split port, is set from a
+  *     nearby field that other native code also treats as a small,
+  *     3-valid-value enumeration (0, 1, or 2) -- this is the weak half of
+- *     the formula and the only free parameter varied across candidates
+- *     0110 (secondary_bit=1, MODE_VALUE=9, ran cleanly, no picture --
+- *     see notes/2026-09-22-0110-result.md), 0111 (secondary_bit=0,
+- *     this candidate), and 0112 (secondary_bit=2, if 0111 is also
+- *     inconclusive).
+- * MODE_VALUE = rate_class(2) * lane_count(4) + secondary_bit(0) = 8.
++ *     the formula and the only free parameter, swept across
++ *     mode_value = rate_class(2) * lane_count(4) + secondary_bit = 8, 9
++ *     (already tested via separate reboots, 0110/0111, both clean with
++ *     no picture), 10.
++ *
++ * mode_value is bounded to APPLE_DPIN_MODE_VALUE_MAX: this caps both the
++ * single bit MODE_A can set (1 << mode_value) and the field width MODE_B
++ * ORs in, which is also exactly the range the deactivate path below
++ * knows how to clear back to a clean baseline. Raising this bound is a
++ * new, reviewable change, not a runtime knob.
+  */
+ #define APPLE_DPIN_MODE_A 0x14
+ #define APPLE_DPIN_MODE_B 0x1c
+-#define APPLE_DPIN_MODE_VALUE 8U
++#define APPLE_DPIN_MODE_VALUE_MAX 15U
+ 
+ /* Caller owns powered register access and provides a bounded wait. */
+ struct apple_dpin_io {
+@@ -66,11 +73,14 @@ struct apple_dpin_io {
+ };
+ 
+ static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
+-				      int active)
++				      int active, unsigned int mode_value)
+ {
+ 	unsigned int hpd, saved, value, ack;
+ 	int ret;
+ 
++	if (active && mode_value > APPLE_DPIN_MODE_VALUE_MAX)
++		return -EINVAL;
++
+ 	if (active) {
+ 		hpd = io->read(io->ctx, APPLE_DPIN_HPD);
+ 		if (hpd == ~0U)
+@@ -89,13 +99,35 @@ static inline int apple_dpin_handshake(const struct apple_dpin_io *io,
+ 		mode_b = io->read(io->ctx, APPLE_DPIN_MODE_B);
+ 		if (mode_b != ~0U)
+ 			io->write(io->ctx, APPLE_DPIN_MODE_B,
+-				  mode_b | (APPLE_DPIN_MODE_VALUE << 7));
++				  mode_b | (mode_value << 7));
+ 
+ 		mode_a = io->read(io->ctx, APPLE_DPIN_MODE_A);
+ 		if (mode_a != ~0U)
+ 			io->write(io->ctx, APPLE_DPIN_MODE_A,
+ 				  (mode_a & ~0xffU) |
+-				  (1U << APPLE_DPIN_MODE_VALUE));
++				  (1U << mode_value));
++	} else {
++		unsigned int mode_a, mode_b;
++
++		/*
++		 * Not native teardown behavior (never traced; see the
++		 * CONNECTED comment above) -- this exists solely so a later
++		 * activate on this same boot starts from clean state and is
++		 * a valid isolated test of a different mode_value. Bounded
++		 * to exactly the bits any in-range mode_value write above
++		 * could have set: MODE_B's OR'd field (bits 7..7+MAX's
++		 * width) and MODE_A's cleared-low-byte-plus-one-set-bit
++		 * (bits 0..MAX). Never touches bits outside that range.
++		 */
++		mode_b = io->read(io->ctx, APPLE_DPIN_MODE_B);
++		if (mode_b != ~0U)
++			io->write(io->ctx, APPLE_DPIN_MODE_B,
++				  mode_b & ~(APPLE_DPIN_MODE_VALUE_MAX << 7));
++
++		mode_a = io->read(io->ctx, APPLE_DPIN_MODE_A);
++		if (mode_a != ~0U)
++			io->write(io->ctx, APPLE_DPIN_MODE_A,
++				  mode_a & ~((1U << (APPLE_DPIN_MODE_VALUE_MAX + 1)) - 1));
+ 	}
+ 	value = active ? (saved & ~APPLE_DPIN_INACTIVE) | APPLE_DPIN_CONNECTED :
+ 			 saved | APPLE_DPIN_INACTIVE;
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index 34b30d6..016afb6 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -124,6 +124,19 @@ static bool dpin_native;
+ module_param(dpin_native, bool, 0444);
+ MODULE_PARM_DESC(dpin_native, "Opt-in J416s right-port native DP-IN handshake");
+ 
++/*
++ * Bounded lab sweep of the unconfirmed DPIN0 MODE_A/MODE_B value (see
++ * apple-dpin-handshake.h); writable so the remaining candidates in the
++ * formula's one free parameter (0110=9, 0111=8, ... up to
++ * APPLE_DPIN_MODE_VALUE_MAX) can be tried across unplug/replug on one
++ * boot instead of a reinstall+reboot per value. Out-of-range values are
++ * rejected inside apple_dpin_handshake(), not clamped here.
++ */
++static unsigned int dpin_mode_value = 8;
++module_param(dpin_mode_value, uint, 0644);
++MODULE_PARM_DESC(dpin_mode_value,
++		 "DPIN0 MODE_A/MODE_B lab value (0-" __stringify(APPLE_DPIN_MODE_VALUE_MAX) "); read at each activate");
++
+ struct apple_cio {
+ 	struct device *dev;
+ 	struct device_node *np;
+@@ -1861,11 +1874,23 @@ int apple_usb4_right_dpin0_set_active(bool active)
+ 	}
+ 	poll.base = acio->dpin_base;
+ 	poll.deadline = jiffies + msecs_to_jiffies(1000);
+-	dev_info(acio->dev, "native DPIN0: active=%u base=%pa, CONTROL=0x0c ACK=0x10\n",
+-		 active, &res.start);
+-	ret = apple_dpin_handshake(&io, active);
+-	if (!ret)
++	dev_info(acio->dev,
++		 "native DPIN0: active=%u base=%pa, CONTROL=0x0c ACK=0x10 mode_value=%u\n",
++		 active, &res.start, dpin_mode_value);
++	ret = apple_dpin_handshake(&io, active, dpin_mode_value);
++	if (!ret) {
+ 		acio->dpin_active = active;
++		/*
++		 * A clean deactivate clears MODE_A/MODE_B back to a known
++		 * baseline (apple_dpin_handshake()'s !active branch), so a
++		 * later activate this same boot -- possibly with a different
++		 * dpin_mode_value -- is a valid isolated retest. Without this,
++		 * -EALREADY below would permanently latch after the first
++		 * attempt for the rest of the boot.
++		 */
++		if (!active)
++			acio->dpin_attempted = false;
++	}
+ 	dev_info(acio->dev, "native DPIN0: active=%u handshake=%d\n", active, ret);
+ unlock_cio:
+ 	mutex_unlock(&acio->lock);
+-- 
+2.55.0
+

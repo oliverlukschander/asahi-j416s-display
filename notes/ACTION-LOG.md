@@ -3873,3 +3873,63 @@ with no picture (0110=9, 0111=8). One value remains: secondary_bit=2
 Requested Oliver unplug the hub from the right port; awaiting
 confirmation before any further hardware action (one-attempt-per-boot
 guard already used this boot).
+
+## 2026-09-23 -0112 built offline; reboot-free infrastructure for the mode-value sweep
+
+Oliver flagged reboot cycles as the real cost blocking progress and
+asked for a reboot-free way to sweep the bounded DPIN0 mode-value space.
+Root causes: (1) the value was a compile-time constant, and (2) even if
+runtime-adjustable, MODE_B's pure-OR write and MODE_A's set-one-bit
+write would contaminate a second activate without a genuine register
+reset in between, and a latent one-shot latch (dpin_attempted) would
+have silently blocked any activate after the first for the rest of the
+boot anyway. Kernel commit 8fa45e4 fixes both: dpin_mode_value becomes
+a 0644 module parameter read fresh on each activate (out-of-range
+values rejected with -EINVAL before any register access), and a new
+deactivate-path clear (bounded to exactly the bits any in-range value
+could have set: MODE_A bits 0-15, MODE_B bits 7-10) leaves clean state
+for the next activate; dpin_attempted is reset on a successful
+deactivate so that next activate is actually reachable. This is new
+behavior invented for our own test isolation, explicitly not a claim
+about native teardown (never traced, same caveat already applied to
+HPD). Same DPIN0 resource already safely used; no new addresses, no
+forbidden register access.
+
+scripts/test-dpin-handshake.c updated for the new function signature;
+added out-of-range rejection, the core round-trip (activate 9, clean
+deactivate, activate 10, assert no contamination -- this is the
+scenario the whole change exists to make valid), and confirmation the
+deactivate clear never touches bits outside its documented range.
+ASan/UBSan, 13 scenarios, all passing. `make` in src/thunderbolt
+rebuilds only apple.o/thunderbolt_apple.ko; the other four modules are
+byte-identical to 0111 (verified by SHA256). Full design in
+notes/2026-09-23-0112-runtime-sweep.md.
+
+This candidate itself still needs one reboot to load (module params and
+code paths can't be hot-patched into an already-loaded module). Every
+value sweep after that should not: testing becomes `echo N | sudo tee
+/sys/module/thunderbolt_apple/parameters/dpin_mode_value`, unplug/replug,
+capture -- no reinstall, no reboot.
+
+After committing/pushing these changes execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0112.py install
+```
+
+Back up eleven module/image files to /var/tmp/j416s-0112-before (same
+five module pairs as prior candidates plus initramfs); install pinned
+modules/options, depmod, rebuild/verify initramfs. No live module
+reload, parameter write, MMIO, mapping or reboot. Options unchanged
+from 0109-0111 (unconditional code behind the existing dpin_native=1
+gate). Candidate hashes: thunderbolt_apple
+f25986e265c84cf3a51c4b5901a3ae9672cbc60013cd8c1445a6dd87259979a6;
+thunderbolt (core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a1126032f7;
+mux 38e0756e986d236eddb458e2480f62f45eed1b3c2baeb5e61aa2e55a522f8b24;
+atc e47f03cef54c44c816c85a7565f41cde046a9a364b9db9857653c5fbaad0b0c9;
+appledrm 9894035809e17b72d82d9f823d40bf115621539bebc74a5b7448f21f31f392e3
+(last four unchanged, reinstalled only for manifest symmetry). Future
+candidate uses existing right ATC 0xf03000000 size 0x4c000, crossbar
+0xf0304c000 size 0x4000, DCP 0x315c00000, NHI 0xf01f00000, ACIO
+0xf01ac0000, DPIN0 0xf01e50000 size 0x4000. None accessed during this
+install. Hub/direct display stay unplugged; reboot separately logged.
