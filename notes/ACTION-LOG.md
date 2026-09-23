@@ -5220,3 +5220,50 @@ hash 69ef18690a67d277ffaa0eac63bc3126fd3e2b41cdfb0e109373ec72122b4469, i.e.
 Next: reboot, verify boot, watch for native DPIN0 activation lines
 alongside GET_SUPPORTS_HPD=0/request_display=0, then whether DCP proceeds
 to SET_LINK_RATE and DPRX actually locks.
+
+## 2026-09-23 -0119 result: furthest point ever reached (INACTIVE_SINK_DETECTED), still no picture
+
+Rebooted into 0119 with hub connected (left port). Confirmed via
+journalctl: GET_SUPPORTS_HPD still answers 0 (0118's fix holds), and this
+time the native DPIN0 activation log lines are back (`native DPIN0:
+active=1 handshake=0`, `native DPIN0: DCP active=1 result=0`) -- 0119's
+guard fix confirmed working, no more immediate DEACTIVATE. request_display
+still returns 0.
+
+New this boot: `DPTXPort: APCALL 20 (16 bytes)` = DPTX_APCALL_INACTIVE_SINK_DETECTED.
+Our own handler (dptxep.c:856-867) already has a comment from prior project
+history confirming this is "the normal prelude to link training on USB4" and
+acks it correctly (does not treat it as a failure). This is the furthest any
+candidate has reached this session or before: DCP is now actively
+AUX-probing the sink rather than silently ignoring the connection. However,
+no SET_ACTIVE_LANE_COUNT or SET_LINK_RATE followed, and 12s later `DPRX
+timeout, keeping DP tunnel` fired again (matches drivers/thunderbolt/tunnel.c's
+TB_DPRX_TIMEOUT=12000ms exactly). Monitor stayed on standby (implied by no
+report of a picture; not yet explicitly re-confirmed by Oliver after this
+specific boot).
+
+Checked two candidate next levers before recommending anything further:
+- `dpin_aux` (thunderbolt_apple module param, runtime-writable, pokes the
+  ACIO's own DP IN analog block +0x00/+0x20 registers): this project's own
+  prior history (candidates 0054-0056, notes/2026-09-21-acio-rc-dpin-analog.md)
+  already found these specific MMIO writes "do not stick" (readback doesn't
+  reflect the write) -- already-established ineffective, not worth
+  re-testing without new evidence the earlier characterization was wrong.
+- `dprx_timeout` (thunderbolt core module param, 0444/load-time-only,
+  default 12000ms): a deliberately-chosen upstream value, not an arbitrary
+  short window -- the code comment cites real-world monitor retry behavior
+  ("some monitors retry connections every 10 seconds, we use 12 seconds
+  here"). Extending it would need a full reboot cycle to test and has no
+  strong evidence behind it; noted as a low-confidence, higher-cost option
+  rather than recommended.
+
+Conclusion so far: the remaining gap looks like a genuine physical AUX/DPRX
+negotiation between the USB4 tunnel's dedicated DP adapter hardware and the
+actual downstream sink (Synaptics VMM7100 -> BenQ monitor) that neither our
+driver nor DCP firmware's software sequencing can force -- everything
+software-sequenceable up to this exact point (crossbar routing, native
+DPIN0 handshake, request_display, HPD-consistency, real PHY attachment) is
+now confirmed working. Not yet claimed as a hard limit; flagged to Oliver
+for how to proceed (further firmware trace of what re-triggers a retry
+after INACTIVE_SINK_DETECTED, vs. suspecting a cable/adapter-chain
+compatibility issue, vs. stopping here).
