@@ -3933,3 +3933,40 @@ candidate uses existing right ATC 0xf03000000 size 0x4c000, crossbar
 0xf0304c000 size 0x4000, DCP 0x315c00000, NHI 0xf01f00000, ACIO
 0xf01ac0000, DPIN0 0xf01e50000 size 0x4000. None accessed during this
 install. Hub/direct display stay unplugged; reboot separately logged.
+
+## 2026-09-23 -0112 installed and verified; request unplugged reboot
+
+Note: Oliver reported "rebooted" once before this install ran; boot_id
+check showed no actual reboot had occurred (unchanged from the prior
+0111 boot), and the hub was still present on the bus. A second report
+("restarted now") checked out (boot_id changed to
+ad86f858-6719-4244-92bc-fbfc24a526ba); hub was then confirmed unplugged
+via sysfs before this install. That earlier boot ran on the still-
+installed 0111 image, not 0112 -- 0112 had not been installed yet at
+that point, so it does not count as this candidate's boot.
+
+Installer exited 0, verified backup /var/tmp/j416s-0112-before (eleven
+files; manifest confirms all four unchanged modules and
+thunderbolt_apple backup match the prior disarmed-0111 state exactly,
+hash 411e2701e019dc4d15c15043a12adab5f44a4a6051579bea0e7a2854121115f4
+for the backed-up image). New image SHA256
+2dc4436524eef7c22fff3a358d483a380a794a89367ba96083b5bc5c1ce6bfb1.
+Post-install preflight passes, hub/external display absent. Recurring
+firmware/font/architecture mkinitcpio warnings only; image verification
+passed. No live reload/MMIO/parameter write occurred.
+
+After committing/pushing this entry ask Oliver to keep hub and direct
+display adapter unplugged, reboot with exactly `systemctl reboot`, then
+report back before plugging anything in. This is a user-executed reboot
+instruction; no agent reboot command executed. New boot arms 0112 (same
+options as 0109-0111 - unconditional code behind the existing
+dpin_native=1 gate; dpin_mode_value defaults to 8 at load, writable at
+runtime after boot). Hardware paths/addresses remain those recorded in
+the preceding installation entry: ATC 0xf03000000 size 0x4c000,
+crossbar 0xf0304c000 size 0x4000, DCP 0x315c00000, NHI 0xf01f00000,
+ACIO 0xf01ac0000, DPIN0 0xf01e50000 size 0x4000. No new manual address
+access or mapping; no forbidden panel mapping, /dev/mem, PHY mode
+change or module unload. On return verify loaded modules/eDP, confirm
+the new dpin_mode_value sysfs parameter exists, and disarm future boots
+before separately logged single RIGHT-port attachment testing
+dpin_mode_value=10. No picture success claimed.
