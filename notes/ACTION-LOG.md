@@ -144,6 +144,52 @@ Linux-side changes at all. Next: proceed with the full architectural port
 scoped earlier (see /tmp/dcp-fw2/agent-portA-dcp-side.md and
 agent-portB-tb-side.md for the complete function-by-function plan).
 
+## 2026-09-24 -0127: full port of Thunderbolt DP tunnel routing from PR#8
+
+0126's quick PHY-mode fix was a clean negative (byte-for-byte identical to
+0124). Proceeded to the full architectural port scoped earlier: every
+candidate through 0126 relied on faking a USB4 tunnel route through the
+Type-C alt-mode mux-state machinery, never a genuine "a Thunderbolt DP
+tunnel came up" trigger. Ported the real mechanism from
+aurora-silicon/linux#8 (hardware-validated on t8103), adapted to
+T602X/j416s. Full reasoning, architecture, and known-uncertainty notes in
+notes/2026-09-24-0127-port-thunderbolt-dp-tunnel-routing.md.
+
+Spans four modules for the first time this project: dcp.c/dptxep.c (new
+apple_dcp_tb_dp_tunnel() entry point + dcp_tunnel_* helpers, ~400 lines of
+superseded scaffolding removed), drivers/thunderbolt/apple.c (new
+apple_dpin_ctx mechanism wired into this project's own already-safe
+dp_tunnel_pre/post_activate/deactivate hooks -- zero changes to shared
+tb.c/tunnel.c, thunderbolt.ko stays byte-identical), atc.c (renamed
+tunnel-rate export, kept our T602X implementation), and
+apple-display-crossbar.c (generalized the existing dpin0 bring-up helper
+to any index). Confirmed before writing code: the device-tree graph link
+the mechanism needs already exists on this hardware (walked the live
+phandle), no DT change needed.
+
+Only dcp.o/dptxep.o recompiled. New appledrm.ko SHA256:
+28c219f2549dfba6a6182b5224588890fd1dc65baa9eb2072d0e31634a095395.
+thunderbolt_apple.ko SHA256:
+16b18fb9494d4f9b865748276bfb4c2c1df28c65da2598e93d46ed3e18eeb4ad.
+mux-apple-display-crossbar.ko SHA256:
+813682df2cfa01b0ee83daac9824a37a3290bf234b389035e483da6c5044c3df.
+phy-apple-atc.ko SHA256:
+31b68d51a454885081406089c99bae00617231c49cb99680586494d3c8a4a49f.
+thunderbolt.ko unchanged (verified byte-identical). Module options also
+changed: removed usb4_defer_bringup=1 (wrong semantics under the new
+crossbar model, see design note) and usb4_tunnel_clock=1 from appledrm's
+line (the module param it gated no longer exists). Stale-symlink sweep
+clean, test-dpin-handshake.c 13/13 pass. Patch:
+patches/0127-port-thunderbolt-dp-tunnel-routing-from-pr8.patch.
+scripts/manage-0127.py hand-updated (first candidate changing more than
+one module's hash at once, so not purely mechanical this time).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0127.py install
+```
+
 ## Last actions
 
 - **0124** (instrumentation, no behavior change): closed several silent
