@@ -5502,3 +5502,12 @@ After committing/pushing execute exactly:
 ```
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0122.py install
 ```
+
+## 2026-09-23 -0122 installed
+
+Ran `sudo -n python3 scripts/manage-0122.py install` with hub connected.
+Succeeded, backup verified, hash re-verified, initramfs rebuilt and verified.
+State: 0122 staged for next boot. Next: reboot, verify boot, watch for the
+ACIO wake at Activate WITHOUT a crossbar log line, then INACTIVE_SINK_DETECTED,
+then (hoped for) SET_LINK_RATE and a second, later crossbar bring-up from
+DidChangeLinkConfiguration.
