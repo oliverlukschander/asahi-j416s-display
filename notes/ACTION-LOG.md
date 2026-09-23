@@ -4936,3 +4936,18 @@ verifies the initramfs. No live module reload, register write, or
 reboot. Same OPTIONS string as every candidate since 0109 (this is a
 behavior fix, not a new module parameter). Per Oliver's standing
 preference, hub may stay connected for install and reboot.
+
+## 2026-09-23 -0116 installed
+
+Ran `sudo -n python3 scripts/manage-0116.py install` with hub
+connected. Succeeded: backup verified to /var/tmp/j416s-0116-before
+(pre-0116 appledrm hash a9476d34ed835b9c94a72aa310992f8c82419ae42376484e4e1eb42d9a995f30,
+i.e. 0115), new appledrm.ko installed and re-verified against
+ec1a940a3482a804f08ea8f59a7062cb948b7047acaa5cc7eab4b7c3120b14ce,
+initramfs rebuilt (new sha256
+eb7bb527621ad6adca3d5d543b4e4ac7e44182c2eeb43ff3fb60222ec9968e62) and
+verify_image(armed=True) passed. State: 0116 staged for next boot;
+current running kernel still has 0115 loaded. Next: reboot (hub may
+stay connected), verify boot, then reconnect hub+monitor on the left
+port and check whether the pre-existing request_display call now
+succeeds without 0114's deadlocking resend.
