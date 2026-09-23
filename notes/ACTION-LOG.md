@@ -5084,3 +5084,72 @@ path's own already-correct target addressing rather than relying on
 dptx_phy/dptx_die, and should not be attempted again without a much
 more solid trigger condition and a plan that doesn't require the
 shared PHY to hand back cleanly, given tonight's result.
+
+## 2026-09-23 -0118 built offline: real per-port PHY + consistent supports_hpd (ultracode 4-agent workflow)
+
+Per Oliver's request ("use ultracode... decompile again if necessary and really
+have the full chain working... up to 3-5 agents"), ran a 4-agent workflow
+(wf_eaa02ec8-561): 3 parallel investigations (source+history state-machine
+diff, DCP firmware decompile, XNU kernelcache decompile) + 1 synthesis agent.
+Full design/reasoning in
+notes/2026-09-23-0118-real-phy-plus-consistent-hpd.md; summary: the confirmed-
+correct crossbar address (target=0x8001, core=1, atc=0) was never the bug --
+DCP firmware's real connectTo() handler (decompiled, address 0x43e2c) gates
+its one first-connection training-kickoff callback on bit8 (SUPPORTS_HPD) of
+the connect payload, and XNU's kernelcache independently confirms the same
+bit position/semantics in real macOS's IODPTXPortAttributes. Our driver
+hardcodes supports_hpd=true for this address (dcp.c:1599) and separately,
+unconditionally, answers GET_SUPPORTS_HPD=1 for every USB4 target
+(dptxep.c:600) -- so DCP is told twice not to bother training. No path using
+this address ever attaches a real PHY either (dptxport_call_get_max_lane_count
+short-circuits to a fixed 4 lanes when dptx->atcphy is NULL). Both single-lever
+fixes (deny HPD alone: candidate history shows it regressed to
+DEVICE_NOT_STARTED; attach a PHY alone: candidate 0088) were already tried in
+isolation and both failed; the untried combination is doing both together at
+the address already proven correct.
+
+Kernel commit 09dc764 (drivers/gpu/drm/apple/dcp.c,
+drivers/gpu/drm/apple/dptxep.c): (1) dptxport_call_get_supports_hpd() now
+checks dcp_is_usb4_output() too; (2) the analog-DPIN block attaches
+dcp->active_typec_route->phy (the per-port ATC PHY already proven safe by
+0088, NOT the shared eDP-linked lpdptxphy 0117 used) to dptxport[bind].atcphy
+and calls phy_set_mode_ext(..., PHY_MODE_DP, dcp->index) before
+validate/connect when available; (3) dptxport_connect()'s supports_hpd
+argument changed from hardcoded true to !have_phy.
+
+Manually traced (beyond the workflow's own synthesis) whether attaching this
+PHY could disturb the USB4 tunnel mode the hub's other traffic depends on:
+apple_atc_dp_phy_ops.set_mode (atcphy_dpphy_set_mode) is a documented no-op,
+confirmed by reading atc.c directly -- it does not touch atcphy->mode. Also
+confirmed dptxport_tunnel_clock()'s downstream apple_atc_right_usb4_tunnel_rate()
+is already port-generic (uses apple_atc_is_typec_core(), the same helper 0115
+added) despite its "right"-only name, so if SET_LINK_RATE does fire, applying
+it to real hardware should already work without further changes. Deliberately
+did NOT patch set_link_rate/set_active_lane_count's phy_configure skip for
+usb4 -- traced it to a plausible, already-correct, intentional USB4-tunneling
+design (rate goes through the parallel tunnel-clock mechanism instead; lane
+count is likely a logical/tunnel-bandwidth property, not a literal PHY
+register write) rather than a proven gap, matching this project's own
+established rule not to guess at untested changes without evidence.
+
+Only dcp.o/dptxep.o recompiled. New appledrm.ko SHA256:
+69ef18690a67d277ffaa0eac63bc3126fd3e2b41cdfb0e109373ec72122b4469. Stale-symlink
+sweep clean. test-dpin-handshake.c: 13/13 still pass (regression check only).
+Patch: patches/0118-drm-apple-dptx-attach-a-real-per-port-PHY-and-match-.patch.
+scripts/manage-0118.py derived from manage-0116.py (candidate number + hash
+only), syntax-checked.
+
+This candidate does NOT touch usb4_lpdptx_phy/usb4_force_dptx/usb4_dptx_train
+at all -- the shared PHY that blanked eDP in 0117 is never exercised by 0118.
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0118.py install
+```
+
+Backs up currently-installed 0116 modules/initramfs to
+/var/tmp/j416s-0118-before, installs the new appledrm.ko, rebuilds/verifies
+initramfs. No live module reload, register write, or reboot. Same OPTIONS
+string as every candidate since 0109. Per Oliver's standing preference, hub
+may stay connected for install and reboot.

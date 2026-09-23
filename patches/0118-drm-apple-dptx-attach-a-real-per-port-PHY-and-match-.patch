@@ -1,0 +1,111 @@
+From 09dc764357975bae12fff239d50ed14e7c985c6f Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 20:47:22 +0200
+Subject: [PATCH] drm: apple: dptx: attach a real per-port PHY and match
+ supports_hpd
+
+Three independent Ghidra/kernelcache decompiles this session converged
+on the same root cause for why USB4-tunneled DP output never trains:
+the analog-DPIN connect path (dcp_dptx_connect(), the one path already
+confirmed to use the correct crossbar-routed target 0x8001/core=1/
+atc=0) hardcodes supports_hpd=true in dptxport_connect() and never
+attaches a real PHY to dptx->atcphy, while dptxport_call_get_supports_hpd()
+separately and unconditionally answers 1 for every Type-C/USB4 target
+regardless of what connect() sends. Decompiling DCP firmware's real
+connectTo() handler found bit8 of the connect payload (SUPPORTS_HPD)
+is the literal, sole gate on the one callback DCP fires on a brand-new
+connection; decompiling the XNU kernelcache's AppleDCPDPTXRemotePortProxy/
+UFP found the same bit position and semantics in real macOS's
+equivalent packed attributes, independently corroborating it.
+
+Fix: attach route->phy (the per-port ATC PHY already used safely by
+usb4_dptx_set(), distinct from the shared lpdptxphy that also drives
+eDP) before validate/connect when available, pass supports_hpd=false
+to dptxport_connect() to match, and make the separate GET_SUPPORTS_HPD
+APCALL reply agree by also checking dcp_is_usb4_output(). This is the
+combination (correct address + real PHY + consistent HPD answer) that
+no prior candidate ever assembled -- the address alone, the PHY alone,
+and the flag alone were each tried in isolation before and each failed.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c    | 20 +++++++++++++++++++-
+ drivers/gpu/drm/apple/dptxep.c | 17 ++++++++++++-----
+ 2 files changed, 31 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 3f583b6..c9a7593 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1576,12 +1576,30 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			u32 bind = port;
+ 			int n = 0, i, v = -EINVAL, c = -EINVAL, h = -EINVAL,
+ 			    r = -EINVAL;
++			struct apple_dcp_typec_route *dp_route =
++				dcp->active_typec_route;
++			bool have_phy = dp_route && dp_route->phy;
+ 
+ 			cores[n++] = (usb4_core == 2) ? 2 : 1;
+ 			cores[n++] = (cores[0] == 1) ? 2 : 1;
+ 			dev_info(dcp->dev,
+ 				 "USB4: analog DPIN bind port=%u (unit %u)\n",
+ 				 bind, dcp->dptxport[bind].unit);
++			/*
++			 * Give DCP firmware a real PHY to train against
++			 * instead of leaving dptxport[bind].atcphy NULL --
++			 * with it NULL, dptxport_call_get_max_lane_count()
++			 * short-circuits to a fixed 4-lane analog answer and
++			 * DCP is never given anything to negotiate against.
++			 * route->phy is the per-port ATC PHY (the same one
++			 * usb4_dptx_set() already uses safely, distinct from
++			 * the shared lpdptxphy that also drives eDP).
++			 */
++			if (have_phy) {
++				dcp->dptxport[bind].atcphy = dp_route->phy;
++				phy_set_mode_ext(dp_route->phy, PHY_MODE_DP,
++						 dcp->index);
++			}
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			for (i = 0; i < n; i++) {
+ 				u8 core = cores[i];
+@@ -1596,7 +1614,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 				if (v)
+ 					continue;
+ 				c = dptxport_connect(svc, core, atc,
+-						     dcp->dptx_die, true);
++						     dcp->dptx_die, !have_phy);
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN connect core=%u atc=%u HPD: %d\n",
+ 					 core, atc, c);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 60519da..9ca6c92 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -592,12 +592,19 @@ static int dptxport_call_get_supports_hpd(struct apple_epic_service *service,
+ 
+ 	reply->retcode = cpu_to_le32(0);
+ 	/*
+-	 * Analog DPIN CORE=1 already uses AFK set_hpd (returns 0).
+-	 * Denying HPD here made request_display ACTIVATE then 22/24
+-	 * DEVICE_NOT_STARTED (~5.5s). Advertise HPD so firmware uses
+-	 * that path instead of waiting for a PHY start.
++	 * Denying HPD here once regressed to DEVICE_NOT_STARTED (~5.5s)
++	 * on the USB4 analog-DPIN path when no real PHY was attached to
++	 * answer the link-training APCALLs that follow. That path now
++	 * attaches route->phy before connect() when available (see the
++	 * analog-DPIN block in dcp_dptx_connect()) and passes a matching
++	 * supports_hpd=false to dptxport_connect() -- this reply must
++	 * agree with that same decision instead of unconditionally
++	 * claiming HPD support for every Type-C/USB4 target, or DCP
++	 * firmware's two independent "does the AP handle HPD" signals
++	 * (this APCALL and connect()'s own payload bit) disagree.
+ 	 */
+-	reply->supported = cpu_to_le32(dcp_is_typec_output(dcp) ? 1 : 0);
++	reply->supported = cpu_to_le32((dcp_is_typec_output(dcp) &&
++					!dcp_is_usb4_output(dcp)) ? 1 : 0);
+ 	dev_info(dcp->dev, "DPTXPort: GET_SUPPORTS_HPD %u usb4=%d\n",
+ 		 le32_to_cpu(reply->supported), dcp_is_usb4_output(dcp));
+ 	return 0;
+-- 
+2.55.0
+
