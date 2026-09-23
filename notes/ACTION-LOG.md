@@ -4524,3 +4524,27 @@ including the decompiler setup steps for reuse in future sessions
 
 No hardware register write in the course of this investigation --
 purely offline firmware decompilation. Hub still connected; no picture.
+
+## 2026-09-23 monitor-side confirmation: "no signal detected" on correct HDMI input
+
+After a genuine reboot (boot a15dbce5-94d9-4232-828b-18818830c0cf; the
+/tmp decompiler setup was lost as expected, module came up already
+armed since the modprobe.d config was never removed after the last
+re-arm), the hub was already connected at boot and went through a
+completely clean sequence (native DPIN0 handshake, crossbar bring-up,
+DPRX_DONE=1, set_digital_out_mode success) -- identical in every
+observable respect to every other "successful-looking" attempt this
+project has ever logged.
+
+Oliver checked the monitor's own input selection directly: it is on
+the correct HDMI input (the one the Synaptics VMM7100 output feeds),
+and the monitor's own OSD explicitly reports "no signal detected" on
+that input. This rules out a mundane wrong-input-selected explanation
+and positively confirms the mechanism traced earlier today
+(notes/2026-09-23-power-state-gate-traced.md): no real video clock/
+data signal ever reaches the physical output, consistent with DCP's
+internal power state never completing its transition to the fully-
+active ordinal (0x21) this pipe's swap-completion path depends on.
+Not a new finding -- direct physical confirmation of the existing one.
+
+No hardware register write in the course of this entry.
