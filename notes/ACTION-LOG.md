@@ -4814,3 +4814,41 @@ attached hub). Removed that specific check; kept the separate
 different, still-useful signal unrelated to this preference. This
 preference and the tooling change are now recorded in a saved memory
 for future sessions on this project.
+
+## 2026-09-23 -0115 installed
+
+Ran `sudo -n python3 scripts/manage-0115.py install` with the hub
+connected (per the just-relaxed preflight). Succeeded:
+
+- Verified backup written to /var/tmp/j416s-0115-before, manifest
+  covers all 11 tracked files, e.g. appledrm-kernel.ko ==
+  c29b0cb13c4bc6415a7299b3970582fb8043af1692c9710b94eca4321256e504
+  (pre-0115), thunderbolt_apple-kernel.ko ==
+  cb636968b5f50919fae72cb7c304b4f92f666d04a727de683266240e95dc8096
+  (pre-0115).
+- Candidate .ko files copied in and re-verified against the 0115
+  hashes recorded in notes/2026-09-23-0115-any-port-generalization.md
+  (appledrm a9476d3..., thunderbolt_apple 7d20ca2..., mux 0abc55f...,
+  atc fb748d4..., thunderbolt core dd99ee9... unchanged).
+- /etc/modprobe.d/j416s-0115-dpin0-mode-guess.conf written with the
+  standard OPTIONS string (usb4_protocol_probe=1 usb4_native_dpin=1
+  usb4_tunnel_clock=1, thunderbolt_apple dpin_native=1, phy_apple_atc
+  usb4_tunnel_clock=1, mux_apple_display_crossbar
+  usb4_defer_bringup=1, thunderbolt dp_video_counter=1
+  dp_bw_grant=1).
+- mkinitcpio rebuilt /boot/initramfs-linux-aurora.img (new sha256
+  9389c440cbe083147b52f30281996d4ea12c30c1480606adfd24db60be7269bc);
+  verify_image(armed=True) passed inside install() (correct appledrm/
+  thunderbolt_apple/thunderbolt/mux/atc module content packaged, and
+  candidate options file present) before returning success.
+
+Also fixed a stale success message in install(): it printed "Hub and
+direct external display MUST remain unplugged" from an earlier
+candidate template, contradicting the now-current preference. Updated
+to just state completion, matching the corrected check() message from
+the preflight-relaxation commit.
+
+State: 0115 is staged to load on the *next* boot. Current running
+kernel still has the pre-0115 modules loaded in memory -- nothing live
+has changed yet. Next: ask Oliver to reboot (hub may stay connected),
+then verify the new boot actually loaded 0115 before testing.

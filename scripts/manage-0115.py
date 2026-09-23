@@ -167,7 +167,7 @@ def install():
         print('Installation failed; restoring verified originals.', flush=True)
         restore()
         raise
-    print('0115 installed and initramfs verified. Hub and direct external display MUST remain unplugged. No reboot performed.', flush=True)
+    print('0115 installed and initramfs verified. No reboot performed.', flush=True)
 
 
 def main():
