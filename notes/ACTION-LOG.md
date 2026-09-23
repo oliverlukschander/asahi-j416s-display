@@ -4199,3 +4199,25 @@ access or mapping; no forbidden panel mapping, /dev/mem, PHY mode
 change or module unload. On return verify loaded modules/eDP and disarm
 future boots before separately logged single RIGHT-port attachment
 testing dpin_mode_value=0. No picture success claimed.
+
+## 2026-09-23 -0113 boot verified; disarm future boots
+
+Boot 393854ae-59a9-4c26-abaa-ad5dc20ce507, preflight passes, hub and
+external display absent. eDP-1 connected. Installed thunderbolt_apple
+matches candidate cb636968b5f50919fae72cb7c304b4f92f666d04a727de683266240e95dc8096.
+Loaded readonly flags: thunderbolt_apple dpin_native=Y.
+dpin_mode_value present at its compiled-in default (8). No DP tunnel
+exists yet so no handshake code has run this boot.
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0113.py disarm
+```
+
+Removes 0113 options and rebuilds/verifies initramfs. Current readonly
+flags remain Y for this boot; dpin_mode_value stays live-writable
+regardless. No live MMIO, mapping, module reload. No addresses
+accessed; resource scope remains ATC 0xf03000000, crossbar 0xf0304c000,
+DCP 0x315c00000, NHI 0xf01f00000, ACIO 0xf01ac0000, DPIN0 0xf01e50000.
+Hotplug will be logged separately after successful disarm.
