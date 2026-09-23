@@ -4669,3 +4669,24 @@ access or mapping; no forbidden panel mapping, /dev/mem, PHY mode
 change or module unload. On return verify loaded modules/eDP and
 disarm future boots before separately logged single RIGHT-port
 attachment. No picture success claimed.
+
+## 2026-09-23 -0114 boot verified; disarm future boots
+
+Boot 97561110-378c-4bfd-9a1a-beacdf2128aa, preflight passes, hub and
+external display absent. eDP-1 connected. Installed candidate matches:
+appledrm c29b0cb13c4bc6415a7299b3970582fb8043af1692c9710b94eca4321256e504.
+Loaded readonly flags: thunderbolt_apple dpin_native=Y. No DP tunnel
+exists yet so the resend-request_display code has not run.
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0114.py disarm
+```
+
+Removes 0114 options and rebuilds/verifies initramfs. Current readonly
+flags remain Y for this boot. No live MMIO, mapping, module reload or
+parameter write. No addresses accessed; resource scope remains ATC
+0xf03000000, crossbar 0xf0304c000, DCP 0x315c00000, NHI 0xf01f00000,
+ACIO 0xf01ac0000, DPIN0 0xf01e50000. Hotplug will be logged separately
+after successful disarm.
