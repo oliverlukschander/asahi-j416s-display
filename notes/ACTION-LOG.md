@@ -4221,3 +4221,43 @@ regardless. No live MMIO, mapping, module reload. No addresses
 accessed; resource scope remains ATC 0xf03000000, crossbar 0xf0304c000,
 DCP 0x315c00000, NHI 0xf01f00000, ACIO 0xf01ac0000, DPIN0 0xf01e50000.
 Hotplug will be logged separately after successful disarm.
+
+## 2026-09-23 -0113 disarmed; dpin_mode_value=0 set; single right-port attachment (retest)
+
+Disarm exited 0, image verified; new SHA256
+411e2701e019dc4d15c15043a12adab5f44a4a6051579bea0e7a2854121115f4 (matches
+0108-0112's disarmed image). Current 0113 flags remain enabled for this
+boot only; future boots disarmed.
+
+Set dpin_mode_value=0 via the runtime parameter (the corrected
+highest-confidence value from
+notes/2026-09-23-mode-value-formula-correction.md -- CORE=1, our
+connection's actual first-try route). This is the genuine retest of the
+attempt invalidated by the 0112 latch bug fixed in 0113.
+
+After committing and pushing this entry request exactly: connect hub
+once to RIGHT USB-C port with monitor on hub; leave connected for
+capture; report visible picture and eDP status. If eDP blacks out,
+unplug hub and stop. No replug/reboot. No shell command initiates
+physical connection.
+
+Scope is identical to prior candidates plus 0113's fix (cable-state
+guard now falls through to the existing handshake/cleanup path instead
+of latching). This value is NOT confirmed - see
+notes/2026-09-23-mode-value-formula-correction.md.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0113-mv0-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0113-mv0-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0113-mv0-dpin-counters.txt
+```
+
+Confirm right port, native DPIN0 handshake actually runs this time
+(active=1 handshake=... log line present), crossbar/link-config result,
+DPRX completion, and actual picture - the last decided only by Oliver's
+visual confirmation. If this is also inconclusive, unplug, verify via
+kernel log that the deactivate this time reaches "active=0 handshake=..."
+(not -19), then proceed to mode_value=1.
