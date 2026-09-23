@@ -4390,3 +4390,14 @@ correct), no MMIO, no live reload. After verification, ask Oliver to
 reboot with `systemctl reboot`, hub still unplugged, then disarm again
 after boot verification per the usual discipline before the next
 attachment.
+
+## 2026-09-23 -0113 re-armed and verified; request unplugged reboot
+
+Config file recreated byte-for-byte, initramfs rebuilt, manage-0113.py
+check confirms correct kernel/machine, hub/display absent, and matching
+candidate hashes. New image SHA256
+$(sha256sum /boot/initramfs-linux-aurora.img | cut -d' ' -f1).
+No module files touched, no live reload, no MMIO. Hub remains unplugged.
+
+After committing/pushing this entry ask Oliver to reboot with exactly
+\`systemctl reboot\`, hub still unplugged, then report back.
