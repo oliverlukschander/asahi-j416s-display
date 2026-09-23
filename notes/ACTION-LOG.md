@@ -5167,3 +5167,45 @@ current running kernel still has 0116 loaded, no live effect yet. Next:
 reboot (hub may stay connected), verify boot, reconnect on left port, watch
 for GET_SUPPORTS_HPD=0 / SET_LINK_RATE / DPRX per the test plan in
 notes/2026-09-23-0118-real-phy-plus-consistent-hpd.md.
+
+## 2026-09-23 -0118 result: GET_SUPPORTS_HPD=0 confirmed, but ACTIVATE immediately failed/deactivated
+
+Rebooted into 0118 with hub already connected (left port). Log: kernel/
+candidate check passed. Connect sequence ran automatically at boot:
+`GET_SUPPORTS_HPD 0 usb4=1` confirms fix #1 (the reply-vs-connect() HPD
+consistency fix) took effect for the first time. request_display still
+returns 0. BUT: APCALL 0 (ACTIVATE) was followed, in the same log timestamp,
+by APCALL 1 (DEACTIVATE) -- and the native DPIN0 activation log lines that
+appeared on every prior successful boot since 0113 (`native DPIN0: active=1
+...`, `native DPIN0: DCP active=1 result=...`) are completely absent. DPRX
+timeout still fires; monitor stays on standby (Oliver's report).
+
+Root cause found immediately by re-reading dptxport_native_dpin()'s own
+guard list (dptxep.c:657, pre-fix): it independently rejected
+(`return -EINVAL`) whenever `dptx->atcphy` was non-NULL -- a second,
+previously-unnoticed instance of the same "native DPIN0 + real PHY are
+mutually exclusive" assumption 0118's design note already knew about for a
+DIFFERENT function (dcp_usb4_protocol_connect()'s EBUSY guard), now hit
+because 0118 attaches the PHY before the ACTIVATE APCALL ever arrives. Full
+analysis in notes/2026-09-23-0119-native-dpin-vs-atcphy-guard.md.
+
+## 2026-09-23 -0119 built offline: relax that guard
+
+Kernel commit 7e3fc1a removes `|| dptx->atcphy` from
+dptxport_native_dpin()'s guard (dptxep.c). Verified safe: nothing in this
+function touches the PHY object (only crossbar mux_control_select/deselect
+and the ACIO apple_usb4_dpin0_set_active() RTKit handshake), so there is no
+double-configuration risk with 0118's earlier phy_set_mode_ext() call. Only
+dptxep.o recompiled. New appledrm.ko SHA256:
+8713ea27613c61ab1c32936744327fdf1d7ee6d393aa37883a7c62977f9dac83.
+Stale-symlink sweep clean, test-dpin-handshake.c 13/13 pass. Patch:
+patches/0119-drm-apple-dptx-let-native-DPIN0-activation-run-with-.patch.
+scripts/manage-0119.py derived from manage-0118.py (candidate number + hash
+only).
+
+Same test plan as 0118 (single boot, shared eDP PHY untouched). After
+committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0119.py install
+```

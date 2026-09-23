@@ -1,0 +1,57 @@
+From 7e3fc1ad0946e908fcbcdbab77fbffb751ce3ffe Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 21:00:52 +0200
+Subject: [PATCH] drm: apple: dptx: let native DPIN0 activation run with a real
+ PHY attached
+
+0118 attached route->phy in dcp_dptx_connect() before ACTIVATE, but
+dptxport_native_dpin()'s own guard still rejected with -EINVAL whenever
+dptx->atcphy was non-NULL -- a leftover assumption from before 0118
+that native DPIN0 activation and a real PHY reference were mutually
+exclusive. This silently skipped the entire crossbar/ACIO handshake on
+tonight's first 0118 test: DCP saw ACTIVATE's reply indicate failure
+and immediately sent DEACTIVATE, before ever reaching SET_LINK_RATE
+(confirmed by the total absence of the native DPIN0 log lines that
+appear on every prior successful activation, and by the abnormally
+fast APCALL 0 -> APCALL 1 sequence in the captured log). Nothing this
+function does touches the PHY object -- it only selects the crossbar
+mux and drives the ACIO RTKit handshake, a physically separate block
+from route->phy's own SERDES/lane logic -- so removing this check
+carries no double-configuration risk.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dptxep.c | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 9ca6c92..9c91dc3 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -654,8 +654,22 @@ static int dptxport_native_dpin(struct apple_epic_service *service, bool active,
+ 	    dcp->index != 2 || !of_machine_is_compatible("apple,j416s") ||
+ 	    dcp->dptx_die != 0 || dptx->unit != 0 ||
+ 	    dcp->fw_compat != DCP_FIRMWARE_V_13_5 ||
+-	    usb4_dpin_index != 1 || dptx->atcphy)
++	    usb4_dpin_index != 1)
+ 		return -EINVAL;
++	/*
++	 * The `dptx->atcphy` check this guard used to include predates
++	 * 0118, from when native DPIN0 activation and a real PHY reference
++	 * were assumed mutually exclusive. 0118 deliberately attaches
++	 * route->phy in dcp_dptx_connect() before this ACTIVATE ever runs,
++	 * so with the old check this guard silently returned -EINVAL here
++	 * every time, skipping the crossbar/ACIO handshake below entirely
++	 * -- DCP then saw ACTIVATE "fail" and immediately sent DEACTIVATE,
++	 * before ever reaching SET_LINK_RATE. Nothing below touches the PHY
++	 * object (mux_control_select/apple_usb4_dpin0_set_active operate on
++	 * the crossbar and ACIO, a physically separate block from
++	 * route->phy's own SERDES/lane logic), so there is no double-
++	 * configuration risk in letting both run.
++	 */
+ 	set_active = symbol_get(apple_usb4_dpin0_set_active);
+ 	if (!set_active)
+ 		return -EOPNOTSUPP;
+-- 
+2.55.0
+
