@@ -4064,3 +4064,19 @@ not covered by this 3-value sweep.
 Requested Oliver unplug the hub from the right port. Given 0112's
 reboot-free infrastructure, next steps (if any) can be evaluated and,
 if warranted, tested without a reboot cycle.
+
+## 2026-09-23 -0112 widened sweep started (full 0-15 range)
+
+Oliver asked to widen the search beyond the original 3-value bounded
+sweep (8,9,10, all clean/no picture) and to look up external
+documentation in parallel (background research task, no hardware
+access, will be reported separately when it returns). Reframing: MODE_A/
+MODE_B are 4-bit-wide fields (APPLE_DPIN_MODE_VALUE_MAX=15), so the full
+0-15 range has a principled reading as every combination of a 2-bit
+rate_class field (0=RBR,1=HBR,2=HBR2,3=HBR3) and a 2-bit secondary field
+(0-3), not just arbitrary brute force. Already covered: rate_class=2
+(HBR2) x secondary={0,1,2} = {8,9,10}. Remaining, to be tested via the
+0112 runtime parameter and unplug/replug (no further reboots): 0,1,2,3
+(RBR), 4,5,6,7 (HBR), 11 (HBR2/secondary=3), 12,13,14,15 (HBR3). Same
+DPIN0 resource, same one-value-per-attach discipline, hub confirmed
+unplugged via sysfs before starting.
