@@ -1,0 +1,156 @@
+From 7435260687860f1a5468ce4c947619581ea8631a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 21:21:57 +0200
+Subject: [PATCH] phy: apple: drm: apple: enable DP AUX on the USB4 tunnel PHY
+
+Oliver confirmed the identical hub/cable/adapter/monitor chain works
+instantly against a real Mac's macOS -- conclusively ruling out
+hardware/cable compatibility and confirming this is purely a missing
+software step. 0119 got DCP firmware to actively AUX-probe the sink
+(APCALL 20, INACTIVE_SINK_DETECTED) for the first time this project,
+but it never got a response and never proceeded to SET_LINK_RATE.
+
+Root cause: atcphy_modes[APPLE_ATCPHY_MODE_USB4].enable_dp_aux is
+false, so the normal mode-transition path never powers up the DP AUX
+sub-block (a separate "lpdptx" register region, distinct from the
+SS/crossbar/lane_mode state a mode transition otherwise programs) for
+a USB4-tunneled connection. Confirmed via this project's own 2026-09-21
+history (notes/2026-09-21-t602x-dpin-mux.md) that this exact gap was
+already identified once before, on an earlier addressing scheme, and
+never revisited once the analog-DPIN/crossbar mechanism was built.
+Without AUX actually powered on, DCP's own probe of the downstream
+sink has nothing to communicate over -- exactly matching
+INACTIVE_SINK_DETECTED firing but never resolving.
+
+Add apple_atc_usb4_enable_dp_aux(), a new exported entry point that
+calls atcphy_enable_dp_aux() directly, without a full mode transition,
+so the USB4 tunnel's own SS lane/crossbar state (and other traffic
+already flowing over this PHY) is left untouched. Wire it up via a new
+dptxport_usb4_enable_dp_aux() symbol_get wrapper, called from
+dcp_dptx_connect()'s analog-DPIN block right after the per-port PHY is
+attached (0118).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c    | 15 ++++++++++++++
+ drivers/gpu/drm/apple/dptxep.c | 14 +++++++++++++
+ drivers/gpu/drm/apple/dptxep.h |  1 +
+ drivers/phy/apple/atc.c        | 36 ++++++++++++++++++++++++++++++++++
+ 4 files changed, 66 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index c9a7593..500f906 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1596,9 +1596,24 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			 * the shared lpdptxphy that also drives eDP).
+ 			 */
+ 			if (have_phy) {
++				int aux_ret;
++
+ 				dcp->dptxport[bind].atcphy = dp_route->phy;
+ 				phy_set_mode_ext(dp_route->phy, PHY_MODE_DP,
+ 						 dcp->index);
++				/*
++				 * atcphy_modes[APPLE_ATCPHY_MODE_USB4].enable_dp_aux
++				 * is false, so nothing so far has powered up the
++				 * AUX sub-block on this PHY -- DCP's own AUX probe
++				 * of the downstream sink has nothing to actually
++				 * talk to. Enable it directly, without a full mode
++				 * transition, so the USB4 tunnel's own SS lane/
++				 * crossbar state is left untouched.
++				 */
++				aux_ret = dptxport_usb4_enable_dp_aux(dp_route->phy);
++				dev_info(dcp->dev,
++					 "USB4: enable DP AUX on route->phy: %d\n",
++					 aux_ret);
+ 			}
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			for (i = 0; i < n; i++) {
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 9c91dc3..f59cd72 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -25,6 +25,20 @@ module_param(usb4_tunnel_clock, bool, 0444);
+ MODULE_PARM_DESC(usb4_tunnel_clock, "Opt-in native right DPIN0 clock configuration");
+ 
+ extern int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate);
++extern int apple_atc_usb4_enable_dp_aux(struct phy *phy);
++
++int dptxport_usb4_enable_dp_aux(struct phy *phy)
++{
++	int (*enable)(struct phy *phy);
++	int ret;
++
++	enable = symbol_get(apple_atc_usb4_enable_dp_aux);
++	if (!enable)
++		return -EOPNOTSUPP;
++	ret = enable(phy);
++	symbol_put(apple_atc_usb4_enable_dp_aux);
++	return ret;
++}
+ 
+ static int dptxport_tunnel_clock(struct apple_epic_service *service, u8 rate)
+ {
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index 555f540..4a0ed8a 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -76,6 +76,7 @@ int dptxport_release_display(struct apple_epic_service *service);
+ int dptxport_set_hpd(struct apple_epic_service *service, bool hpd);
+ int dptxport_set_hpd_timeout(struct apple_epic_service *service, bool hpd,
+ 			     unsigned int timeout_ms);
++int dptxport_usb4_enable_dp_aux(struct phy *phy);
+ 
+ extern unsigned int usb4_target_or;
+ extern int usb4_dpin_index;
+diff --git a/drivers/phy/apple/atc.c b/drivers/phy/apple/atc.c
+index c96acd7..21e9ced 100644
+--- a/drivers/phy/apple/atc.c
++++ b/drivers/phy/apple/atc.c
+@@ -2378,6 +2378,42 @@ int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate)
+ }
+ EXPORT_SYMBOL_GPL(apple_atc_right_usb4_tunnel_rate);
+ 
++/*
++ * atcphy_modes[APPLE_ATCPHY_MODE_USB4].enable_dp_aux is false, so the
++ * normal atcphy_set_mode() path never powers up the DP AUX sub-block
++ * (the separate "lpdptx" register block, distinct from the USB4
++ * SS/crossbar/lane_mode state atcphy_set_mode() otherwise programs) for
++ * a USB4-tunneled connection. Without it, DCP firmware's own AUX probe
++ * of the downstream sink has nothing to actually communicate over --
++ * consistent with DCP reaching INACTIVE_SINK_DETECTED (it tries) but
++ * never proceeding to SET_LINK_RATE (the sink never responds). Call
++ * atcphy_enable_dp_aux() directly here, without going through a full
++ * mode transition, so the USB4 tunnel's own SS lane/crossbar state
++ * (and any other traffic already flowing over this PHY, e.g. the
++ * tunnel's USB3/USB2 fabric) is left untouched.
++ */
++int apple_atc_usb4_enable_dp_aux(struct phy *phy);
++int apple_atc_usb4_enable_dp_aux(struct phy *phy)
++{
++	struct apple_atcphy *atcphy;
++
++	if (!phy || phy->ops != &apple_atc_dp_phy_ops ||
++	    !of_machine_is_compatible("apple,j416s"))
++		return -EOPNOTSUPP;
++	atcphy = phy_get_drvdata(phy);
++	if (!of_device_is_compatible(atcphy->np, "apple,t6020-atcphy") ||
++	    !apple_atc_is_typec_core(atcphy->res.core->start) ||
++	    resource_size(atcphy->res.core) < 0x7048)
++		return -EINVAL;
++	guard(mutex)(&atcphy->lock);
++	if (atcphy->mode != APPLE_ATCPHY_MODE_USB4)
++		return -EBUSY;
++	atcphy_enable_dp_aux(atcphy);
++	dev_info(atcphy->dev, "USB4 DP AUX: enabled (mode unchanged)\n");
++	return 0;
++}
++EXPORT_SYMBOL_GPL(apple_atc_usb4_enable_dp_aux);
++
+ static struct phy *atcphy_xlate(struct device *dev, const struct of_phandle_args *args)
+ {
+ 	struct apple_atcphy *atcphy = dev_get_drvdata(dev);
+-- 
+2.55.0
+

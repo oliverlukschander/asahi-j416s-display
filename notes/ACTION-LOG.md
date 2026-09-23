@@ -5267,3 +5267,50 @@ now confirmed working. Not yet claimed as a hard limit; flagged to Oliver
 for how to proceed (further firmware trace of what re-triggers a retry
 after INACTIVE_SINK_DETECTED, vs. suspecting a cable/adapter-chain
 compatibility issue, vs. stopping here).
+
+## 2026-09-23 -0120 built offline: enable DP AUX on the USB4 tunnel PHY
+
+Oliver confirmed the identical hub/cable/adapter/monitor chain works
+instantly on a real Mac running macOS -- ruling out hardware/cable
+compatibility conclusively. This directly motivated re-checking this
+project's own oldest notes (2026-09-21, before the analog-DPIN mechanism
+existed): notes/2026-09-21-t602x-dpin-mux.md already identified "Each ATC
+has a separate DP AUX block (lpdptx) that USB4 mode currently leaves off
+(enable_dp_aux = false)" on an earlier addressing scheme, never revisited
+after the crossbar mechanism was built. Confirmed this exact gap still
+exists today: atcphy_modes[APPLE_ATCPHY_MODE_USB4].enable_dp_aux is false
+in drivers/phy/apple/atc.c, and atcphy_enable_dp_aux() (real, already-
+proven register programming, same function the working direct-DP path
+uses) is only ever called from atcphy_set_mode() gated on that per-mode
+flag -- never reached for a USB4-mode PHY, and 0118's phy_set_mode_ext()
+call doesn't trigger a real mode transition (confirmed no-op in 0118's own
+design note). Full reasoning in
+notes/2026-09-23-0120-enable-dp-aux-on-usb4-phy.md.
+
+Asked Oliver explicitly before building given a new risk category: this
+touches the same ATC PHY currently carrying the hub's other USB traffic
+(keyboard, etc.), not just DP -- worst case if the interaction is wrong is
+losing hub USB functionality entirely, not just no picture. Oliver approved.
+
+Kernel commit 7435260: new exported apple_atc_usb4_enable_dp_aux()
+(drivers/phy/apple/atc.c) calls atcphy_enable_dp_aux() directly under the
+existing atcphy->lock, gated on atcphy->mode == APPLE_ATCPHY_MODE_USB4,
+without any mode-table lookup or crossbar/lane_mode reprogramming -- the
+USB4 tunnel's own SS lane/crossbar state is left untouched. Wired up via a
+new dptxport_usb4_enable_dp_aux() symbol_get wrapper
+(drivers/gpu/drm/apple/dptxep.c/.h) called from dcp_dptx_connect()'s
+analog-DPIN block right after 0118's PHY attachment.
+
+Both phy-apple-atc.ko and appledrm.ko changed -- new hashes:
+atc 2feeec3f8501ce51e51b4a85f22a91e7fea3f0a57037d9dfdabed257e2249d8b,
+appledrm b401f2913e55206c7b2dc2249e804c29d92e19b5af35baca6f1f1d91f00d9cf5.
+Stale-symlink sweep clean, test-dpin-handshake.c 13/13 pass. Patch:
+patches/0120-phy-apple-drm-apple-enable-DP-AUX-on-the-USB4-tunnel.patch.
+scripts/manage-0120.py derived from manage-0119.py (candidate number and
+both hashes updated).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0120.py install
+```
