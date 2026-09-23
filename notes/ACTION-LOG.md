@@ -4401,3 +4401,40 @@ No module files touched, no live reload, no MMIO. Hub remains unplugged.
 
 After committing/pushing this entry ask Oliver to reboot with exactly
 \`systemctl reboot\`, hub still unplugged, then report back.
+
+## 2026-09-23 root mechanism found: DCP never sends swap_complete for this pipeline
+
+Purely observational investigation (no register writes) while the hub
+was live-connected with a genuinely successful modeset (crtc-2/USB-3,
+mode "2560x1440" 60Hz, enable=1 active=1, plane assigned). Correlated
+three signal sources never read together before this session: DRM's
+atomic state (debugfs), the per-crtc CRC frame-index counter (debugfs),
+and Hyprland's own compositor log (never checked before -- everything
+prior was kernel-log-only).
+
+Found: crtc-2's frame index advances a handful of times at initial
+enable then never again (confirmed via blocking debugfs reads over
+several minutes and after moving the cursor onto that screen's area),
+while eDP's crtc-0 continuously advances as expected. Hyprland's log
+shows exactly why: "ERR from aquamarine]: atomic drm request: failed
+to commit: Device or resource busy, flags: ATOMIC_NONBLOCK
+PAGE_FLIP_EVENT", logged once right after the successful modeset and
+never again -- the compositor tried once more, got -EBUSY, and gave up
+on this output. Traced -EBUSY to its source: our driver's
+dcp_drm_crtc_page_flip() (which unblocks the next atomic commit) is
+only called from dcpep_cb_swap_complete(), which only runs when DCP
+firmware itself sends a swap-complete RPC callback. That callback
+never arrives for this pipeline, so the crtc's pending-commit state
+never clears.
+
+This reframes the entire session: crossbar, DPIN0 handshake, USB4
+tunnel, AUX/DPRX, link-rate/lane negotiation, and set_digital_out_mode
+all genuinely work (much higher confidence than before). The break is
+specifically in DCP firmware's per-swap completion signaling for this
+dcpext+USB4-tunnel pipeline shape, not in any register value tested to
+date (0093-0113, mode-value sweep 0-15 all now understood to be
+investigating the wrong layer for this specific symptom). Full writeup
+in notes/2026-09-23-swap-complete-never-fires.md.
+
+No hardware register write in the course of this investigation. Hub
+still connected at time of writing.
