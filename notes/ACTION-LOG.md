@@ -5616,3 +5616,61 @@ After committing/pushing execute exactly:
 ```
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0124.py install
 ```
+
+## 2026-09-23 -0124 result: cleanest trace yet, no protocol errors anywhere, points at the already-known dpin_aux gap
+
+Rebooted into 0124 with hub connected. Captured full `journalctl -k -b 0` to
+captures/2026-09-23-0124-boot-kernel.log. User confirmed: no external display
+active.
+
+The new instrumentation fired zero times: no `returned retcode`, no `reply
+mismatch`, no `failed to complete`, no `sending NO reply` lines anywhere in
+the boot log. Every AFK call this boot succeeded cleanly, with DCP's replies
+matching exactly what we sent. `DPTX validate`/`DPTX connect`/
+`DPTX request_display` each show `call #1` -- confirms Agent C's finding
+holds here too, no repeat connect this boot.
+
+Full observed sequence: validate(0)->connect(0)->set_hpd(0)->request_display,
+which blocks while DCP does real work inside it (RTKit syslog shows
+`AppleDCPDPTX.cpp: powering nub`, `PmgrService: pmgrSetPowerState`,
+`pmgrResetDevice`) and asks us `APCALL 18` (GET_SUPPORTS_HPD), `APCALL 10`
+(GET_MAX_LANE_COUNT), then `APCALL 0` (ACTIVATE -- confirmed by numeric value
+here, not the approximate enum guess from earlier sessions), which fires our
+native DPIN0 ACIO wake (`result=0`, success) -- all of this nested *inside*
+the single request_display call before it finally returns 0. Then:
+`USB4: reselect dpin after nub: 0`, `USB4 protocol probe finished: 0; no
+automatic retry`. Then **11 seconds of complete silence** from DCP -- no
+further apcalls, not even INACTIVE_SINK_DETECTED this time -- until
+`thunderbolt-apple-nhi: DPRX timeout, keeping DP tunnel` fires from the
+Thunderbolt tunnel layer itself (drivers/thunderbolt/tunnel.c,
+TB_DPRX_TIMEOUT), independent of DCP's own AFK protocol.
+
+This is the first time we've had clean enough visibility to see that the
+apparent point of failure is not a DCP-AFK-protocol-level rejection or a
+missing signal we control -- everything we send, DCP accepts and acts on
+correctly. The register dump at the DPRX timeout shows `VE=1 AE=1 HPD=1
+DPRX=0` on both the host DP IN and hub DP OUT adapters: link/AUX-enable are
+up, hotplug-detect is up, but DPRX (DisplayPort RX signal detected) never
+asserts. `apple_nhi_dp_tunnel_post_activate()` (drivers/thunderbolt/apple.c)
+explicitly documents why: "DPRX_DONE stays 0 until this serializer talks
+AUX/DPCD into the host adapter", gated on the `dpin_aux` module parameter
+(default 0, current behavior: "DP IN analog: leaving PHY alone until DPRX
+timeout" -- logged, confirmed, at the very start of this exact boot).
+
+This is the SAME `dpin_aux` mechanism already tested and found ineffective
+in candidates 0054-0056 (notes/2026-09-21-acio-rc-dpin-analog.md: direct
+MMIO pokes to the ACIO DP IN analog block "do not stick", readback doesn't
+reflect the write) -- not a new lead. Everything software-sequenceable
+through DCP's own AFK protocol (crossbar routing, native DPIN0 handshake,
+role bit, request_display, real PHY attachment) is now confirmed working
+end-to-end with zero protocol errors. The remaining gap is a real AUX/DPRX
+electrical negotiation between the USB4 tunnel's DP adapter hardware and the
+downstream Synaptics VMM7100/BenQ chain that neither DCP's software sequencing
+nor our driver's AFK-level calls can reach -- it would need either (a)
+re-examining whether dpin_aux's "doesn't stick" finding still holds now that
+crossbar/native-DPIN0/role-bit sequencing is correct (unverified since
+0054-0056, worth a hypothesis-driven re-test rather than assuming it's
+unchanged), or (b) further DCP firmware-internal reverse engineering of
+whatever this AUX read logic is (not reachable from Linux-side instrumentation
+at all, since DCP never reports back on it during this 11s window). Flagged
+to Oliver for how to proceed.
