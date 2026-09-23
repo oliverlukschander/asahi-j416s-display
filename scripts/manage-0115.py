@@ -74,9 +74,12 @@ def preflight():
         raise RuntimeError('Wrong running kernel')
     if b'apple,j416s' not in Path('/sys/firmware/devicetree/base/compatible').read_bytes().split(b'\0'):
         raise RuntimeError('Wrong machine')
-    for router in Path('/sys/bus/thunderbolt/devices').glob('*-*'):
-        if ':' not in router.name and not router.name.endswith('-0'):
-            raise RuntimeError(f'Unplug hub: external router {router.name}')
+    # Per Oliver's 2026-09-23 preference, the hub may stay connected across
+    # install/reboot/disarm -- this action is file-only (module copy,
+    # initramfs rebuild), never live MMIO or module reload, so an attached
+    # hub carries no risk here. The external-display connector check below
+    # is kept: it is a different, still-useful signal (catches a route that
+    # already came up) and was not part of that preference.
 
     for status in Path('/sys/class/drm').glob('card*-*/status'):
         if '-eDP-' not in status.parent.name and status.read_text().strip() == 'connected':
@@ -176,7 +179,7 @@ def main():
         for path, expected in CANDIDATES.values():
             if digest(path) != expected:
                 raise RuntimeError(f'Candidate checksum mismatch: {path}')
-        print('Correct kernel/machine; hub and external display absent; candidate hashes match.')
+        print('Correct kernel/machine; no unexpected external display route; candidate hashes match.')
         return
     if os.geteuid() != 0:
         raise RuntimeError('Run with sudo')

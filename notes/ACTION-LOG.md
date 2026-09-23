@@ -4799,3 +4799,18 @@ thunderbolt (core) dd99ee948f23549ccd16e188db9a6b7c1452f9389ce60a5ecdec34a112603
 just-established preference, hub may stay physically connected across
 this reboot -- no unplug request for the reboot itself. Left port is
 the target for this test given today's physical location.
+
+## 2026-09-23 -0115 preflight relaxed: hub may stay connected for file-only actions
+
+Oliver asked to always keep the hub connected, including across
+restarts, given many reboots this session with the hub connected at
+various points have shown no crashes/hangs even on the stock/disarmed
+driver. Extended this to manage-0115.py's own preflight() check (which
+still required no external Thunderbolt router present, blocking a
+plain `install`/`check` even though that action is pure file-copy and
+initramfs rebuild -- no live MMIO, no module reload, no risk from an
+attached hub). Removed that specific check; kept the separate
+"no unexpected external display connector" check, which is a
+different, still-useful signal unrelated to this preference. This
+preference and the tooling change are now recorded in a saved memory
+for future sessions on this project.
