@@ -4951,3 +4951,45 @@ current running kernel still has 0115 loaded. Next: reboot (hub may
 stay connected), verify boot, then reconnect hub+monitor on the left
 port and check whether the pre-existing request_display call now
 succeeds without 0114's deadlocking resend.
+
+## 2026-09-23 -0116 boot verified: request_display now succeeds, DPRX still times out
+
+`uname -r` correct, `manage-0116.py check` passed, params armed
+(dpin_native=Y, usb4_native_dpin=Y). Hub was already connected across
+the reboot (left port, per standing preference) and the connect
+sequence ran automatically at boot (19:41:17), before any manual
+replug.
+
+Confirmed via journalctl -k -b: `USB4: analog DPIN request_display
+core=1 atc=0: 0` -- SUCCESS, not -110. First time this call has ever
+returned 0 on the hub-tunneled path. The crossbar reselect that only
+runs on success also completed (`USB4: reselect dpin after nub: 0`),
+and `USB4 protocol probe finished: 0; no automatic retry`. This
+directly confirms the 0116 deadlock-fix hypothesis: with the
+self-inflicted deadlock removed, DCP answers the original
+request_display call within its normal timeout.
+
+However, 12 seconds later: `DPRX timeout, keeping DP tunnel` (same
+symptom as every prior candidate) -- the actual DisplayPort AUX/link
+training between DCP's DPTX PHY and the Synaptics adapter never
+completes. DRM sysfs confirms: all card2-USB-*/HDMI-A-1 connectors
+stayed `disconnected` all boot; no picture (matches the pattern from
+before -- "DP IN armed typec0; DPTX HPD in 200ms (no PHY connect)" /
+"dpin mux only (ACIO AUX, no DPTX PHY)" -- this path arms crossbar
+routing and gets DCP's software-level agreement to a display session,
+but nothing in the sequence drives actual DPTX PHY link training for
+the USB4-tunneled case).
+
+Conclusion: 0116 is a confirmed, real, necessary bug fix (verified
+both by code reading and by this boot's behavior), but it is not
+sufficient on its own to produce a picture. The remaining gap is a
+distinct, deeper problem: DCP accepting the display request does not
+by itself cause real DPTX PHY/link training to happen on this
+USB4-tunneled path. This is consistent with (not yet re-confirmed
+this session) the much earlier finding that continuous frame
+completion requires an internal DCP power-state transition
+(8->0x21) that nothing in our sequence has been shown to trigger
+(notes/2026-09-23-power-state-gate-traced.md) -- request_display
+succeeding is necessary but was evidently not the only missing piece.
+No hardware register write made in response; captured and stopped
+per protocol.
