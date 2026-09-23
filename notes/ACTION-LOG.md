@@ -4852,3 +4852,36 @@ State: 0115 is staged to load on the *next* boot. Current running
 kernel still has the pre-0115 modules loaded in memory -- nothing live
 has changed yet. Next: ask Oliver to reboot (hub may stay connected),
 then verify the new boot actually loaded 0115 before testing.
+
+## 2026-09-23 -0115 boot verified; first live 0114+0115 hardware test (left port)
+
+`uname -r` == 7.1.12-2.5-1-ARCH (correct booted kernel), `manage-0115.py
+check` passed, module params confirm 0115 armed this boot
+(thunderbolt_apple: dpin_native=Y dpin_mode_value=8; appledrm:
+usb4_native_dpin=Y usb4_protocol_probe=Y usb4_tunnel_clock=Y, etc.).
+
+Oliver rebooted with hub already connected to the LEFT port (his
+present physical constraint) and monitor attached. Result: monitor
+stayed in standby, no picture (Oliver's own report, matching the log
+evidence below -- not inferred).
+
+`journalctl -k -b` shows: ACIO came up as 701ac0000.cio (typec_index 0,
+left port) confirming 0115's port generalization actually engaged on a
+non-right port for the first time; crossbar 70304c000.mux logged
+"native DPIN0: route selected"; native DPIN0 handshake succeeded
+(active=1 handshake=0, DCP active=1 result=0); 0114's new resend line
+fired ("USB4: resend request_display after native DPIN0 activate:
+-110") but returned -110 (ETIMEDOUT); 12s later "DPRX timeout, keeping
+DP tunnel". DRM sysfs (card2-USB-1/2/3) stayed disconnected all boot;
+hyprctl monitors shows only eDP-1. Full analysis in
+notes/2026-09-23-0114-0115-left-port-result.md.
+
+Captured (untracked, not committed): capture-display.sh output,
+journalctl -k -b, modetest -M apple -e, and both host-side
+(0-0/port5) and hub-side (0-1/port19) DPIN debugfs counters (both
+all-zero, expected since DPRX never completed).
+
+No register/timing/retry change made in response; stopped per
+protocol pending a proper design note for whatever's investigated
+next (setPowerState powerstate==0 path or the _displayRequested-flag
+origin, per notes/2026-09-23-xnu-power-state-trace.md).
