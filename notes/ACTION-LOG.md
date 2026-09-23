@@ -3970,3 +3970,27 @@ change or module unload. On return verify loaded modules/eDP, confirm
 the new dpin_mode_value sysfs parameter exists, and disarm future boots
 before separately logged single RIGHT-port attachment testing
 dpin_mode_value=10. No picture success claimed.
+
+## 2026-09-23 -0112 boot verified; disarm future boots
+
+Boot d203e463-23ef-4dd8-8e5f-15dd4bd10550, preflight passes, hub and
+external display absent. eDP-1 connected. Installed thunderbolt_apple
+matches candidate f25986e265c84cf3a51c4b5901a3ae9672cbc60013cd8c1445a6dd87259979a6.
+Loaded readonly flags: thunderbolt_apple dpin_native=Y. New writable
+parameter confirmed present and at its compiled-in default:
+/sys/module/thunderbolt_apple/parameters/dpin_mode_value=8. No DP
+tunnel exists yet so no handshake code has run this boot.
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0112.py disarm
+```
+
+Removes 0112 options and rebuilds/verifies initramfs. Current readonly
+flags remain Y for this boot; dpin_mode_value stays live-writable
+regardless (0644, not gated by the modprobe.d options file). No live
+MMIO, mapping, module reload. No addresses accessed; resource scope
+remains ATC 0xf03000000, crossbar 0xf0304c000, DCP 0x315c00000, NHI
+0xf01f00000, ACIO 0xf01ac0000, DPIN0 0xf01e50000. Hotplug will be
+logged separately after successful disarm.
