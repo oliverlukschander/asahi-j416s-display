@@ -5324,3 +5324,59 @@ next boot; current running kernel still has 0119 loaded. Next: reboot,
 verify boot, watch for "USB4: enable DP AUX on route->phy: 0", then
 whether SET_LINK_RATE/SET_ACTIVE_LANE_COUNT fire and DPRX locks. Also
 verify hub-connected USB peripherals (keyboard) still work post-boot.
+
+## 2026-09-23 -0120 result: REGRESSION -- enabling DP AUX disconnected the entire hub
+
+Rebooted into 0120 with hub connected (left port). Confirmed via journalctl:
+`phy-apple-atc 703000000.phy: USB4 DP AUX: enabled (mode unchanged)` /
+`USB4: enable DP AUX on route->phy: 0` -- the new call succeeded as coded.
+GET_SUPPORTS_HPD=0, native DPIN0 handshake, request_display=0 all still
+worked. APCALL 20 (INACTIVE_SINK_DETECTED) fired again, same as 0119.
+
+But 10 seconds after boot (the same ~10s mark DCP always gives up at),
+something new and bad happened:
+```
+thunderbolt-apple-nhi 701f00000.nhi: 0:5: DP IN CS changed CS0=00090400
+  CS2=00000000 CS9=41000553 CS13=00000000 COMMON=00000000 VE=0 AE=0
+  HPD=0 DPRX=0 disc=0
+usb 1-1: USB disconnect, device number 2
+usb 1-1.1: USB disconnect, device number 3
+thunderbolt 0-0:1.1: retimer disconnected
+usb 1-1.2: USB disconnect, device number 4
+thunderbolt 0-1: device disconnected
+usb 1-1.3: USB disconnect, device number 5
+```
+The ENTIRE hub (OWC Thunderbolt 5 Hub, `thunderbolt 0-1`) and every
+downstream device (Synaptics adapter, Keychron keyboard, everything)
+disconnected -- not just the DP path. Confirmed still down, not
+auto-recovered: `/sys/bus/thunderbolt/devices/` is empty and
+`/sys/bus/usb/devices/` shows only the two root hubs, no downstream
+devices, well after the disconnect. External monitor: still standby
+(Oliver's report, consistent -- the whole hub was gone by then anyway).
+
+This confirms the exact risk flagged before building 0120 and accepted by
+Oliver: `atcphy_enable_dp_aux()`'s register writes were NOT as cleanly
+isolated from the USB4 tunnel's own PLL/SERDES state as the code reading
+suggested (specifically `ACIOPHY_PLL_COMMON_CTRL`, named "common" for a
+reason apparently). Enabling DP AUX on a live USB4-mode PHY destabilized
+the whole tunnel, not just the DP sub-path.
+
+Immediately ran `sudo -n python3 scripts/manage-0120.py restore` (file-only,
+no live reload) to put 0119's modules and initramfs back for the next boot,
+since 0119 is the last known-good state (native DPIN0 + request_display +
+INACTIVE_SINK_DETECTED all working, no hub disruption). Oliver needs to
+reboot to actually recover the hub/keyboard -- the currently-running kernel
+still has 0120's modules loaded in memory; a live unplug/replug of the hub
+may not be sufficient if the ATC PHY's own hardware state is wedged, since
+this looks like a low-level PHY/PLL disruption, not just a software link
+state issue.
+
+**Conclusion for future sessions: do not call `apple_atc_usb4_enable_dp_aux()`
+(or any future variant of it) on a live USB4-mode PHY again without first
+finding what specifically in `atcphy_enable_dp_aux()`'s register sequence
+is shared with the USB4 tunnel's own state** -- the `ACIOPHY_PLL_COMMON_CTRL`
+write is the most likely suspect (name and behavior both point at a shared
+PLL domain), followed by the `ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0`
+PCLK-select/enable writes, which may also touch lanes the USB4 tunnel is
+actively using. This candidate (0120) is reverted; 0119 is the current
+recommended-safe baseline.
