@@ -5030,3 +5030,57 @@ with nothing to undo.
 
 Command about to run:
 sudo -n sh -c 'echo 1 > /sys/module/appledrm/parameters/usb4_dptx_train'
+
+## 2026-09-23 -0117 result: real PHY instantiated, lane training still times out, eDP panel needs reboot to recover
+
+Ran `echo 1 > /sys/module/appledrm/parameters/usb4_dptx_train`. Log:
+lpdptxphy instantiated successfully ("USB4: instantiated lpdptxphy
+phy-apple-dptx", "USB4: got lpdptxphy phy"); DPTX validate/connect
+succeeded but at a DIFFERENT target than the analog-DPIN path's known-
+correct one: target=0x8040 core=0 atc=4 die=0 (vs analog-DPIN's
+target=0x8001 core=1 atc=0 -- these come from dcp->dptx_phy/dptx_die,
+a separate, likely-mismatched addressing scheme from the one already
+confirmed wired to our actual left-port/typec_index0 crossbar route).
+request_display appears to have succeeded (no failure logged). Waited
+8s on usb4_lane_completion and timed out ("dcp_dptx_connect: USB4
+DPTX train timeout"); DCP then sent DEACTIVATE. Auto-restore fired at
++10s as designed ("USB4: auto-restore lpdptxphy DCP index 0 (eDP)"),
+setting usb4_force_dptx=false and calling phy_set_mode_ext(...,
+PHY_MODE_DP, 0).
+
+External monitor: still standby, no picture (Oliver's report).
+
+eDP: did NOT visually recover after the auto-restore, despite every
+software-visible signal looking normal -- DRM sysfs
+card2-eDP-1/status=connected, backlight apple-panel-bl power=0
+(=on) brightness=350/500, hyprctl monitors shows eDP-1 active,
+dpmsStatus=1, valid 3456x2160@120 mode, not disabled. This mismatch
+(software stack believes eDP is fine, panel shows nothing) suggests
+the panel's own physical link needs a full re-init that
+phy_set_mode_ext's restore call alone doesn't provide -- a real,
+observed side effect beyond what 0078's original note described, not
+merely "briefly blanks and recovers." One quick `hyprctl dispatch
+"dpms off/on eDP-1"` attempt failed on a syntax error (not a real
+test) and was not pursued further given Oliver is currently without a
+usable screen.
+
+Per the recovery section of
+notes/2026-09-23-0117-usb4-dptx-train-real-phy-test.md and Oliver's
+explicit permission, next step is: unplug the hub, then reboot. This
+test changed no installed file, initramfs, or modprobe.d config --
+only live module parameter state and PHY hardware state -- so the
+next boot returns to the already-verified 0116 state with nothing to
+revert first. `manage-0116.py check` after reboot confirms this.
+
+Conclusion for next session/candidate: the shared-lpdptxphy approach
+is confirmed even more clearly dangerous than 0078's original finding
+suggested (panel needs a reboot to recover here, not just ~10s), and
+the "normal"/force_dptx code path's own target addressing
+(dptx_phy/dptx_die -> core=0/atc=4) is likely wrong for this port
+regardless -- it does not match the analog-DPIN path's confirmed-
+correct core=1/atc=0 encoding for typec_index 0. A future attempt at
+real PHY training should inject usb4_lpdptx_phy into the *analog-DPIN*
+path's own already-correct target addressing rather than relying on
+dptx_phy/dptx_die, and should not be attempted again without a much
+more solid trigger condition and a plan that doesn't require the
+shared PHY to hand back cleanly, given tonight's result.
