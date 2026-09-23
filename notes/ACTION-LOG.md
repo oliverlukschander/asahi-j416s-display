@@ -5511,3 +5511,51 @@ State: 0122 staged for next boot. Next: reboot, verify boot, watch for the
 ACIO wake at Activate WITHOUT a crossbar log line, then INACTIVE_SINK_DETECTED,
 then (hoped for) SET_LINK_RATE and a second, later crossbar bring-up from
 DidChangeLinkConfiguration.
+
+## 2026-09-23 -0122 result: wake/crossbar split confirmed working, but same outcome as before
+
+Rebooted into 0122 with hub connected. Confirmed: ACIO wake fires right after
+APCALL 0 (ACTIVATE) with NO crossbar reselect at that exact moment (the split
+works as coded). request_display still returns 0. But found a SECOND,
+pre-existing "reselect dpin after nub" step in dcp_dptx_connect() (unrelated
+to tonight's Activate/DidChangeLinkConfig work) that unconditionally reselects
+the crossbar right after request_display succeeds, regardless of Activate's
+own handling. This time DCP didn't even reach INACTIVE_SINK_DETECTED before
+the 12s DPRX timeout (slightly different from, if anything worse than, 0119/0121).
+
+Key observation: 0119, 0121, and 0122 all reached essentially the identical
+final outcome (DPRX timeout, no picture) despite substantially different
+Activate/crossbar ordering each time -- pointing at a signal never sent at
+all, not a timing detail fixable by further reordering.
+
+## 2026-09-23 -0123 built offline: send the Thunderbolt DP IN role bit
+
+The reference implementation (aurora-silicon/linux#8) packs a "role" bit
+(0=direct PHY, 1=Thunderbolt/USB4 DP IN) into validate_connection's and
+connect's attributes field, separate from supportsHPD. Our analog-DPIN path
+has never set it, in any candidate this entire project -- every test sent a
+plain direct-PHY-shaped value even though this has always been a genuinely
+USB4-tunneled connection. Full reasoning in
+notes/2026-09-23-0123-role-bit.md.
+
+Kernel commit 44de38a: both dptxport_validate_connection() and
+dptxport_connect() (drivers/gpu/drm/apple/dptxep.c) now OR in
+dcp_is_usb4_output(dcp) ? 1 : 0 alongside their existing fields.
+validate_connection's reply check relaxed to match the reference
+implementation's own tolerance (only the role bit is allowed to differ in
+the echoed reply). dptxport_connect() already tolerated any mismatch
+unconditionally, no change needed there.
+
+Only dptxep.o recompiled. New appledrm.ko SHA256:
+4548cf6159b6c80669be032470e98018ee77e6055080600f604de4aa61f38d84.
+phy-apple-atc.ko untouched (still 0119-identical). Stale-symlink sweep clean,
+test-dpin-handshake.c 13/13 pass. Patch:
+patches/0123-drm-apple-dptx-send-the-Thunderbolt-DP-IN-role-bit-o.patch.
+scripts/manage-0123.py derived from manage-0122.py (candidate number + hash
+only).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0123.py install
+```
