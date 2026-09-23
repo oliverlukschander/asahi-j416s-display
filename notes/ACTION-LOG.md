@@ -5729,3 +5729,13 @@ VMM7100 adapter chain specifically for the *tunneled* path (direct HDMI and
 direct USB-C to the same monitor both work). Flagged to Oliver; no further
 hardware action planned until he decides which direction, if either, to take
 next.
+
+## 2026-09-23 -0124 clean reboot re-verification
+
+Oliver wants a clean reboot (no live pokes -- 0125's live dpin_aux write is
+already reverted and confirmed back at 0 above) to fully read out DCP's
+natural stopping point on a fresh boot, since 0124's boot log is now the
+reference trace this project is building on. No config change: still 0124's
+installed modules/initramfs, dpin_aux already at its documented default (0).
+Hub stays connected. About to ask Oliver to reboot; will capture
+`journalctl -k -b 0` fresh afterward the same way as 0124.
