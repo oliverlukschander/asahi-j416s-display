@@ -3815,3 +3815,37 @@ parameter write. No addresses accessed; resource scope remains ATC
 0xf03000000, crossbar 0xf0304c000, DCP 0x315c00000, NHI 0xf01f00000, ACIO
 0xf01ac0000, DPIN0 0xf01e50000. Hotplug will be logged separately after
 successful disarm.
+
+## 2026-09-23 -0111 disarmed; single right-port attachment (lower-bound test)
+
+Disarm exited 0, image verified; new SHA256
+411e2701e019dc4d15c15043a12adab5f44a4a6051579bea0e7a2854121115f4 (matches
+0108/0109/0110's disarmed image, as expected since options are unchanged).
+Current 0111 flags remain enabled for this boot only; future boots
+disarmed. After committing and pushing this entry request exactly: connect
+hub once to RIGHT USB-C port with monitor on hub; leave connected for
+capture; report visible picture and eDP status. If eDP blacks out, unplug
+hub and stop. No replug/reboot. No shell command initiates physical
+connection. Keyboard untested unless attached and checked.
+
+Scope is identical to 0110 (existing owner mappings unchanged) plus
+0111's change: apple_dpin_handshake now writes MODE_VALUE=8
+(secondary_bit=0, the lower bound of the bounded sweep) instead of
+0110's 9 to DPIN0+0x1c and +0x14 when activating, in native's own call
+order. Same DPIN0 resource already safely used; no new addresses, no
+forbidden register access. This value is NOT confirmed - see
+notes/2026-09-23-0111-mode-value-lower-bound.md.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0111-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0111-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0111-dpin-counters.txt
+```
+
+Confirm right port, pre-clock gates off, PLL/nativeup result, 034/800,
+lanes/DPRX, counter readback, and actual picture - the last decided only
+by Oliver's visual confirmation. If sequence stalls, capture and stop
+without retrying gates or changing registers.
