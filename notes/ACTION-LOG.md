@@ -5380,3 +5380,67 @@ PLL domain), followed by the `ACIOPHY_LANE_DP_CFG_BLK_TX_DP_CTRL0`
 PCLK-select/enable writes, which may also touch lanes the USB4 tunnel is
 actively using. This candidate (0120) is reverted; 0119 is the current
 recommended-safe baseline.
+
+## 2026-09-23 -0121 built offline: the real fix, found via a real reference implementation
+
+Oliver pointed at https://github.com/aurora-silicon/linux/pull/8, a real,
+hardware-tested (three docks: CalDigit TS3 Plus, Kensington SD5560T, CalDigit TS4;
+multiple monitors) DisplayPort-over-Thunderbolt-tunnel implementation for t8103
+(M1), explicitly built on Oliver's own earlier t6020 tunnel-clock work
+(apple_atc_dp_tunnel_rate() there is architecturally identical to our own
+apple_atc_right_usb4_tunnel_rate()/atc_tunnel_start()). Read the full PR diff.
+It never touches DP AUX or any PLL-common-control register at all -- confirming
+0120's whole approach was built on the wrong mental model. Full reasoning in
+notes/2026-09-23-0121-defer-crossbar-to-linkconfig.md.
+
+The actual difference is ORDERING: their Activate handler only wakes the DP IN
+adapter; crossbar mux selection is deferred to DidChangeLinkConfiguration, gated
+on SetLinkRate having already started the tunnel pixel clock
+(dcp_tunnel_set_rate()/apple_atc_dp_tunnel_rate()). Re-reading our OWN
+dptxport_call_did_change_link_config() found it ALREADY has this exact mechanism,
+already correctly gated on dptx->link_rate, with a comment already stating the
+right idea -- but dptxport_call_activate() ALSO, unconditionally, brought up the
+crossbar+ACIO DPIN0 handshake immediately, before any link rate existed. This
+routed a real analog signal path through the crossbar with no pixel clock behind
+it every single time all session -- consistent with DCP's own AUX probe finding
+nothing coherent (INACTIVE_SINK_DETECTED, confirmed in 0119) and never proceeding
+to SET_LINK_RATE, so the already-correctly-wired dptxport_tunnel_clock() never got
+a chance to run.
+
+Kernel commit 30bd882: (1) removed the eager dptxport_native_dpin() call from
+dptxport_call_activate() -- it now does nothing hardware-related for the
+native-DPIN0/USB4 case, matching the reference implementation's own division of
+labor; (2) reverted 0118's GET_SUPPORTS_HPD/supports_hpd changes back to original
+(the reference implementation keeps supportsHPD set for a tunnel route too; what
+actually distinguishes it is a separate "role" bit this driver doesn't have yet);
+(3) fully removed 0120's DP-AUX-enable additions -- verified phy-apple-atc.ko now
+hashes BYTE-IDENTICAL to 0119's already-known-good build
+(fb748d4ba55e467dad4eaca6f4045059200aea46eccbd8a1bd2165025a95cf7f), confirming
+zero risk of repeating tonight's tunnel-disconnect regression; (4) kept 0118's PHY
+attachment and 0119's guard relaxation, both matching the reference
+implementation's own pattern.
+
+Net diff: 26 insertions, 98 deletions across dcp.c/dptxep.c/dptxep.h/atc.c --
+smaller than 0118 alone, since this removes far more than it adds. New appledrm.ko
+SHA256: 15dd9b2346879b3b771200a45362ad81e281fde158d3fae7632369073c5b6ca8. Stale-
+symlink sweep clean, test-dpin-handshake.c 13/13 pass. Patch:
+patches/0121-drm-apple-dptx-defer-crossbar-DPIN0-activation-to-Di.patch.
+scripts/manage-0121.py derived from manage-0120.py (candidate number + both
+hashes updated).
+
+Noted, deliberately not fixed: dptxport_call_did_change_link_config()'s
+usb4_link_up_attempted latch never resets (same class of bug as the dpin_attempted
+latch 0113 fixed) -- a SECOND connect attempt after this one succeeds would hit
+-EALREADY. Does not affect tonight's test (first execution of this path on a fresh
+boot); flagged for follow-up if a replug scenario is needed.
+
+This candidate does not touch usb4_lpdptx_phy/usb4_force_dptx/usb4_dptx_train (the
+shared eDP PHY) or the AUX/PLL_COMMON_CTRL register that caused 0120's regression
+at all -- hub USB functionality should be completely unaffected regardless of
+outcome.
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0121.py install
+```

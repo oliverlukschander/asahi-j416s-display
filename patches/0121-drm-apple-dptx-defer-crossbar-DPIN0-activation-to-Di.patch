@@ -1,0 +1,240 @@
+From 30bd882e50815cdce4852af5076d2a37fbd314e4 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Wed, 23 Sep 2026 21:48:57 +0200
+Subject: [PATCH] drm: apple: dptx: defer crossbar/DPIN0 activation to
+ DidChangeLinkConfiguration
+
+Found via aurora-silicon/linux#8, a real, hardware-tested (three docks,
+multiple monitors) DisplayPort-over-Thunderbolt-tunnel implementation
+for a different SoC, explicitly built on this project's own earlier
+t6020 tunnel-clock work. It never touches DP AUX or any PLL-common
+register (0120's whole approach was the wrong mental model); the real
+difference is ordering: its Activate handler only wakes the DP IN
+adapter, and defers crossbar mux selection to DidChangeLinkConfiguration,
+gated on SetLinkRate having already started the tunnel pixel clock.
+
+Our own dptxport_call_did_change_link_config() already has this exact
+mechanism, already correctly gated on dptx->link_rate, with a comment
+that already states the right idea -- but dptxport_call_activate() also,
+unconditionally, brought up the crossbar and ACIO DPIN0 handshake
+immediately, before any link rate existed. This routed a real analog
+signal path through the crossbar with no pixel clock behind it every
+time, all session -- consistent with DCP's own AUX probe finding
+nothing coherent (INACTIVE_SINK_DETECTED, confirmed in the 0119 test)
+and never proceeding to SET_LINK_RATE, so dptxport_tunnel_clock()
+(already wired up correctly) never got a chance to run.
+
+Remove the eager call from Activate. Revert 0118's GET_SUPPORTS_HPD/
+supports_hpd changes (the reference implementation keeps supportsHPD
+set for a tunnel route too; what actually distinguishes it is a
+separate role bit this driver doesn't have yet, not supportsHPD).
+Fully remove 0120's DP-AUX-enable additions -- phy-apple-atc.ko now
+hashes byte-identical to 0119's already-known-good build, confirmed.
+Keep 0118's PHY attachment and 0119's guard relaxation, both of which
+match the reference implementation's own pattern.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c    | 17 +--------
+ drivers/gpu/drm/apple/dptxep.c | 70 ++++++++++++----------------------
+ drivers/gpu/drm/apple/dptxep.h |  1 -
+ drivers/phy/apple/atc.c        | 36 -----------------
+ 4 files changed, 26 insertions(+), 98 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 500f906..3080490 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1596,24 +1596,9 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 			 * the shared lpdptxphy that also drives eDP).
+ 			 */
+ 			if (have_phy) {
+-				int aux_ret;
+-
+ 				dcp->dptxport[bind].atcphy = dp_route->phy;
+ 				phy_set_mode_ext(dp_route->phy, PHY_MODE_DP,
+ 						 dcp->index);
+-				/*
+-				 * atcphy_modes[APPLE_ATCPHY_MODE_USB4].enable_dp_aux
+-				 * is false, so nothing so far has powered up the
+-				 * AUX sub-block on this PHY -- DCP's own AUX probe
+-				 * of the downstream sink has nothing to actually
+-				 * talk to. Enable it directly, without a full mode
+-				 * transition, so the USB4 tunnel's own SS lane/
+-				 * crossbar state is left untouched.
+-				 */
+-				aux_ret = dptxport_usb4_enable_dp_aux(dp_route->phy);
+-				dev_info(dcp->dev,
+-					 "USB4: enable DP AUX on route->phy: %d\n",
+-					 aux_ret);
+ 			}
+ 			mutex_lock(&dcp->hpd_mutex);
+ 			for (i = 0; i < n; i++) {
+@@ -1629,7 +1614,7 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 				if (v)
+ 					continue;
+ 				c = dptxport_connect(svc, core, atc,
+-						     dcp->dptx_die, !have_phy);
++						     dcp->dptx_die, true);
+ 				dev_info(dcp->dev,
+ 					 "USB4: analog DPIN connect core=%u atc=%u HPD: %d\n",
+ 					 core, atc, c);
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index f59cd72..f236c76 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -25,20 +25,6 @@ module_param(usb4_tunnel_clock, bool, 0444);
+ MODULE_PARM_DESC(usb4_tunnel_clock, "Opt-in native right DPIN0 clock configuration");
+ 
+ extern int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate);
+-extern int apple_atc_usb4_enable_dp_aux(struct phy *phy);
+-
+-int dptxport_usb4_enable_dp_aux(struct phy *phy)
+-{
+-	int (*enable)(struct phy *phy);
+-	int ret;
+-
+-	enable = symbol_get(apple_atc_usb4_enable_dp_aux);
+-	if (!enable)
+-		return -EOPNOTSUPP;
+-	ret = enable(phy);
+-	symbol_put(apple_atc_usb4_enable_dp_aux);
+-	return ret;
+-}
+ 
+ static int dptxport_tunnel_clock(struct apple_epic_service *service, u8 rate)
+ {
+@@ -606,19 +592,12 @@ static int dptxport_call_get_supports_hpd(struct apple_epic_service *service,
+ 
+ 	reply->retcode = cpu_to_le32(0);
+ 	/*
+-	 * Denying HPD here once regressed to DEVICE_NOT_STARTED (~5.5s)
+-	 * on the USB4 analog-DPIN path when no real PHY was attached to
+-	 * answer the link-training APCALLs that follow. That path now
+-	 * attaches route->phy before connect() when available (see the
+-	 * analog-DPIN block in dcp_dptx_connect()) and passes a matching
+-	 * supports_hpd=false to dptxport_connect() -- this reply must
+-	 * agree with that same decision instead of unconditionally
+-	 * claiming HPD support for every Type-C/USB4 target, or DCP
+-	 * firmware's two independent "does the AP handle HPD" signals
+-	 * (this APCALL and connect()'s own payload bit) disagree.
++	 * Analog DPIN CORE=1 already uses AFK set_hpd (returns 0).
++	 * Denying HPD here made request_display ACTIVATE then 22/24
++	 * DEVICE_NOT_STARTED (~5.5s). Advertise HPD so firmware uses
++	 * that path instead of waiting for a PHY start.
+ 	 */
+-	reply->supported = cpu_to_le32((dcp_is_typec_output(dcp) &&
+-					!dcp_is_usb4_output(dcp)) ? 1 : 0);
++	reply->supported = cpu_to_le32(dcp_is_typec_output(dcp) ? 1 : 0);
+ 	dev_info(dcp->dev, "DPTXPort: GET_SUPPORTS_HPD %u usb4=%d\n",
+ 		 le32_to_cpu(reply->supported), dcp_is_usb4_output(dcp));
+ 	return 0;
+@@ -729,26 +708,27 @@ dptxport_call_activate(struct apple_epic_service *service,
+ 	/* The native USB4 candidate must never configure a physical DP PHY. */
+ 	if (usb4_native_dpin && dcp_is_usb4_output(dcp)) {
+ 		/*
+-		 * 0114 called dptxport_request_display() (a blocking
+-		 * afk_service_call()) from right here -- but this function
+-		 * runs as service->ops->call(), dispatched inline on
+-		 * afkep->wq, which is an *ordered* workqueue (afk.c). That
+-		 * queue is also what runs the work item that completes any
+-		 * outbound afk_service_call(), including this one and the
+-		 * pre-existing outer request_display() call in
+-		 * dcp_dptx_connect() that's still pending when DCP sends us
+-		 * this very ACTIVATE APCALL. A call issued from here can
+-		 * never observe its own completion (nothing else can run on
+-		 * this queue until this handler returns), so it always times
+-		 * out after exactly one second -- and it delays the ACTIVATE
+-		 * reply DCP is waiting on by that same second, which starves
+-		 * the outer call's own independent timeout too. See
+-		 * notes/2026-09-23-0114-deadlock-found.md. Do only the
+-		 * hardware activation here and return immediately, so the
+-		 * outer request_display() call gets an uncontended chance to
+-		 * receive DCP's real reply.
++		 * Do NOT bring up the crossbar/native DPIN0 handshake here.
++		 * A real, hardware-validated reference implementation of the
++		 * equivalent Thunderbolt DP tunnel mechanism on a different
++		 * SoC (aurora-silicon/linux#8, tested on t8103) confirmed
++		 * this must wait until DCP has actually set a real link
++		 * rate: its Activate handler only wakes the DP IN adapter,
++		 * and defers the crossbar mux selection to
++		 * DidChangeLinkConfiguration, gated on a link rate already
++		 * being set by SetLinkRate. dptxport_call_did_change_link_config()
++		 * below already does exactly this, already correctly gated
++		 * on dptx->link_rate ("ACTIVATE alone precedes clock
++		 * configuration" -- see its own comment). Bringing up the
++		 * crossbar eagerly here, before any pixel clock exists,
++		 * leaves it routing a real analog signal path with nothing
++		 * valid behind it -- consistent with everything observed
++		 * this session: DCP's own AUX probe finds nothing coherent
++		 * (INACTIVE_SINK_DETECTED) and never proceeds to
++		 * SET_LINK_RATE, so dptxport_tunnel_clock() (already wired
++		 * up in dptxport_call_set_link_rate() for this exact case)
++		 * never even gets a chance to run.
+ 		 */
+-		ret = dptxport_native_dpin(service, true, false);
+ 	} else if (dptx->atcphy &&
+ 	    (!dcp->phy_managed_by_typec || dcp_is_usb4_output(dcp)))
+ 		phy_set_mode_ext(dptx->atcphy, PHY_MODE_DP, dcp->index);
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index 4a0ed8a..555f540 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -76,7 +76,6 @@ int dptxport_release_display(struct apple_epic_service *service);
+ int dptxport_set_hpd(struct apple_epic_service *service, bool hpd);
+ int dptxport_set_hpd_timeout(struct apple_epic_service *service, bool hpd,
+ 			     unsigned int timeout_ms);
+-int dptxport_usb4_enable_dp_aux(struct phy *phy);
+ 
+ extern unsigned int usb4_target_or;
+ extern int usb4_dpin_index;
+diff --git a/drivers/phy/apple/atc.c b/drivers/phy/apple/atc.c
+index 21e9ced..c96acd7 100644
+--- a/drivers/phy/apple/atc.c
++++ b/drivers/phy/apple/atc.c
+@@ -2378,42 +2378,6 @@ int apple_atc_right_usb4_tunnel_rate(struct phy *phy, u8 rate)
+ }
+ EXPORT_SYMBOL_GPL(apple_atc_right_usb4_tunnel_rate);
+ 
+-/*
+- * atcphy_modes[APPLE_ATCPHY_MODE_USB4].enable_dp_aux is false, so the
+- * normal atcphy_set_mode() path never powers up the DP AUX sub-block
+- * (the separate "lpdptx" register block, distinct from the USB4
+- * SS/crossbar/lane_mode state atcphy_set_mode() otherwise programs) for
+- * a USB4-tunneled connection. Without it, DCP firmware's own AUX probe
+- * of the downstream sink has nothing to actually communicate over --
+- * consistent with DCP reaching INACTIVE_SINK_DETECTED (it tries) but
+- * never proceeding to SET_LINK_RATE (the sink never responds). Call
+- * atcphy_enable_dp_aux() directly here, without going through a full
+- * mode transition, so the USB4 tunnel's own SS lane/crossbar state
+- * (and any other traffic already flowing over this PHY, e.g. the
+- * tunnel's USB3/USB2 fabric) is left untouched.
+- */
+-int apple_atc_usb4_enable_dp_aux(struct phy *phy);
+-int apple_atc_usb4_enable_dp_aux(struct phy *phy)
+-{
+-	struct apple_atcphy *atcphy;
+-
+-	if (!phy || phy->ops != &apple_atc_dp_phy_ops ||
+-	    !of_machine_is_compatible("apple,j416s"))
+-		return -EOPNOTSUPP;
+-	atcphy = phy_get_drvdata(phy);
+-	if (!of_device_is_compatible(atcphy->np, "apple,t6020-atcphy") ||
+-	    !apple_atc_is_typec_core(atcphy->res.core->start) ||
+-	    resource_size(atcphy->res.core) < 0x7048)
+-		return -EINVAL;
+-	guard(mutex)(&atcphy->lock);
+-	if (atcphy->mode != APPLE_ATCPHY_MODE_USB4)
+-		return -EBUSY;
+-	atcphy_enable_dp_aux(atcphy);
+-	dev_info(atcphy->dev, "USB4 DP AUX: enabled (mode unchanged)\n");
+-	return 0;
+-}
+-EXPORT_SYMBOL_GPL(apple_atc_usb4_enable_dp_aux);
+-
+ static struct phy *atcphy_xlate(struct device *dev, const struct of_phandle_args *args)
+ {
+ 	struct apple_atcphy *atcphy = dev_get_drvdata(dev);
+-- 
+2.55.0
+
