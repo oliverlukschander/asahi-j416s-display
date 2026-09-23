@@ -3994,3 +3994,49 @@ MMIO, mapping, module reload. No addresses accessed; resource scope
 remains ATC 0xf03000000, crossbar 0xf0304c000, DCP 0x315c00000, NHI
 0xf01f00000, ACIO 0xf01ac0000, DPIN0 0xf01e50000. Hotplug will be
 logged separately after successful disarm.
+
+## 2026-09-23 -0112 disarmed; dpin_mode_value=10 set; single right-port attachment
+
+Disarm exited 0, image verified; new SHA256
+411e2701e019dc4d15c15043a12adab5f44a4a6051579bea0e7a2854121115f4 (matches
+0108-0111's disarmed image, as expected since options are unchanged).
+Current 0112 flags remain enabled for this boot only; future boots
+disarmed.
+
+Set the remaining untested bound via the new runtime parameter:
+`echo 10 | sudo tee /sys/module/thunderbolt_apple/parameters/dpin_mode_value`,
+read back and confirmed =10 (secondary_bit=2, the upper bound of the
+bounded 3-value sweep; 0110=9/secondary_bit=1 and 0111=8/secondary_bit=0
+both already ran clean with no picture). No MMIO, mapping, or hardware
+access occurred from this parameter write alone -- it only takes effect
+on the next DPIN0 activate.
+
+After committing and pushing this entry request exactly: connect hub
+once to RIGHT USB-C port with monitor on hub; leave connected for
+capture; report visible picture and eDP status. If eDP blacks out,
+unplug hub and stop. No replug/reboot. No shell command initiates
+physical connection. Keyboard untested unless attached and checked.
+
+Scope is identical to 0111 (existing owner mappings unchanged) plus
+0112's infrastructure change: apple_dpin_handshake now reads
+mode_value from a runtime parameter (currently 10) instead of a
+compile-time constant, and a deactivate-path clear (new in 0112, not a
+native-teardown claim) keeps state clean for any further same-boot
+retest. This value is NOT confirmed - see
+notes/2026-09-23-0112-runtime-sweep.md.
+
+After user connects, capture exactly (private raw files remain untracked):
+
+```
+/home/oliver/Development/asahi-j416s-display/scripts/capture-display.sh /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0112-mv10-right-connected.txt
+sudo -n journalctl -k -b --no-pager -o short-monotonic > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0112-mv10-right-kernel.log
+modetest -M apple -e
+sudo -n cat /sys/kernel/debug/thunderbolt/0-0/port5/counters > /home/oliver/Development/asahi-j416s-display/captures/2026-09-23-0112-mv10-dpin-counters.txt
+```
+
+Confirm right port, pre-clock gates off, PLL/nativeup result, 034/800,
+lanes/DPRX, counter readback, and actual picture - the last decided
+only by Oliver's visual confirmation. If sequence stalls, capture and
+stop without retrying gates or changing registers. If this is also
+inconclusive, the plan is to unplug, then (thanks to 0112) sweep
+further values without another reboot rather than stopping here.
