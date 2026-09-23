@@ -5444,3 +5444,14 @@ After committing/pushing execute exactly:
 ```
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0121.py install
 ```
+
+## 2026-09-23 -0121 installed
+
+Ran `sudo -n python3 scripts/manage-0121.py install` with hub connected.
+Succeeded, backup verified, both module hashes re-verified (atc.ko confirmed
+byte-identical to 0119), initramfs rebuilt and verified. State: 0121 staged for
+next boot; current running kernel still has 0120's restored-to-0119 modules
+loaded. Next: reboot, verify boot, watch for SET_LINK_RATE and deferred native
+DPIN0 activation (now tagged from DidChangeLinkConfig, not Activate), then
+whether DPRX locks. Also verify hub-connected USB peripherals unaffected
+(expected, since neither AUX/PLL registers nor the shared eDP PHY are touched).
