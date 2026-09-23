@@ -4274,3 +4274,18 @@ that the deactivate this time reaches "native DPIN0: active=0
 handshake=..." (not the -19 early-return the 0113 fix addresses), then
 set dpin_mode_value=1 (CORE=2 case) and request the next single
 right-port attachment.
+
+## 2026-09-23 -0113 unplug confirmed, deactivate verified fixed; dpin_mode_value=1 set
+
+Hub unplug confirmed via sysfs (no Thunderbolt devices; eDP-1 remains
+connected). Kernel log confirms the 0113 fix works end-to-end: "native
+DPIN0: DCP active=0 result=0" (success), not the -19 early-return seen
+before the fix. dpin_attempted and the MODE_A/MODE_B registers are now
+genuinely reset, making the next activate a valid isolated test.
+
+Set dpin_mode_value=1 via the runtime parameter (CORE=2 case, the
+second and final candidate from the corrected formula). After
+committing and pushing this entry request exactly: connect hub once to
+RIGHT USB-C port with monitor on hub; leave connected for capture;
+report visible picture and eDP status. Capture the same set as before
+under a 2026-09-23-0113-mv1-* prefix.
