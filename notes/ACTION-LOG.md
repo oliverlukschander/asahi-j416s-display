@@ -5153,3 +5153,17 @@ Backs up currently-installed 0116 modules/initramfs to
 initramfs. No live module reload, register write, or reboot. Same OPTIONS
 string as every candidate since 0109. Per Oliver's standing preference, hub
 may stay connected for install and reboot.
+
+## 2026-09-23 -0118 installed
+
+Ran `sudo -n python3 scripts/manage-0118.py install` with hub connected.
+Succeeded: backup verified to /var/tmp/j416s-0118-before (pre-0118 appledrm
+hash ec1a940a3482a804f08ea8f59a7062cb948b7047acaa5cc7eab4b7c3120b14ce, i.e.
+0116), new appledrm.ko re-verified against
+69ef18690a67d277ffaa0eac63bc3126fd3e2b41cdfb0e109373ec72122b4469, initramfs
+rebuilt (new sha256 30e322c4d1d3a9802df782d9faaa5c19007395f28f60207b2308ed163ebe2e3c)
+and verify_image(armed=True) passed. State: 0118 staged for next boot;
+current running kernel still has 0116 loaded, no live effect yet. Next:
+reboot (hub may stay connected), verify boot, reconnect on left port, watch
+for GET_SUPPORTS_HPD=0 / SET_LINK_RATE / DPRX per the test plan in
+notes/2026-09-23-0118-real-phy-plus-consistent-hpd.md.
