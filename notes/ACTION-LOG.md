@@ -5739,3 +5739,20 @@ reference trace this project is building on. No config change: still 0124's
 installed modules/initramfs, dpin_aux already at its documented default (0).
 Hub stays connected. About to ask Oliver to reboot; will capture
 `journalctl -k -b 0` fresh afterward the same way as 0124.
+
+## 2026-09-23 -0124 clean reboot result: identical, reproducible stopping point
+
+Captured captures/2026-09-23-0124-reboot2-kernel.log. Byte-for-byte identical
+outcome to the first 0124 boot: `dpin_aux` confirmed at 0 beforehand; zero
+retcode/mismatch/dropped-reply lines; validate/connect/request_display each
+`call #1`, all succeed; APCALL 18 (GET_SUPPORTS_HPD) -> APCALL 10
+(GET_MAX_LANE_COUNT) -> APCALL 0 (ACTIVATE); `USB4: reselect dpin after nub:
+0`; `USB4 protocol probe finished: 0; no automatic retry`; then exactly 12
+seconds later, `DPRX timeout, keeping DP tunnel` with the identical register
+values (`VE=1 AE=1 HPD=1 DPRX=0` on both host DP IN and hub DP OUT). This
+confirms 0124's trace is the genuine, reproducible natural stopping point of
+this driver/firmware stack on this hardware -- not an artifact of the earlier
+live dpin_aux experimentation in the same boot. State: everything
+software-sequenceable is confirmed correct and reproducible; the remaining
+gap is the AUX/DPRX hardware negotiation, exactly as concluded after 0125.
+No further hardware action pending -- next is documentation cleanup only.
