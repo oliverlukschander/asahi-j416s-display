@@ -5674,3 +5674,25 @@ unchanged), or (b) further DCP firmware-internal reverse engineering of
 whatever this AUX read logic is (not reachable from Linux-side instrumentation
 at all, since DCP never reports back on it during this 11s window). Flagged
 to Oliver for how to proceed.
+
+Oliver chose (a): re-test dpin_aux=1 live, given everything upstream of it is
+now confirmed clean. Full design in notes/2026-09-23-0125-dpin-aux-retest.md.
+
+## 2026-09-23 -0125: live dpin_aux=1 re-test, no kernel change
+
+No rebuild needed -- `dpin_aux` is an existing, already-shipped runtime
+module parameter (`drivers/thunderbolt/apple.c`, `module_param_cb`, mode
+0644). Confirmed read-only beforehand: current value 0, hub (`0-1`) still
+enumerated on the Thunderbolt bus from the 0124 boot (tunnel was "kept", not
+torn down, per the 0124 log's "DPRX timeout, keeping DP tunnel"), so
+`apple_dpin_anhi` should still be set and the write should act on the live,
+already-activated tunnel immediately via `apple_dpin_aux_set()`'s existing
+`if (v >= 1 && anhi) apple_dp_start_analog(anhi, true);` path -- no
+unplug/replug or reboot needed for this specific attempt.
+
+About to run exactly:
+```
+echo 1 | sudo tee /sys/module/thunderbolt_apple/parameters/dpin_aux
+```
+Reversible via `echo 0 | sudo tee ...`; unplug also clears the relevant state
+independent of this value (`apple_nhi_dp_tunnel_deactivate()`).
