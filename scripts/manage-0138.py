@@ -94,9 +94,22 @@ def preflight():
     present_stale = [p for p in STALE_CONFIGS if p.is_file()]
     if present_stale:
         raise RuntimeError(f'0136 stale-config cleanup not in place: {present_stale}')
+    # USB-3 (the Type-C tunnel connector this whole candidate is about) is
+    # exempted here: disconnected_hpd_event() -- the only thing that ever
+    # clears its "connected" status -- lives inside
+    # apple_dcp_tb_dp_tunnel(active=false), which is exactly the call this
+    # candidate's own fix (tb_dp_activate's early return) is needed to
+    # reach. So on the *currently running, unpatched* kernel, this status
+    # is permanently stuck at "connected" from the original boot connect
+    # no matter how thoroughly the cable is unplugged -- confirmed stale
+    # by Oliver physically unplugging it and the status not changing.
+    # Every other connector keeps the real check.
     for status in Path('/sys/class/drm').glob('card*-*/status'):
-        if '-eDP-' not in status.parent.name and status.read_text().strip() == 'connected':
-            raise RuntimeError(f'Unplug external display: {status.parent.name}')
+        name = status.parent.name
+        if '-eDP-' in name or name.endswith('-USB-3'):
+            continue
+        if status.read_text().strip() == 'connected':
+            raise RuntimeError(f'Unplug external display: {name}')
 
 
 def verify_image(armed):
