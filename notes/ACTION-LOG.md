@@ -52,7 +52,58 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0135 prepared, post-deep-research)
+## Current state (as of 2026-09-24, candidate 0135 result: port confound resolved)
+
+**0135 result: the port/pipeline confound is resolved, decisively. The
+right port's ACIO hardware is confirmed fine -- the defect is specific to
+the dcpext1 pipeline instance, not the physical port.** Forcing the right
+port's tunnel onto dcpext0 (0127's own pipeline) reproduced 0127's result
+almost exactly: the full rich link-training apcall burst fired
+immediately after `request_display` succeeded (`SET_LINK_RATE`,
+`WILL_CHANGE_LINK_CONFIG`, `DID_CHANGE_LINK_CONFIG`, drive-settings
+cycles), and **`DPRX_DONE=1` was reached** -- a genuine AUX/DPCD hardware
+completion, on the right port, for the first time ever. It then hit the
+exact same `DP tunnel crossbar up failed: -22` 0127 hit and eventually
+gave up with the same `timed out waiting for port 0 link configuration`
+(twice, both connect attempts, same shape both times) -- consistent,
+reproducible, and matching 0127's own failure point precisely.
+`captures/2026-09-24-0135-boot-kernel.log`.
+
+This conclusively answers what 0135 set out to test: **it is not the
+right ACIO instance's hardware.** The same physical port that has never
+once produced an apcall past `request_display` on dcpext1 (0128-0134)
+produces a full, real AUX handshake on dcpext0 (this run). The defect is
+tied to the dcpext1 pipeline/DCP-instance specifically.
+
+Chased two follow-up hypotheses from this same capture, both closed by
+direct verification rather than left open:
+- **dcpext0 runs an explicit `dcp_poweroff()` cycle at boot; dcpext1
+  never does.** Checked the code (`dcp_enable_dp2hdmi_hpd()`,
+  `dcp.c:1797`): this is gated on `dcp->hdmi_hpd` (a GPIO only dcpext0
+  has, for its fixed HDMI output) vs. `dcp_is_typec_output()` (which does
+  nothing at boot for either instance, since no cable is connected yet).
+  Fully expected, symmetric, correct behavior -- not a lead.
+- **`apple,typec-mux-indices` differs in the live device tree: `[0,0,0]`
+  for dcpext0 vs `[2,2,0]`... `[2,2,2]` for dcpext1.** Traced
+  `route->mux_index`'s only use in the tunnel path
+  (`dcp_tunnel_crossbar_up()`, `dcc.c:473`,
+  `mux_control_try_select(route->active_xbar, route->mux_index)`): this
+  is the crossbar *state* (which dispext a selected control routes to),
+  not which control is selected -- dcpext0 routing to state 0 (itself)
+  and dcpext1 to state 2 (itself) is exactly the expected, correct,
+  symmetric per-instance identity. Also not a lead.
+
+**Open question, now much sharper than before**: why does DCP's dcpext1
+instance never issue a single apcall for ~5 seconds after accepting
+`request_display`, while dcpext0 -- receiving the identical
+target/core/atc/die values, on either port -- immediately launches a
+real link-training burst every single time? Nothing checked so far
+(devicetree symmetry, apcall dispatch code, crossbar routing code, PHY
+sequencing) explains this; it looks like it comes down to something
+about the dcpext1 firmware instance itself, or some remaining
+driver-side difference in how it specifically gets initialized/talked
+to, not yet found.
+
 
 **Full parallel research sweep run at Oliver's request (8 independent
 agents, ~1.1M tokens): overturns the 0133/0134 "stuck FSM" premise, and
