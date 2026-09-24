@@ -52,7 +52,51 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0138 prepared: reconnect-after-replug fix)
+## Current state (as of 2026-09-24, candidate 0138 CONFIRMED on hardware: reconnect fix works)
+
+**0138 installed and definitively confirmed: the reconnect-after-replug bug is fixed.**
+`captures/2026-09-24-0138-boot-and-replug-kernel.log`. Sequence: monitor
+plugged in fresh after boot -> connects normally, `DPRX_DONE=1` at
+12:26:32 -> the (unrelated, see below) autonomous teardown hits at
+12:27:01 (exactly 29s later) -> Oliver unplugged and replugged the cable
+-> **`"DP IN tunnel routing: tunnel down"` appears for the first time in
+any capture this whole project** (12:27:22, apple.c's
+`apple_nhi_dp_tunnel_deactivate()` finally runs) -> a genuine second
+connect cycle fires on replug: `dcp_dptx_disconnect(port=0)`, `allocated
+Type-C DPTX PHY 2`, `display routed to Thunderbolt DP tunnel dpin0`,
+`dcp_dptx_connect(port=0)`, `DPTX request_display: call #2` (12:27:31) --
+**this never happened even once in 0136/0137's own replug test** -- and
+it reaches `DPRX_DONE=1` again at 12:27:32. The fix is proven, not just
+theorized.
+
+**Problem #1 (the autonomous teardown) recurred, on both connects, and
+is now much more precisely characterized: exactly 29 seconds after
+DPRX_DONE, to the second, both times** (12:26:32->12:27:01, and
+12:27:32->12:28:01). This rules out "random/environmental" and
+strengthens the firmware-fixed-timeout theory from the research: DCP
+firmware appears to give up on a link nobody has claimed with a real
+video mode after a fixed ~29s internal deadline. Still no picture
+(status quo unchanged there).
+
+**New, sharper lead for problem #1, not yet applied:** read
+`drivers/gpu/drm/apple/iomfb.c:230-316` in full. `dcp_hotplug()`'s
+comment (lines 291-295) states outright: "DCP defers link training until
+we set a display mode. But we set display modes from atomic_flush, so
+userspace needs to trigger a flush, or the CRTC gets no signal." The
+`dcp_retrain_active_crtc()` nudge exists specifically to force that
+flush for an already-active CRTC after a hotplug -- and is explicitly
+skipped for USB4/tunnel outputs (`!dcp_is_usb4_output(dcp)` at line 297).
+Untested complication found while reading this, not yet resolved:
+`dcp_retrain_active_crtc()` itself only acts `if (crtc->state->active)`
+(line 247) -- and Hyprland currently shows this connector's CRTC applying
+a `0x0` mode, so it's not yet confirmed whether that CRTC actually reads
+as "active" in DRM's own terms; simply removing the `dcp_is_usb4_output`
+gate might not be sufficient on its own. Needs verification before being
+turned into a candidate -- not done yet, pending research given this
+touches core atomic-modeset logic and deserves the same rigor as the
+last two fixes before spending another reboot cycle.
+
+## Prior state (candidate 0138 prepared: reconnect-after-replug fix)
 
 The second research workflow (5 angles + synthesis + 3 adversarial
 verifiers, all `refuted: false`) resolved both mysteries from 0137:
