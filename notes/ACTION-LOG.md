@@ -52,6 +52,38 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0145 prepared: the actual "doesn't reactivate after standby" root cause
+
+Oliver moved the hub from the right-back to the left-back USB-C port
+(different NHI, different ATC PHY instance: `703000000.phy` vs
+`f03000000.phy`) and the monitor stayed dark -- a genuinely different
+symptom from anything found earlier tonight: a continuous
+`SET_LINK_RATE 0xa`/`0x0` retrain loop, not a single silent stuck-at-0x0.
+
+Root cause, found live in dmesg: `atc_tunnel_start()`'s preflight
+refuses with `-EBUSY` while `ACIOPHY_AUSPLL_LOCK` still reads set (to
+avoid clobbering a PLL some other client has genuinely locked), but
+`atc_tunnel_restore()` never waited for that same bit to actually clear
+after tearing its own lock down -- it just wrote the restore registers
+and returned. DCP firmware retries a failed tunnel clock request
+roughly once a second; on the left-back port's PHY instance that
+landed inside the PLL's own unlock settling window every single time,
+so every retry saw its own just-torn-down lock as "still busy" and
+refused itself forever. Full detail in
+`notes/2026-09-24-0145-auspll-lock-retry-loop.md`.
+
+**This is very likely the actual mechanism behind "doesn't reactivate
+after standby" too** -- standby/wake and a live replug both go through
+the same disconnect -> `atc_tunnel_restore()` -> reconnect ->
+`atc_tunnel_start()` sequence, and any reconnect landing soon enough
+after teardown hits the same race regardless of what triggered it.
+
+Fix: `atc_tunnel_restore()` now polls for `ACIOPHY_AUSPLL_LOCK` to
+clear before returning, matching the poll-for-completion pattern
+already used elsewhere in this file. Only `phy-apple-atc.ko` changes.
+Rebuilt clean: zero errors, zero warnings.
+`python3 scripts/manage-0145.py check` passes. Not yet installed.
+
 ## 0144 prepared: PR-prep cleanup, one real bug fixed
 
 Preparing to turn the branch into a PR against `aurora-silicon/linux`
