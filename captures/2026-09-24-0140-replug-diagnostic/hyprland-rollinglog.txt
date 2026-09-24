@@ -1,0 +1,32 @@
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 800, y: 600] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 800, y: 600] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 800, y: 600] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: Swapchain: Reconfigured a swapchain to [Vector2D: x: 800, y: 600] XR24 of length 3
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 720, y: 576] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 720, y: 576] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 720, y: 576] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: Swapchain: Reconfigured a swapchain to [Vector2D: x: 720, y: 576] XR24 of length 3
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 720, y: 480] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 720, y: 480] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 720, y: 480] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: Swapchain: Reconfigured a swapchain to [Vector2D: x: 720, y: 480] XR24 of length 3
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 640, y: 480] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 640, y: 480] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: GBM: Allocated a new buffer with size [Vector2D: x: 640, y: 480] and format XR24 with modifier 0x0 : LINEAR
+DEBUG from aquamarine ]: Swapchain: Reconfigured a swapchain to [Vector2D: x: 640, y: 480] XR24 of length 3
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 
+DEBUG from aquamarine ]: atomic drm request: failed to commit: Invalid argument, flags: ATOMIC_ALLOW_MODESET ATOMIC_TEST_ONLY 

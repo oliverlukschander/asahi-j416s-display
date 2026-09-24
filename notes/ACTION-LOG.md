@@ -52,7 +52,37 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0140 prepared: found and fixed the actual EINVAL cause)
+## Current state (as of 2026-09-24, candidate 0140 tested: did NOT fix it -- 0141 adds ground-truth diagnostics)
+
+**0140 was installed and tested on real hardware. It did not work --
+Oliver rebooted, connected the monitor, and it stayed dark.** Direct
+before/after comparison confirms zero observable effect:
+
+- Live replug before 0140 vs. after 0140
+  (`captures/2026-09-24-live-replug-diagnostic/` vs.
+  `captures/2026-09-24-0140-replug-diagnostic/`): **byte-for-byte
+  identical** Aquamarine cascade (800x600/720x576/720x480/640x480, every
+  ATOMIC_TEST_ONLY commit failing with EINVAL).
+- `captures/2026-09-24-0140-boot-kernel.log`: `apple_plane_atomic_check()`
+  still fires only for the internal panel's plane, never once for the
+  tunnel connector, exactly as before 0140.
+
+So the `possible_crtcs`-exclusion theory (0140) either was wrong, or
+something else besides the specific exclusion removed is also keeping
+dcpext0's CRTC bit out of play. **Correcting the record: 0140 is
+confirmed NOT a fix**, despite being reported with high confidence.
+
+**0141 (prepared, not yet installed): pure diagnostics, no more guessing
+this round.** Logs the actual computed `possible_crtcs` mask (and each
+candidate DCP's contribution) at probe time in
+`apple_probe_typec_ports()`, and logs every reach of
+`dcp_crtc_atomic_check()` (the per-CRTC hook) to determine whether the
+generic DRM core even gets that far for dcpext0's CRTC during a failed
+commit, or rejects the pairing even earlier. Full detail in
+`notes/2026-09-24-0141-log-possible-crtcs-and-crtc-check-reach.md`.
+`check` already passes (no sudo).
+
+## Prior state (candidate 0140 prepared: found and fixed the actual EINVAL cause)
 
 **0139 installed and its diagnostics pinpointed the exact mechanism.**
 `captures/2026-09-24-0139-boot-kernel.log`: `apple_plane_atomic_check()`'s
