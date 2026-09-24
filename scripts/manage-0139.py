@@ -47,7 +47,7 @@ CANDIDATES = {
     'mux': (ROOT / 'src/mux/mux-apple-display-crossbar.ko',
             '813682df2cfa01b0ee83daac9824a37a3290bf234b389035e483da6c5044c3df'),
     'appledrm': (ROOT / 'src/appledrm/appledrm.ko',
-                '00586d9911053147882b9981dcc4f2fdf60f126b47bdf6e0030bd78c5ec30345'),
+                'b9a0715c8a69de37cb005f0ee794a285ad7566985c484973ed0e89a2df1bb49e'),
     'thunderbolt_apple': (ROOT / 'src/thunderbolt/thunderbolt_apple.ko',
                         'cfcd0fce5f999ab0ee082cb2680468996c96c9a143ace01d324aff6ee7268374'),
     'thunderbolt': (ROOT / 'src/thunderbolt/thunderbolt.ko',

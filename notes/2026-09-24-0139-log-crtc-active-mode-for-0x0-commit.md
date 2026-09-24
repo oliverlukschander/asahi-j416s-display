@@ -1,140 +1,108 @@
-# 0139: log crtc active/mode state for the stuck 0x0 tunnel commit (diagnostic only)
+# 0139: log every apple_plane_atomic_check() exit point (updated after native macOS comparison)
 
-## What 0138 confirmed on hardware
+## Superseded framing
 
-0138's reconnect fix is definitively proven: `"DP IN tunnel routing:
-tunnel down"` (never seen once before, in any capture this whole
-project) fired on unplug, and a genuine second connect cycle
-(`dcp_dptx_connect`/`request_display: call #2`/"display routed to
-Thunderbolt DP tunnel") fired on replug and reached `DPRX_DONE=1` again.
-See `captures/2026-09-24-0138-boot-and-replug-kernel.log` and the
-ACTION-LOG entry for full detail.
+This candidate started as a narrow diagnostic (log `crtc_state->active`
+in `dcp_hotplug()`/`dcp_crtc_atomic_modeset()`'s 0x0 bail-out) based on a
+research pass that concluded no atomic commit likely ever reaches the
+kernel for the tunnel connector at all. **That premise turned out to be
+wrong, overturned by direct evidence gathered after that research pass
+completed.** This note documents what actually happened and what 0139
+now contains.
 
-Still no picture. The ~29s autonomous teardown recurred, on **both**
-connects this boot, with exact, reproducible timing: `DPRX_DONE=1` at
-12:26:32 -> teardown at 12:27:01 (29s); `DPRX_DONE=1` at 12:27:32 ->
-teardown at 12:28:01 (29s again). This rules out randomness and confirms
-a fixed firmware-internal deadline, consistent with the prior research's
-conclusion that this specific figure isn't visible or fixable from this
-source tree.
+## What overturned it: native macOS comparison + a live Linux replug test
 
-## The lead investigated this candidate, and why it's NOT being turned into a fix
+Oliver ran the macOS capture script (from this session) natively on both
+his M4 MacBook Pro and, critically, the actual M2 Pro/T602x machine
+booted into macOS with the identical hub+monitor setup
+(`captures/macos-2026-09-24/{m2,m4}-logs/`). The M2 capture shows the
+entire path from physical tunnel activation to a fully committed,
+DCP-acknowledged real video mode taking **~575ms**, automatically:
+`hotPlug_notify` (13:08:10.258) -> WindowServer already has the full
+EDID/mode list by 13:08:10.284 -> `set_digital_out_mode: Modeset
+requested` at 13:08:10.300 (42ms after the hotplug notification) ->
+`plug gated: modeset received.` at 13:08:10.503. Confirmed on the M4
+(different chip) too, ~10ms end to end. This is a universal WindowServer
+behavior, not firmware-specific timing -- see the ACTION-LOG entry for
+the full timeline and citations.
 
-A third deep-research pass (5 angles + synthesis + 3 adversarial
-verifiers, all `refuted: false`) investigated the one real, previously
-un-applied lead: `drivers/gpu/drm/apple/iomfb.c`'s `dcp_hotplug()` has a
-retrain-nudge (`dcp_retrain_active_crtc()`) explicitly excluded for USB4
-outputs (`!dcp_is_usb4_output(dcp)`).
+Grepping every one of our own Linux captures (0136-0138) for the
+equivalent event (`set_digital_out_mode(`) found it never fires once for
+the tunnel connector -- consistent with either "no commit ever reaches
+the kernel" (the prior research's working assumption) or "a commit
+reaches the kernel and is silently rejected" (indistinguishable from
+kernel logs alone, as that research pass itself flagged).
 
-**Git archaeology (confirmed, not guessed):** the retrain-nudge itself
-was introduced unconditionally by commit `5c29016e3` ("recover Type-C
-displays across link interruptions"). The USB4 exclusion was bolted on
-three weeks later by commit `8fb643a0e` ("do not mark USB4 link BAD on
-fake scanout"), whose own message reads: *"Hyprland saw USB-3 1920x1080
-but stayed at 0x0@60. dcp_hotplug set LINK_STATUS_BAD because valid_mode
-was 0, so userspace never committed the mode. Skip that on USB4."* That
-commit was silencing a **debug shim that injected a fake 1920x1080 mode**
-(`e75d67fe9`, from the same day, written before AUX/DPRX ever worked on
-this fork). The big tunnel-routing port (`0dc9f5087`, which everything
-this session's fixes build on) deleted that fake-scanout scaffolding
-entirely but never touched `iomfb.c` or reconsidered this exclusion.
+**A live, zero-reboot test settled it.** With Oliver's help, did one more
+physical replug on the currently-running (0138-confirmed-working) kernel,
+capturing `hyprctl rollinglog` and `dmesg` immediately after
+(`captures/2026-09-24-live-replug-diagnostic/`). Hyprland's own log
+(`hyprland-rollinglog.txt`) shows Aquamarine (Hyprland's DRM backend)
+**actively trying**: it allocates a real GBM buffer and attempts a real
+`ATOMIC_ALLOW_MODESET | ATOMIC_TEST_ONLY` commit for a cascade of
+fallback resolutions -- 800x600, 720x576, 720x480, 640x480 -- and **every
+single one fails with "Invalid argument" (EINVAL)**. `dmesg.log` from the
+exact same window has zero atomic-related lines at all (confirmed
+`drm.debug` is already at its maximum bitmask, `1023`, but this driver's
+checks don't route through the dynamic-debug-gated `DRM_DEBUG_ATOMIC`
+macros, and dynamic_debug has no matching callsites for
+`drm_atomic`/`drm_mode_atomic` in this kernel build).
 
-**So the exclusion's history is an unrevisited leftover, not a
-documented hazard with the retrain mechanism itself** -- but two
-independent problems make removing it unlikely to help regardless,
-both traced through actual DRM atomic-commit semantics, not guessed:
+**So a commit does reach the kernel, repeatedly, and gets silently
+rejected.** The prior research's "likely no commit lands" conclusion was
+reasonable given what it could see, but is now confirmed wrong by direct
+evidence it didn't have access to.
 
-1. **`dcp_retrain_active_crtc()` never touches the mode.**
-   `drm_atomic_helper_reset_crtc()` (generic DRM core) only sets
-   `crtc_state->connectors_changed = true` and re-commits -- it never
-   resets `crtc_state->mode`. Traced the full chain:
-   `connectors_changed=true` forces `drm_atomic_crtc_needs_modeset()`
-   true, which re-invokes `apple_crtc_atomic_enable()` even though
-   `active` didn't change, which unconditionally calls
-   `dcp_crtc_atomic_modeset()` on `crtc_state->active` -- but that
-   function only replays whatever mode is **already stored**. If that
-   stored mode is the same 0x0 blob Hyprland is currently showing, the
-   replay lands right back on `iomfb.c`'s own silent 0x0 bail-out
-   (confirmed: `if (crtc_state->mode.hdisplay == 0 && ... vdisplay == 0)
-   return 0;`, no log, `dcp->valid_mode` never becomes true). Removing
-   the gate would very likely just replay the same nothing.
-2. **The gate wraps `DRM_MODE_LINK_STATUS_BAD` too, not just the
-   retrain call** -- confirmed by reading the diff of the commit that
-   added it. Narrowing the gate to only skip the retrain (keeping
-   `LINK_STATUS_BAD`) would reintroduce exactly the regression that
-   commit's own message documents happening on this same connector type.
+## Where the rejection likely is, and the new diagnostic
 
-**Confirmed from the log (grep over the whole 1872-line capture):**
-`set_digital_out_mode(` -- the only string `iomfb_modeset()` ever prints,
-and the only place `dcp->valid_mode` is ever set true -- appears exactly
-twice, both for `389c00000.dcp` (the internal panel). It never appears
-once for `289c00000.dcp` (the tunnel), in either connect cycle. Whatever
-decides this connector gets 0x0 has left no trace in the kernel log
-either way -- consistent with either "no atomic commit ever lands for
-this connector" or "one lands but is silently swallowed by the existing
-0x0 bail-out," which are indistinguishable from the log as it stands
-today.
+Read `apple_plane_atomic_check()` (`drivers/gpu/drm/apple/plane.c`) in
+full -- the plane-level atomic-check hook (a different function from
+`dcp_crtc_atomic_check()`, which the prior research correctly cleared:
+re-verified directly, it only ever returns non-zero on `dcp->crashed`,
+confirmed absent from every capture including this new one). Found:
+- A 32x32 minimum-plane-size guard that already logs
+  (`dev_err_once(..., "Plane operation would have crashed DCP!
+  Rejected!"...)`) -- but this string appears **zero times** in any
+  capture including the fresh one, so it's confirmed not the cause.
+- Two genuinely **silent** `-EINVAL` returns: an unaligned-pitch check
+  (`fb->pitches[i] & 63`) and a mismatched-multi-plane-object check.
+  Neither logs anything, matching the observed symptom exactly.
+- A generic `drm_atomic_helper_check_plane_state()` call whose own
+  failure is also not logged by this driver.
 
-Also corrected, for the record: my own framing of the teardown apcall
-sequence as literally "WILL_CHANGE_LINK_CONFIG -> SET_ACTIVE_LANE_COUNT(0)
--> SET_LINK_RATE(0x0) -> DID_CHANGE_LINK_CONFIG" doesn't match the log's
-actual printed strings -- `WILL_CHANGE_LINK_CONFIG` and
-`DID_CHANGE_LINK_CONFIG` never appear as literal text anywhere in the
-capture (the log only prints bare `APCALL 5`/`APCALL 12`/`APCALL 9`/
-`APCALL 6` numbers plus the named `SET_LINK_RATE 0x0`). The apcall-number
-mapping (from `dptxep.h`'s enum) is still the correct interpretation, but
-the research caught that I'd stated it as if those exact strings were
-logged, which they aren't.
+Added `dev_info()` at **every** exit point of `apple_plane_atomic_check()`
+-- the `crtc_state` error path, the generic check's failure (with mode
+and fb dimensions), the not-visible early return, both previously-silent
+`-EINVAL`s (now with the actual pitch/plane values that triggered them),
+and an explicit "OK" log on success. No control-flow change anywhere. If
+even the "OK" line never appears for the tunnel connector's plane, that
+would point further up (generic DRM core's own `drm_atomic_helper_check`,
+outside this driver -- a different, follow-up question). If a specific
+`-EINVAL` line does appear, it tells us exactly which check and why,
+directly.
 
-## The change (diagnostic only, no fix)
+## The change
 
-`drivers/gpu/drm/apple/iomfb.c`, two additive `dev_info()` lines, no
-control-flow change:
-
-- In `dcp_crtc_atomic_modeset()`'s existing 0x0 bail-out: log
-  `crtc_state->active` and `dcp_is_usb4_output(dcp)` right before the
-  early return. This fires synchronously with ANY atomic commit Hyprland
-  ever issues for this CRTC that reaches this function at all.
-- In `dcp_hotplug()`: log the connector's bound crtc pointer,
-  `crtc->state->active`, and the crtc's currently-stored mode dimensions,
-  unconditionally (not gated on USB4), right after the function's
-  existing entry log line.
-
-Same module set as 0138 otherwise (atc/mux/thunderbolt/thunderbolt_apple
-unchanged, only `appledrm.ko` rebuilt: `iomfb.o` recompiled).
+`drivers/gpu/drm/apple/plane.c`: instrumented, no behavior change.
+Combined into the same `appledrm.ko` as the original crtc-mode diagnostic
+(`drivers/gpu/drm/apple/iomfb.c`, unchanged from the first version of
+this candidate). Same module set as 0138 otherwise.
 
 ## Build verification
 
-`make` in `src/appledrm/` (vermagic `7.1.12-2.5-1-ARCH`): only `iomfb.o`
-recompiled, clean relink, no new warnings. `python3 scripts/manage-0139.py
-check` (no sudo) passes cleanly.
-
-## What this should tell us on the next capture
-
-If, after a fresh boot+replug, the new "0x0 commit for crtc active=%d
-(usb4=%d)" line **never appears** for `289c00000.dcp` even after
-manually forcing a mode via `hyprctl keyword monitor ...`, that
-confirms Hyprland genuinely never submits an atomic commit for this
-connector at all -- a userspace/wlroots-side problem, outside anything
-fixable in this kernel driver, and the next step would be investigating
-Hyprland/wlroots's own DRM backend rather than this tree. If it **does**
-fire, with `active=1`, that proves a real commit is landing with a
-degenerate mode, and the question becomes why Hyprland (or wlroots)
-picked 0x0 in the first place -- still likely a userspace question, but
-a more specific one. Either outcome is strictly more useful than
-guessing at a kernel-side fix on the current evidence.
+`make` in `src/appledrm/` (vermagic `7.1.12-2.5-1-ARCH`): only `plane.o`
+recompiled this round, clean, no new warnings. `python3
+scripts/manage-0139.py check` (no sudo) passes.
 
 ## Test plan
 
 1. Ask Oliver to run `sudo -n python3 scripts/manage-0139.py check` then
    `sudo -n python3 scripts/manage-0139.py install`.
 2. Ask Oliver to reboot with the monitor unplugged, then plug it in once
-   booted (matching 0138's own successful test sequence).
+   booted.
 3. Pull `dmesg --ctime`, save as `captures/2026-09-24-0139-boot-kernel.log`.
-   Check for the new "0x0 commit for crtc active=%d (usb4=%d)" and
-   "dcp_hotplug: crtc=... active=... mode=..." lines for `289c00000.dcp`,
-   both right after connect and (if convenient) after a manual
-   `hyprctl keyword monitor "USB-3,2560x1440@59.95,1728x0,1"` attempt
-   like the one tried earlier this session. As always, the only result
-   that actually counts is whether there's a picture -- only Oliver's own
-   visual confirmation counts as success.
+   Look for `apple_plane_atomic_check:` lines -- specifically whether the
+   final "OK" line ever appears, or which specific rejection fires (and
+   with what pitch/dimension values) for the tunnel connector's plane.
+   As always, the only result that actually counts is whether there's a
+   picture -- only Oliver's own visual confirmation counts as success.

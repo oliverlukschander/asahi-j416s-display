@@ -52,7 +52,36 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, MAJOR PIVOT: native macOS logs reframe the whole remaining problem)
+## Current state (as of 2026-09-24, live replug test: a real atomic commit IS reaching the kernel, and getting rejected)
+
+**The "Hyprland never even tries" framing is now further refined and
+partially overturned by a live, zero-reboot test.** With Oliver's help,
+did one more physical replug on the still-running (0138-confirmed)
+kernel, capturing `hyprctl rollinglog` and `dmesg` immediately after
+(`captures/2026-09-24-live-replug-diagnostic/`). Hyprland's own log shows
+Aquamarine (its DRM backend) actively cascading through fallback
+resolutions -- 800x600, 720x576, 720x480, 640x480 -- allocating a real GBM
+buffer and attempting a real `ATOMIC_ALLOW_MODESET | ATOMIC_TEST_ONLY`
+commit for each. **Every single one fails with EINVAL**, with zero
+kernel-side log trace (confirmed `drm.debug` is already maxed out, but
+this driver's checks don't route through dynamic-debug-gated macros).
+
+So a commit does reach the kernel, repeatedly, and gets silently
+rejected -- not "no commit ever lands," which was the prior research's
+working (and reasonable, given what it could see) assumption.
+
+**0139 updated accordingly**: instrumented every exit point of
+`apple_plane_atomic_check()` (`drivers/gpu/drm/apple/plane.c`) -- two
+previously-silent `-EINVAL` returns (unaligned pitch, mismatched
+multi-plane object), the generic scale/clip helper's failure, and an
+explicit "OK" log on success -- alongside the original crtc-mode
+diagnostic in `iomfb.c`. No behavior change. This should pinpoint exactly
+which check rejects every candidate mode, or point further up into
+generic DRM core if even the plane check passes. Full detail in
+`notes/2026-09-24-0139-log-crtc-active-mode-for-0x0-commit.md`. Not yet
+installed.
+
+## Prior state (MAJOR PIVOT: native macOS logs reframe the whole remaining problem)
 
 Oliver ran the new capture script (see below) natively on both his M4
 MacBook Pro and, crucially, on the actual M2 Pro/T602x machine booted
