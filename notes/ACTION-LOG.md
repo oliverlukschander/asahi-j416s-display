@@ -52,6 +52,57 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0147 prepared: auto-recover the display after standby, no replug needed
+
+Building on 0146 (Thunderbolt/ACIO now survives suspend, confirmed
+hardware): the display itself still didn't come back on its own after
+resume, only after a physical unplug/replug. Full evidence trail and
+risk analysis in `notes/2026-09-24-0147-typec-resume-reverify.md`.
+
+**Root cause**: `drivers/usb/typec/tipd/core.c`'s `tipd_resume()`
+(the Type-C PD controller/CD321x chip driver's own resume hook) never
+re-verifies the port's actual attach state -- confirmed by reading it
+in full, it only checks firmware liveness and re-arms the IRQ. A cable
+that was never physically removed generates no fresh attach event, so
+nothing re-drives `apple_cio_tbt_switch_set()`/`apple_cio_start()` --
+even though thunderbolt-core's own `tb_resume_noirq()` ->
+`tb_free_invalid_tunnels()` had already silently torn down the live DP
+tunnel underneath (confirmed generic, not Apple-specific, and not a
+bug by itself). A naive "just re-verify and re-assert" fix would be a
+no-op: `apple_cio_tbt_switch_set()`'s first check
+(`target_cable_info == current_cable_info`) short-circuits on the
+*same* cable, since `current_cable_info` is never touched by anything
+in the resume path.
+
+**The fix**: added `cd321x_resume_reverify()`, which reproduces a
+genuine unplug-then-replug entirely through the existing,
+already-hardware-validated code path -- calls the existing
+`.connect()` callback twice (once with `PLUG_PRESENT` cleared, a
+synthetic disconnect, then once with the real current status). Both
+land on the same debounced work item, coalescing into one run with
+`was_disconnected=true` and the correct final state -- the exact same
+`typec_thunderbolt_switch_set()` OFF-then-back-on sequence, through
+the exact same `apple_cio_tbt_switch_set()` guard, a real physical
+replug already exercises every time someone does it by hand. Wired
+only into the Apple-specific CD321x/sn201202x vtables; the plain TI
+chip variants (non-Apple hardware) are unaffected.
+
+**Stays clear of the watchdog-reset landmine** (documented in
+`apple_cio_tbt_switch_set()`: a direct nonzero-to-different-nonzero
+cable transition can crash ACIO and trigger an SoC watchdog reset) --
+the synthetic disconnect always drives through zero first, the same
+"clean start" shape the guard already treats as safe, because it's
+literally the same mechanism a real replug uses, not a new one. No new
+PM hook was added to `apple_cio_driver` itself (the more invasive
+option, considered and rejected for 0146 for the same reason).
+
+New module directory `src/typec/` (only `tps6598x-core.ko` needed
+rebuilding). Rebuilt clean: zero errors, zero warnings. Hash:
+`25a843beba6585d18c6a8af6f3a73ea862ec1d99ddb1f91a5606bf05302f5669`.
+`python3 scripts/manage-0147.py check` passes. Not yet installed --
+needs a real lid-close/s2idle/lid-open hardware test, same rigor as
+0145/0146, with the hub never touched by hand this time.
+
 ## 0146 prepared: retry the ACIO reset handshake on resume-time contention
 
 **A deeper, separate bug from 0145**: after a genuine s2idle
