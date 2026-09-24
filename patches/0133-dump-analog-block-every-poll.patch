@@ -1,0 +1,62 @@
+From 0a297a8c7cd1ffcde43070dd0f5058900eaad9d9 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 09:12:03 +0200
+Subject: [PATCH] thunderbolt: apple: dump the ACIO analog block on every
+ DP-aux poll
+
+Pure diagnostic, no behavior change: apple_dp_aux_work() already reads
+the DP IN adapter's CS0-13 registers every 500ms for up to 12s, but only
+dumped the deeper ACIO analog block (the actual AUX/DPCD serializer,
+"dpin0/1 analog") once, at the very end. Every host-side register fix
+tried so far (0129 set_hpd timeout, 0130 linkcfg timeout, 0131 HPD
+propagate, 0132 NO_AUTO_LT + video credits) leaves DCP's own ~5-second
+internal wait before DEVICE_NOT_RESPONDING/DEVICE_NOT_STARTED completely
+unchanged, and the analog block's own internal FSM state (offset +0x18)
+has never actually been observed moment-to-moment during that window --
+only a single post-mortem snapshot after the full 12s poll budget was
+already spent. This makes the dump unconditional on every poll instead,
+so the next capture shows whether that FSM (or anything else in the
+block) ever moves during DCP's own attempt, or stays static throughout --
+a genuinely new, currently-missing piece of evidence rather than another
+guess at a register to poke. Full reasoning in notes/2026-09-24-0133-*.md.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/apple.c | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index d18ecb8..db25b75 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -1039,13 +1039,23 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 		tb_port_warn(port, "DP IN DPRX_DONE=1 (ACIO AUX completed)\n");
+ 
+ 	anhi->dp_aux_polls++;
++	/*
++	 * Diagnostic (candidate 0133, see notes/2026-09-24-0133-*.md): dump
++	 * the analog block on every poll, not just the last one. Every
++	 * host-side register fix so far (0129-0132) leaves DCP's own
++	 * ~5-second internal wait before DEVICE_NOT_RESPONDING unchanged, so
++	 * the open question is what (if anything) the ACIO analog block
++	 * itself is doing during that window -- not yet observed, since the
++	 * only prior dump was a single snapshot after the whole 12s poll
++	 * budget was already spent.
++	 */
++	if (anhi->acio)
++		apple_dp_dump_analog(anhi->acio,
++				     dprx ? "dpin0 analog DPRX done" :
++					    "dpin0 analog poll");
+ 	if (!dprx && anhi->dp_aux_polls < APPLE_DP_AUX_POLL_MAX) {
+ 		mod_delayed_work(system_wq, &anhi->dp_aux_work,
+ 				 msecs_to_jiffies(APPLE_DP_AUX_POLL_MS));
+-	} else if (anhi->acio) {
+-		apple_dp_dump_analog(anhi->acio,
+-				     dprx ? "dpin0 analog DPRX done" :
+-					    "dpin0 analog at timeout");
+ 	}
+ 
+ out_unlock:
+-- 
+2.55.0
+

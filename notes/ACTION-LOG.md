@@ -52,7 +52,32 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0132 prepared)
+## Current state (as of 2026-09-24, candidate 0133 prepared)
+
+**0132 result: the full aurora-silicon/linux#8 Apple-host register
+comparison is now exhausted, without a picture.** `NO_AUTO_LT` applied
+with no error logged; the video-hop credit override was also added but
+turned out to target the wrong "credits" field entirely (`hop->nfc_
+credits`, port-level NFC buffer bookkeeping, not `hop.initial_credits`,
+what `apple_dp_dump_hop()` actually prints and what the reference's own
+fix meant -- correction recorded in `notes/2026-09-24-0133-*.md`; harmless,
+but not load-bearing for video, and irrelevant to AUX/DPRX regardless).
+Failure shape unchanged: ~5s of apcall silence, `DEVICE_NOT_RESPONDING`/
+`DEVICE_NOT_STARTED`, `linkcfg_completion` timeout, `DEACTIVATE`, retry,
+same again, `DPRX` never asserted. **Oliver confirmed: monitor still
+dark.** `captures/2026-09-24-0132-boot-kernel.log`.
+
+**The single strongest fact after eight dcpext1 connect attempts across
+five candidates (0128-0132): DCP's own internal wait before declaring
+`DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED` has stayed ~5 seconds,
+unmoved, through every host-side change tried** -- two different widened
+timeouts, HPD propagation, and the hub auto-training hold-off. Every
+Apple-host-specific piece of the hardware-tested reference's generic
+Thunderbolt code is now ported (the Titan Ridge LTTPR skip excepted, not
+applicable to this non-Titan-Ridge hub). Continuing to guess at more
+register pokes from the same source without new evidence would repeat
+exactly what this project's own standing safety rules exist to prevent.
+
 
 **0131 result: HPD propagation confirmed working, but not sufficient
 alone.** `"Apple: HPD propagated"` fired exactly where expected, before
@@ -152,13 +177,14 @@ mechanistic explanation for registers that never move. Full comparison
 and reasoning in
 `notes/2026-09-24-0131-pulse-hpd-propagation-apple-host-dpin.md`.
 
-**Candidate 0131 prepared, awaiting Oliver's install+reboot.** Ports just
-this one piece (the HPD-propagate pulse), gated on the same pre-existing
-`tb_nhi_is_apple()`/`tb_port_is_dpin()` checks so it's a no-op for any
-non-Apple host or non-DP-IN tunnel. Deliberately not ported yet: the
-reference's `NO_AUTO_LT` hold-off on the hub's DP OUT adapter, and its
-5-NFC-credit override for the DP IN video hop -- both real, both part of
-the same commit, held back to keep this one variable at a time.
+**Candidate 0133 prepared, awaiting Oliver's install+reboot.** Pure
+diagnostic, zero behavior change: dumps the ACIO analog block
+(`apple_dp_dump_analog()`, includes the still-undecoded FSM register at
+offset `+0x18`) on every 500ms poll for the full 12s budget instead of
+only once at the very end. This project has never actually observed
+whether that block's internal state changes *during* DCP's own ~5s
+attempt -- only a single post-mortem snapshot after it already gave up.
+Full reasoning in `notes/2026-09-24-0133-dump-analog-block-every-poll.md`.
 
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
 `DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
@@ -200,7 +226,7 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
 `captures/2026-09-24-0128-boot-kernel.log`,
 `captures/2026-09-24-0128-retry-boot-kernel.log`.
 
-## Recent candidates (0126-0132)
+## Recent candidates (0126-0133)
 
 - **0126** (drm/apple/dcp.c, one-line): stopped forcing the USB4 tunnel's
   ATC PHY into `PHY_MODE_DP` (both the reference PR and our own
@@ -253,29 +279,39 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   confirmed firing correctly, but `DPRX` still never asserted -- see
   "Current state" above. `notes/2026-09-24-0131-pulse-hpd-propagation-apple-host-dpin.md`.
 - **0132** (drivers/thunderbolt/tunnel.c + tb_regs.h): direct follow-up to
-  0131. Ports the other two pieces of the same hardware-tested commit,
+  0131. Ported the other two pieces of the same hardware-tested commit,
   held back from 0131 to keep that a single-variable test: `ADP_DP_CS_3_
   NO_AUTO_LT` holding the hub's DP OUT adapter off its own link training
-  while the tunnel is up, and a hardcoded 5 NFC credits for the DP IN
-  video hop (this project's own captures have shown 1/0 there every run).
-  Not yet installed/booted.
-  `notes/2026-09-24-0132-no-auto-lt-and-video-credits-apple-host.md`.
+  while the tunnel is up, and a video-hop credit override that turned out
+  to target the wrong "credits" field (see "Current state" above).
+  Installed and booted same day: `NO_AUTO_LT` applied cleanly, failure
+  shape unchanged, `DPRX` never asserted -- Oliver confirmed, monitor
+  still dark. Closes out the full aurora-silicon/linux#8 Apple-host
+  register comparison. `notes/2026-09-24-0132-no-auto-lt-and-video-credits-apple-host.md`.
+- **0133** (drivers/thunderbolt/apple.c, one function): pure diagnostic,
+  zero behavior change. Dumps the ACIO analog block on every 500ms poll
+  instead of only the last one, so the next capture shows whether that
+  block's internal state (including the still-undecoded FSM register at
+  `+0x18`) ever moves during DCP's own ~5s attempt, or stays static the
+  whole time -- evidence this project has never actually gathered. Not
+  yet installed/booted.
+  `notes/2026-09-24-0133-dump-analog-block-every-poll.md`.
 
-Currently installed and booted: candidate 0131
-(`thunderbolt.ko` SHA256 `fd5f7196144fc760459f71cac094d19901c554531e96ab6c2c68096c7e9b7465`,
-`thunderbolt_apple.ko` SHA256 `4bd921e908a491ddc3ccd2dfd701fb39ae015df2824f0ad9862ca8ca71ef314d`,
-`appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
-from 0130, hashes in `scripts/manage-0131.py`).
-
-Candidate 0132 built and verified, not yet installed
+Currently installed and booted: candidate 0132
 (`thunderbolt.ko` SHA256 `459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`,
-`thunderbolt_apple.ko` SHA256 `91caddc7f37594c6d326b01562656f12d99c8e0b67adc2bde84d3df75645368b`
-(source unchanged, rebuilt against the new tb_regs.h/tunnel.o),
+`thunderbolt_apple.ko` SHA256 `91caddc7f37594c6d326b01562656f12d99c8e0b67adc2bde84d3df75645368b`,
 `appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
-from 0130/0131, hashes in `scripts/manage-0132.py`). To arm and test,
+from 0130/0131, hashes in `scripts/manage-0132.py`).
+
+Candidate 0133 built and verified, not yet installed
+(`thunderbolt_apple.ko` SHA256 `c8ea01a483ad5ca6d025ec5f29ef83e51ba5e4357698c3e00b4f8f4129ac6493`,
+`thunderbolt.ko` unchanged from 0132
+(`459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`),
+`appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
+from 0130-0132, hashes in `scripts/manage-0133.py`). To arm and test,
 after this commit is pushed:
 ```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0132.py check
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0132.py install
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0133.py check
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0133.py install
 ```
 then reboot, and capture `dmesg`/`journalctl -k` from this boot.
