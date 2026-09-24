@@ -1,0 +1,96 @@
+From 537a298829c9d0820061d5d7479662876e105aff Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 12:58:02 +0200
+Subject: [PATCH] drm: apple: iomfb: log crtc active/mode state for a stuck 0x0
+ tunnel commit
+
+DP tunnel connect now reaches DPRX_DONE=1 and 4 lanes on the first
+attempt (0136/0137/0138), and a genuine reconnect now works after a
+physical replug (0138), but there is still no picture: Hyprland shows the
+tunnel connector ("BNQ BenQ LCD T4M01233019", correct EDID) stuck
+applying a 0x0 mode.
+
+A research pass into dcp_hotplug()'s existing !dcp_is_usb4_output(dcp)
+retrain-nudge exclusion found: (1) the exclusion's own history traces to
+an unrelated, since-deleted debug shim, not a documented hazard with the
+retrain path itself; but (2) removing it would very likely be a no-op
+regardless, traced through actual DRM atomic-commit semantics --
+drm_atomic_helper_reset_crtc() never touches crtc_state->mode, so
+replaying an already-active CRTC's state just re-triggers the same
+degenerate 0x0 commit dcp_crtc_atomic_modeset() already silently
+swallows; and (3) narrowing the gate would also reintroduce
+DRM_MODE_LINK_STATUS_BAD marking, which per that same exclusion's own
+commit message has direct precedent for making Hyprland refuse to commit
+a mode at all. No gate change proposed.
+
+Add two additive dev_info() diagnostics instead, no control-flow change:
+in dcp_crtc_atomic_modeset()'s existing 0x0 bail-out, log crtc_state->active
+and dcp_is_usb4_output(); in dcp_hotplug(), log the connector's bound
+crtc/active/mode unconditionally (not gated on usb4). Together these
+settle, on the next capture, whether a real-but-degenerate atomic commit
+is landing for this connector (active=1, 0x0 mode) versus no commit ever
+reaching it at all -- before spending a hardware reboot on a fix that
+might target the wrong layer entirely.
+
+Built and verified (make in src/appledrm/, vermagic
+7.1.12-2.5-1-ARCH, no new warnings; only iomfb.o recompiled).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/iomfb.c | 32 +++++++++++++++++++++++++++++++-
+ 1 file changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/iomfb.c b/drivers/gpu/drm/apple/iomfb.c
+index c2745c192..c447441f6 100644
+--- a/drivers/gpu/drm/apple/iomfb.c
++++ b/drivers/gpu/drm/apple/iomfb.c
+@@ -283,6 +283,23 @@ void dcp_hotplug(struct work_struct *work)
+ 	dev_info(dcp->dev, "%s() connected:%d valid_mode:%d nr_modes:%u\n", __func__,
+ 		 connector->connected, dcp->valid_mode, dcp->nr_modes);
+ 
++	/*
++	 * Diagnostic (candidate 0139): report whether this connector has an
++	 * active CRTC bound and what mode it already holds, unconditionally
++	 * (not gated on dcp_is_usb4_output), so a next capture can tell
++	 * whether Hyprland ever actually committed anything for a
++	 * USB4-tunneled connector versus never touching it at all.
++	 */
++	{
++		struct drm_crtc *crtc = connector->base.state ?
++					 connector->base.state->crtc : NULL;
++		dev_info(dcp->dev,
++			 "%s: crtc=%p active=%d mode=%dx%d\n", __func__,
++			 crtc, crtc && crtc->state ? crtc->state->active : -1,
++			 crtc && crtc->state ? crtc->state->mode.hdisplay : -1,
++			 crtc && crtc->state ? crtc->state->mode.vdisplay : -1);
++	}
++
+ 	if (!connector->connected) {
+ 		drm_edid_free(connector->drm_edid);
+ 		connector->drm_edid = NULL;
+@@ -516,8 +533,21 @@ int dcp_crtc_atomic_modeset(struct drm_crtc *crtc,
+ 		return 0;
+ 
+ 	/* ignore no mode, poweroff is handled elsewhere */
+-	if (crtc_state->mode.hdisplay == 0 && crtc_state->mode.vdisplay == 0)
++	if (crtc_state->mode.hdisplay == 0 && crtc_state->mode.vdisplay == 0) {
++		/*
++		 * Diagnostic (candidate 0139, see notes/2026-09-24-0139-*.md):
++		 * a USB4-tunneled connector has been observed stuck applying
++		 * a 0x0 mode with no picture. This silent bail-out is the
++		 * only place that would ever run for such a commit -- log
++		 * whether it's actually reached, and whether the CRTC is
++		 * active, to tell a real-but-degenerate atomic commit apart
++		 * from no commit ever landing at all.
++		 */
++		dev_info(dcp->dev,
++			 "%s: 0x0 commit for crtc active=%d (usb4=%d)\n",
++			 __func__, crtc_state->active, dcp_is_usb4_output(dcp));
+ 		return 0;
++	}
+ 
+ 	switch (dcp->fw_compat) {
+ 	case DCP_FIRMWARE_V_12_3:
+-- 
+2.55.0
+

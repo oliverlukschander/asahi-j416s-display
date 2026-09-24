@@ -52,7 +52,55 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0138 CONFIRMED on hardware: reconnect fix works)
+## Current state (as of 2026-09-24, candidate 0139 prepared: diagnostic only)
+
+A third research pass (5 angles + synthesis + 3 adversarial verifiers,
+all `refuted: false`) investigated the one remaining lead from 0138: does
+enabling `dcp_hotplug()`'s retrain-nudge for USB4 outputs
+(`!dcp_is_usb4_output(dcp)` exclusion) help the connector escape its stuck
+`0x0` mode? **Conclusion: no code fix proposed.** The exclusion's own
+history traces to an unrelated, since-deleted debug shim (not a
+documented hazard with the retrain path), but removing it would very
+likely be a no-op regardless -- traced through actual DRM atomic-commit
+semantics: the retrain path never touches the CRTC's stored mode, so
+replaying it just re-triggers the same silently-swallowed `0x0` commit.
+Narrowing the gate would also reintroduce a `LINK_STATUS_BAD` marking
+that has direct historical precedent for making Hyprland refuse to
+commit a mode entirely on this same connector. Confirmed from the log:
+`set_digital_out_mode(` (the only thing that ever sets `dcp->valid_mode
+= true`) appears twice, both for the internal panel, never once for the
+tunnel connector, in either connect cycle this boot.
+
+**0139 (prepared, not yet installed): two additive `dev_info()` lines in
+`iomfb.c`, no control-flow change**, to settle whether a real-but-
+degenerate atomic commit (`active=1`, `0x0` mode) is landing for the
+tunnel connector at all, versus no commit ever reaching it -- before
+spending a reboot on a fix that might target the wrong layer (kernel vs.
+Hyprland/wlroots) entirely. Full reasoning in
+`notes/2026-09-24-0139-log-crtc-active-mode-for-0x0-commit.md`. Same
+module set as 0138 except a rebuilt `appledrm.ko`.
+
+**Oliver raised a sharp, likely-load-bearing observation not yet
+followed up on**: the monitor works direct via HDMI, and works via a
+plain USB-C-to-HDMI adapter, but not through the OWC hub. The
+HDMI/adapter cases are almost certainly **DP alt-mode** (direct pin
+reassignment), not USB4/Thunderbolt DP tunneling at all -- an entirely
+different mechanism in the spec (tunneling requires a real USB4 fabric
+bandwidth-negotiation handshake between routers; alt-mode doesn't). If
+so, every "it works" case this whole project has is on a code path
+unrelated to the one actually failing, and offers no evidence about it.
+Proposed next step, not yet acted on: boot into macOS with the identical
+physical setup (hub + BenQ) and capture the unified log (`log
+stream`/`log show`, filtered to DCP/AVService/Thunderbolt subsystems) to
+see what apcall sequence and mode-commit timing macOS's own driver stack
+produces for the same real tunnel -- since the DCP firmware itself
+(`AppleCIOFirmware`) is the same closed Apple blob under both OSes, this
+could reveal whether macOS's WindowServer simply commits a real mode
+fast enough to beat the ~29s firmware deadline, which would reframe the
+open problem as a Linux/Hyprland/DRM hotplug-timing issue rather than a
+kernel driver bug.
+
+## Prior state (candidate 0138 CONFIRMED on hardware: reconnect fix works)
 
 **0138 installed and definitively confirmed: the reconnect-after-replug bug is fixed.**
 `captures/2026-09-24-0138-boot-and-replug-kernel.log`. Sequence: monitor
