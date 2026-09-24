@@ -52,7 +52,48 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0137 prepared: linkcfg_completion fix)
+## Current state (as of 2026-09-24, candidate 0137 installed: two new mysteries)
+
+**0137 installed and confirmed on hardware: both the crossbar fix (0136)
+and the linkcfg_completion fix (0137) work.** Right port, dcpext0 forced.
+`captures/2026-09-24-0137-boot-and-replug-kernel.log`: crossbar cleanly
+enables ("Switched dpin0 to dispext0,0", no `-22`), `SET_ACTIVE_LANE_COUNT
+4` accepted, **`DP IN DPRX_DONE=1` reached, and `dcp_dptx_connect` does
+NOT time out this time** -- `dcp_hotplug() connected:1 valid_mode:0
+nr_modes:22` logged normally, no timeout anywhere in the log. Hyprland
+picked up the connector live: `hyprctl monitors all` shows **"Monitor
+USB-3 (ID 1): description: BNQ BenQ LCD T4M01233019"** with the correct
+full EDID mode list (2560x1440@59.95 etc.) -- the real monitor, identified
+by name, for the first time this whole project.
+
+Still no picture (Oliver confirmed: nothing at all on the physical
+screen), and two new problems surfaced:
+
+1. **~29s after the successful connect (11:40:24-25), DCP autonomously
+   tears the link back down** -- a WILL_CHANGE_LINK_CONFIG /
+   SET_ACTIVE_LANE_COUNT(0) / SET_LINK_RATE(0x0) / DID_CHANGE_LINK_CONFIG
+   apcall sequence at 11:40:54, with **no error, warning, or timeout
+   logged anywhere**. This is why Hyprland's USB-3 monitor is stuck at a
+   placeholder `0x0` mode: the connector is known (EDID cached from the
+   original hotplug), but the underlying link isn't live any more.
+2. **A physical unplug/replug of the monitor cable (done live, no
+   reboot) does not re-arm DCP's software connect flow.** The Thunderbolt/
+   ACIO tunnel physically reforms after replug (new device enumeration,
+   "DP tunnel paths up" at 11:46:14) but this time hits "DPRX timeout,
+   keeping DP tunnel" at 11:46:26 -- and critically, `grep`ing the whole
+   log for `dcp_dptx_connect(port`, `DPTX request_display`, and `display
+   routed to Thunderbolt DP tunnel` shows each exactly once, only at the
+   original 11:40:24 connect, never again after the replug. DCP's own
+   connect flow (`apple_dcp_tb_dp_tunnel()` -> `dcp_typec_route_activate()`
+   -> `dcp_dptx_connect()`) was not re-entered despite the tunnel
+   reforming at the hardware level.
+
+A second research workflow (5 investigation angles + synthesis + 3
+adversarial verifiers, same methodology as 0135/0136/0137's own research)
+is running now to root-cause both. `manage-0137.py` stays installed and
+armed; no new candidate config change made yet pending that result.
+
+## Prior state (candidate 0137 prepared: linkcfg_completion fix)
 
 **0136 installed and confirmed on hardware: the `-22` crossbar failure is
 gone.** `captures/2026-09-24-0136-boot-kernel.log`: `f0304c000.mux:

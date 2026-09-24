@@ -1,0 +1,1724 @@
+[Thu Sep 24 11:39:11 2026] Booting Linux on physical CPU 0x0000000000 [0x611f0340]
+[Thu Sep 24 11:39:11 2026] Linux version 7.1.12-2.5-1-ARCH (linux-aurora@archlinux) (gcc (GCC) 16.1.1 20260430, GNU ld (GNU Binutils) 2.46.0) #1 SMP PREEMPT_DYNAMIC Sun, 20 Sep 2026 02:52:44 +0000
+[Thu Sep 24 11:39:11 2026] random: crng init done
+[Thu Sep 24 11:39:11 2026] Machine model: Apple MacBook Pro (16-inch, M2 Pro, 2023)
+[Thu Sep 24 11:39:11 2026] efi: EFI v2.11 by Das U-Boot
+[Thu Sep 24 11:39:11 2026] efi: RTPROP=0x107d4312040 SMBIOS 3.0=0x107d53c2000 INITRD=0x107d42f8040 MEMRESERVE=0x107d42f7040 
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x000001000196c000..0x0000010001c7ffff (3152 KiB) nomap non-reusable asc-firmware@1000196c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000100009fc000..0x000001000132ffff (9424 KiB) nomap non-reusable asc-firmware@100009fc000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d9478000..0x00000107d947bfff (16 KiB) nomap non-reusable sio-firmware-data@107d9478000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d947c000..0x00000107d947ffff (16 KiB) nomap non-reusable sio-firmware-data@107d947c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d9480000..0x00000107d949ffff (128 KiB) nomap non-reusable sio-firmware-data@107d9480000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d94a0000..0x00000107d94a3fff (16 KiB) nomap non-reusable sio-firmware-data@107d94a0000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x0000010001d48000..0x0000010001e3ffff (992 KiB) nomap non-reusable asc-firmware@10001d48000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000100013e4000..0x00000100013fffff (112 KiB) nomap non-reusable asc-firmware@100013e4000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107ddc80000..0x00000107e4f43fff (117520 KiB) nomap non-reusable framebuffer@107ddc80000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107db37c000..0x00000107dc37bfff (16384 KiB) nomap non-reusable asc-firmware@107db37c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107dc37c000..0x00000107dc67bfff (3072 KiB) nomap non-reusable asc-firmware@107dc37c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107dc67c000..0x00000107dd67bfff (16384 KiB) nomap non-reusable asc-firmware@107dc67c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107dd67c000..0x00000107dd97bfff (3072 KiB) nomap non-reusable asc-firmware@107dd67c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107ddc7c000..0x00000107ddc7ffff (16 KiB) nomap non-reusable region157@107ddc7c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107e4f44000..0x00000107e5003fff (768 KiB) nomap non-reusable region95@107e4f44000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107e5004000..0x00000107e5363fff (3456 KiB) nomap non-reusable region94@107e5004000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107e5364000..0x00000107e6363fff (16384 KiB) nomap non-reusable region57@107e5364000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107dd97c000..0x00000107ddc7bfff (3072 KiB) nomap non-reusable dcp_data@107dd97c000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x0000010000230000..0x0000010000833fff (6160 KiB) nomap non-reusable asc-firmware@10000230000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d94c8000..0x00000107d94cbfff (16 KiB) map non-reusable flash@107d94c8000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x0000010003eb0000..0x0000010003f27fff (480 KiB) map non-reusable flash@10003eb0000
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d94a4000..0x00000107d94bbfff (96 KiB) map non-reusable globals
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d94c0000..0x00000107d94c7fff (32 KiB) map non-reusable hw-cal-a
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d94bc000..0x00000107d94bffff (16 KiB) map non-reusable hw-cal-b
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107fff70000..0x00000107fff73fff (16 KiB) map non-reusable uat-handoff
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107fff78000..0x00000107fffb7fff (256 KiB) map non-reusable uat-pagetables
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107fffb8000..0x00000107fffbbfff (16 KiB) map non-reusable uat-ttbs
+[Thu Sep 24 11:39:11 2026] OF: reserved mem: 0x00000107d94cc000..0x00000107d9783fff (2784 KiB) nomap non-reusable isp-heap
+[Thu Sep 24 11:39:11 2026] cma: Reserved 64 MiB at 0x0000010008000000
+[Thu Sep 24 11:39:11 2026] Zone ranges:
+[Thu Sep 24 11:39:11 2026]   DMA      [mem 0x0000010000230000-0x00000107fffbbfff]
+[Thu Sep 24 11:39:11 2026]   DMA32    empty
+[Thu Sep 24 11:39:11 2026]   Normal   empty
+[Thu Sep 24 11:39:11 2026] Movable zone start for each node
+[Thu Sep 24 11:39:11 2026] Early memory node ranges
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010000230000-0x0000010000833fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000100009fc000-0x000001000132ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000100013e4000-0x00000100013fffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x000001000196c000-0x0000010001c7ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010001d48000-0x0000010001e3ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010001e40000-0x0000010003f7ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010003f80000-0x000001000408ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010004090000-0x0000010006d13fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d14000-0x0000010006d23fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d24000-0x0000010006d27fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d28000-0x0000010006d37fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d38000-0x0000010006d3bfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d3c000-0x0000010006d4bfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d4c000-0x0000010006d4ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d50000-0x0000010006d5ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d60000-0x0000010006d63fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d64000-0x0000010006d73fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d74000-0x0000010006d77fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d78000-0x0000010006d87fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d88000-0x0000010006d8bfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d8c000-0x0000010006d9bfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006d9c000-0x0000010006d9ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006da0000-0x0000010006daffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006db0000-0x0000010006db3fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006db4000-0x0000010006dc3fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006dc4000-0x0000010006dc7fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006dc8000-0x0000010006dd7fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006dd8000-0x0000010006ddbfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006ddc000-0x0000010006debfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006dec000-0x0000010006deffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006df0000-0x0000010006e23fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x0000010006e24000-0x000001073b3fffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x000001073b400000-0x000001073b403fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x000001073b404000-0x00000107d430ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d4310000-0x00000107d4337fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d4338000-0x00000107d53bffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d53c0000-0x00000107d53c3fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d53c4000-0x00000107d938ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d9390000-0x00000107d939ffff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d93a0000-0x00000107d9473fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d9478000-0x00000107d94a3fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d94a4000-0x00000107d94cbfff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107d94cc000-0x00000107d9783fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107db37c000-0x00000107e6363fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107fff70000-0x00000107fff73fff]
+[Thu Sep 24 11:39:11 2026]   node   0: [mem 0x00000107fff78000-0x00000107fffbbfff]
+[Thu Sep 24 11:39:11 2026] Initmem setup node 0 [mem 0x0000010000230000-0x00000107fffbbfff]
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 140 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 114 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 45 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 347 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 50 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 1 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 1790 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 9987 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 1 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] On node 0, zone DMA: 17 pages in unavailable ranges
+[Thu Sep 24 11:39:11 2026] percpu: Embedded 9 pages/cpu s103320 r8192 d35944 u147456
+[Thu Sep 24 11:39:11 2026] pcpu-alloc: s103320 r8192 d35944 u147456 alloc=9*16384
+[Thu Sep 24 11:39:11 2026] pcpu-alloc: [0] 00 [0] 01 [0] 02 [0] 03 [0] 04 [0] 05 [0] 06 [0] 07 
+[Thu Sep 24 11:39:11 2026] pcpu-alloc: [0] 08 [0] 09 [0] 10 [0] 11 
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU0
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Address authentication (IMP DEF algorithm)
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Virtualization Host Extensions
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Spectre-v4
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Spectre-BHB
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Apple IMPDEF PMUv3 Traps
+[Thu Sep 24 11:39:11 2026] alternatives: applying boot alternatives
+[Thu Sep 24 11:39:11 2026] Kernel command line: BOOT_IMAGE=/vmlinuz-linux-aurora root=UUID=725346d2-f127-47bc-b464-9dd46155e8d6 rw rootflags=subvol=@ cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards loglevel=3 quiet splash
+[Thu Sep 24 11:39:11 2026] Unknown kernel command line parameters "splash cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards", will be passed to user space.
+[Thu Sep 24 11:39:11 2026] printk: log buffer data + meta data: 262144 + 1114112 = 1376256 bytes
+[Thu Sep 24 11:39:11 2026] Dentry cache hash table entries: 4194304 (order: 11, 33554432 bytes, linear)
+[Thu Sep 24 11:39:11 2026] Inode-cache hash table entries: 2097152 (order: 10, 16777216 bytes, linear)
+[Thu Sep 24 11:39:11 2026] software IO TLB: SWIOTLB bounce buffer size adjusted to 31MB
+[Thu Sep 24 11:39:11 2026] software IO TLB: area num 16.
+[Thu Sep 24 11:39:11 2026] software IO TLB: SWIOTLB bounce buffer size roundup to 32MB
+[Thu Sep 24 11:39:11 2026] software IO TLB: mapped [mem 0x00000107d228c000-0x00000107d428c000] (32MB)
+[Thu Sep 24 11:39:11 2026] Built 1 zonelists, mobility grouping on.  Total pages: 2068276
+[Thu Sep 24 11:39:11 2026] mem auto-init: stack:off, heap alloc:on, heap free:off
+[Thu Sep 24 11:39:11 2026] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=12, Nodes=1
+[Thu Sep 24 11:39:11 2026] Dynamic Preempt: full
+[Thu Sep 24 11:39:11 2026] rcu: Preemptible hierarchical RCU implementation.
+[Thu Sep 24 11:39:11 2026] rcu: 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=12.
+[Thu Sep 24 11:39:11 2026] 	Trampoline variant of Tasks RCU enabled.
+[Thu Sep 24 11:39:11 2026] 	Tracing variant of Tasks RCU enabled.
+[Thu Sep 24 11:39:11 2026] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[Thu Sep 24 11:39:11 2026] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=12
+[Thu Sep 24 11:39:11 2026] RCU Tasks: Setting shift to 4 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=12.
+[Thu Sep 24 11:39:11 2026] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[Thu Sep 24 11:39:11 2026] Root IRQ handler: aic_handle_irq
+[Thu Sep 24 11:39:11 2026] Root FIQ handler: aic_handle_fiq
+[Thu Sep 24 11:39:11 2026] irq_apple_aic: Using Fast IPIs
+[Thu Sep 24 11:39:11 2026] irq_apple_aic: Initialized with 1961/4096 IRQs * 1/8 die(s), 7 FIQs, 32 vIPIs
+[Thu Sep 24 11:39:11 2026] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[Thu Sep 24 11:39:11 2026] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[Thu Sep 24 11:39:11 2026] arch_timer: cp15 timer running at 24.00MHz (phys).
+[Thu Sep 24 11:39:11 2026] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x588fe9dc0, max_idle_ns: 440795202592 ns
+[Thu Sep 24 11:39:11 2026] sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 4398046511097ns
+[Thu Sep 24 11:39:11 2026] Console: colour dummy device 80x25
+[Thu Sep 24 11:39:11 2026] printk: legacy console [tty0] enabled
+[Thu Sep 24 11:39:11 2026] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=24000)
+[Thu Sep 24 11:39:11 2026] pid_max: default: 32768 minimum: 301
+[Thu Sep 24 11:39:11 2026] landlock: Up and running.
+[Thu Sep 24 11:39:11 2026] Yama: becoming mindful.
+[Thu Sep 24 11:39:11 2026] AppArmor: AppArmor initialized
+[Thu Sep 24 11:39:11 2026] Mount-cache hash table entries: 65536 (order: 5, 524288 bytes, linear)
+[Thu Sep 24 11:39:11 2026] Mountpoint-cache hash table entries: 65536 (order: 5, 524288 bytes, linear)
+[Thu Sep 24 11:39:11 2026] VFS: Finished mounting rootfs on nullfs
+[Thu Sep 24 11:39:11 2026] rcu: Hierarchical SRCU implementation.
+[Thu Sep 24 11:39:11 2026] rcu: 	Max phase no-delay instances is 400.
+[Thu Sep 24 11:39:11 2026] Timer migration: 2 hierarchy levels; 8 children per group; 2 crossnode level
+[Thu Sep 24 11:39:11 2026] Remapping and enabling EFI services.
+[Thu Sep 24 11:39:11 2026] smp: Bringing up secondary CPUs ...
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU1
+[Thu Sep 24 11:39:11 2026] CPU1: Booted secondary processor 0x0000000001 [0x611f0340]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU2
+[Thu Sep 24 11:39:11 2026] CPU2: Booted secondary processor 0x0000000002 [0x611f0340]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU3
+[Thu Sep 24 11:39:11 2026] CPU3: Booted secondary processor 0x0000000003 [0x611f0340]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU4
+[Thu Sep 24 11:39:11 2026] CPU4: Booted secondary processor 0x0000010100 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU5
+[Thu Sep 24 11:39:11 2026] CPU5: Booted secondary processor 0x0000010101 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU6
+[Thu Sep 24 11:39:11 2026] CPU6: Booted secondary processor 0x0000010102 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU7
+[Thu Sep 24 11:39:11 2026] CPU7: Booted secondary processor 0x0000010103 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU8
+[Thu Sep 24 11:39:11 2026] CPU8: Booted secondary processor 0x0000010200 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU9
+[Thu Sep 24 11:39:11 2026] CPU9: Booted secondary processor 0x0000010201 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU10
+[Thu Sep 24 11:39:11 2026] CPU10: Booted secondary processor 0x0000010202 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] Detected PIPT I-cache on CPU11
+[Thu Sep 24 11:39:11 2026] CPU11: Booted secondary processor 0x0000010203 [0x611f0350]
+[Thu Sep 24 11:39:11 2026] smp: Brought up 1 node, 12 CPUs
+[Thu Sep 24 11:39:11 2026] SMP: Total of 12 processors activated.
+[Thu Sep 24 11:39:11 2026] CPU: All CPU(s) started at EL2
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Branch Target Identification
+[Thu Sep 24 11:39:11 2026] CPU features: detected: ARMv8.4 Translation Table Level
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Common not Private translations
+[Thu Sep 24 11:39:11 2026] CPU features: detected: CRC32 instructions
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Data independent timing control (DIT)
+[Thu Sep 24 11:39:11 2026] CPU features: detected: E0PD
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Enhanced Counter Virtualization
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Enhanced Virtualization Traps
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Fine Grained Traps
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Generic authentication (IMP DEF algorithm)
+[Thu Sep 24 11:39:11 2026] CPU features: detected: RCpc load-acquire (LDAPR)
+[Thu Sep 24 11:39:11 2026] CPU features: detected: LSE atomic instructions
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Privileged Access Never
+[Thu Sep 24 11:39:11 2026] CPU features: detected: RAS Extension Support
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Speculation barrier (SB)
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Stage-2 Force Write-Back
+[Thu Sep 24 11:39:11 2026] CPU features: detected: TLB range maintenance instructions
+[Thu Sep 24 11:39:11 2026] CPU features: detected: XNX
+[Thu Sep 24 11:39:11 2026] CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[Thu Sep 24 11:39:11 2026] alternatives: applying system-wide alternatives
+[Thu Sep 24 11:39:11 2026] CPU features: detected: ACTLR virtualization (architectural?)
+[Thu Sep 24 11:39:11 2026] CPU features: detected: ICV_DIR_EL1 trapping
+[Thu Sep 24 11:39:11 2026] CPU features: detected: TSO memory model (Apple)
+[Thu Sep 24 11:39:11 2026] Memory: 32517168K/33092416K available (16192K kernel code, 2850K rwdata, 11904K rodata, 2048K init, 664K bss, 496576K reserved, 65536K cma-reserved)
+[Thu Sep 24 11:39:11 2026] devtmpfs: initialized
+[Thu Sep 24 11:39:11 2026] posixtimers hash table entries: 8192 (order: 3, 131072 bytes, linear)
+[Thu Sep 24 11:39:11 2026] futex hash table entries: 4096 (262144 bytes on 1 NUMA nodes, total 256 KiB, linear).
+[Thu Sep 24 11:39:11 2026] 6060 pages in range for non-PLT usage
+[Thu Sep 24 11:39:11 2026] 128940 pages in range for PLT usage
+[Thu Sep 24 11:39:11 2026] DMI: SMBIOS 3.7.0 present.
+[Thu Sep 24 11:39:11 2026] DMI: Apple Inc. Mac14,10/J416s, BIOS 2026.07 07/01/2026
+[Thu Sep 24 11:39:11 2026] DMI: Memory slots populated: 1/1
+[Thu Sep 24 11:39:11 2026] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[Thu Sep 24 11:39:11 2026] DMA: preallocated 4096 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[Thu Sep 24 11:39:11 2026] audit: initializing netlink subsys (disabled)
+[Thu Sep 24 11:39:11 2026] audit: type=2000 audit(0.011:1): state=initialized audit_enabled=0 res=1
+[Thu Sep 24 11:39:11 2026] thermal_sys: Registered thermal governor 'fair_share'
+[Thu Sep 24 11:39:11 2026] thermal_sys: Registered thermal governor 'bang_bang'
+[Thu Sep 24 11:39:11 2026] thermal_sys: Registered thermal governor 'step_wise'
+[Thu Sep 24 11:39:11 2026] thermal_sys: Registered thermal governor 'user_space'
+[Thu Sep 24 11:39:11 2026] thermal_sys: Registered thermal governor 'power_allocator'
+[Thu Sep 24 11:39:11 2026] cpuidle: using governor ladder
+[Thu Sep 24 11:39:11 2026] cpuidle: using governor menu
+[Thu Sep 24 11:39:11 2026] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[Thu Sep 24 11:39:11 2026] ASID allocator initialised with 256 entries
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@0
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@0
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@1
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@1
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@2
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@2
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[Thu Sep 24 11:39:11 2026] /soc/pcie@580000000: Fixed dependency cycle(s) with /soc/pcie@580000000
+[Thu Sep 24 11:39:11 2026] /soc/pcie@580000000/pci@0,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@0,0
+[Thu Sep 24 11:39:11 2026] /soc/pcie@580000000/pci@1,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@1,0
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b504000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@1303000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b508000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/audio-controller@39b504000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[Thu Sep 24 11:39:11 2026] /soc/audio-controller@39b508000: Fixed dependency cycle(s) with /soc/dcp@315c00000
+[Thu Sep 24 11:39:11 2026] /soc/cio@701ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-0/pcie@730000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-0/pcie@730000000
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-0/pcie@730000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-0/pcie@730000000/pci@0,0
+[Thu Sep 24 11:39:11 2026] /soc/usb@702280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb@702280000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@703000000: Fixed dependency cycle(s) with /soc/usb@702280000
+[Thu Sep 24 11:39:11 2026] /soc/phy@703000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/cio@b01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-1/pcie@b30000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-1/pcie@b30000000
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-1/pcie@b30000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-1/pcie@b30000000/pci@0,0
+[Thu Sep 24 11:39:11 2026] /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/usb@b02280000
+[Thu Sep 24 11:39:11 2026] /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/cio@f01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-2/pcie@f30000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-2/pcie@f30000000
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-2/pcie@f30000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-2/pcie@f30000000/pci@0,0
+[Thu Sep 24 11:39:11 2026] /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/usb@f02280000
+[Thu Sep 24 11:39:11 2026] /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-3/pcie@1330000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-3/pcie@1330000000
+[Thu Sep 24 11:39:11 2026] /soc/usb4-pcie-tunnel-3/pcie@1330000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-3/pcie@1330000000/pci@0,0
+[Thu Sep 24 11:39:11 2026] /soc/phy@1303000000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@0
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@0
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@1
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@1
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@2
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@2
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[Thu Sep 24 11:39:11 2026] /soc/pcie@580000000: Fixed dependency cycle(s) with /soc/pcie@580000000
+[Thu Sep 24 11:39:11 2026] /soc/pcie@580000000/pci@0,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@0,0
+[Thu Sep 24 11:39:11 2026] /soc/pcie@580000000/pci@1,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@1,0
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b504000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@1303000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b508000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b504000
+[Thu Sep 24 11:39:11 2026] /soc/audio-controller@39b504000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b508000
+[Thu Sep 24 11:39:11 2026] /soc/audio-controller@39b508000: Fixed dependency cycle(s) with /soc/dcp@315c00000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[Thu Sep 24 11:39:11 2026] /soc/cio@701ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[Thu Sep 24 11:39:11 2026] /soc/usb@702280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb@702280000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/usb@702280000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@703000000: Fixed dependency cycle(s) with /soc/usb@702280000
+[Thu Sep 24 11:39:11 2026] /soc/phy@703000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[Thu Sep 24 11:39:11 2026] /soc/cio@b01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[Thu Sep 24 11:39:11 2026] /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/usb@b02280000
+[Thu Sep 24 11:39:11 2026] /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[Thu Sep 24 11:39:11 2026] /soc/cio@f01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[Thu Sep 24 11:39:11 2026] /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/usb@f02280000
+[Thu Sep 24 11:39:11 2026] /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[Thu Sep 24 11:39:11 2026] /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@1303000000
+[Thu Sep 24 11:39:11 2026] /soc/phy@1303000000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[Thu Sep 24 11:39:11 2026] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[Thu Sep 24 11:39:11 2026] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[Thu Sep 24 11:39:11 2026] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[Thu Sep 24 11:39:11 2026] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[Thu Sep 24 11:39:11 2026] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[Thu Sep 24 11:39:11 2026] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[Thu Sep 24 11:39:11 2026] iommu: Default domain type: Translated
+[Thu Sep 24 11:39:11 2026] iommu: DMA domain TLB invalidation policy: strict mode
+[Thu Sep 24 11:39:12 2026] SCSI subsystem initialized
+[Thu Sep 24 11:39:12 2026] usbcore: registered new interface driver usbfs
+[Thu Sep 24 11:39:12 2026] usbcore: registered new interface driver hub
+[Thu Sep 24 11:39:12 2026] usbcore: registered new device driver usb
+[Thu Sep 24 11:39:12 2026] pps_core: LinuxPPS API ver. 1 registered
+[Thu Sep 24 11:39:12 2026] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[Thu Sep 24 11:39:12 2026] efivars: Registered efivars operations
+[Thu Sep 24 11:39:12 2026] Advanced Linux Sound Architecture Driver Initialized.
+[Thu Sep 24 11:39:12 2026] NetLabel: Initializing
+[Thu Sep 24 11:39:12 2026] NetLabel:  domain hash size = 128
+[Thu Sep 24 11:39:12 2026] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[Thu Sep 24 11:39:12 2026] NetLabel:  unlabeled traffic allowed by default
+[Thu Sep 24 11:39:12 2026] vgaarb: loaded
+[Thu Sep 24 11:39:12 2026] clocksource: Switched to clocksource arch_sys_counter
+[Thu Sep 24 11:39:12 2026] VFS: Disk quotas dquot_6.6.0
+[Thu Sep 24 11:39:12 2026] VFS: Dquot-cache hash table entries: 2048 (order 0, 16384 bytes)
+[Thu Sep 24 11:39:12 2026] AppArmor: AppArmor Filesystem Enabled
+[Thu Sep 24 11:39:12 2026] NET: Registered PF_INET protocol family
+[Thu Sep 24 11:39:12 2026] IP idents hash table entries: 262144 (order: 7, 2097152 bytes, linear)
+[Thu Sep 24 11:39:12 2026] tcp_listen_portaddr_hash hash table entries: 16384 (order: 4, 262144 bytes, linear)
+[Thu Sep 24 11:39:12 2026] Table-perturb hash table entries: 65536 (order: 4, 262144 bytes, linear)
+[Thu Sep 24 11:39:12 2026] TCP established hash table entries: 262144 (order: 7, 2097152 bytes, linear)
+[Thu Sep 24 11:39:12 2026] TCP bind hash table entries: 65536 (order: 7, 2097152 bytes, linear)
+[Thu Sep 24 11:39:12 2026] TCP: Hash tables configured (established 262144 bind 65536)
+[Thu Sep 24 11:39:12 2026] MPTCP token hash table entries: 32768 (order: 6, 786432 bytes, linear)
+[Thu Sep 24 11:39:12 2026] UDP hash table entries: 16384 (order: 6, 1048576 bytes, linear)
+[Thu Sep 24 11:39:12 2026] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[Thu Sep 24 11:39:12 2026] RPC: Registered named UNIX socket transport module.
+[Thu Sep 24 11:39:12 2026] RPC: Registered udp transport module.
+[Thu Sep 24 11:39:12 2026] RPC: Registered tcp transport module.
+[Thu Sep 24 11:39:12 2026] RPC: Registered tcp-with-tls transport module.
+[Thu Sep 24 11:39:12 2026] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[Thu Sep 24 11:39:12 2026] PCI: CLS 0 bytes, default 64
+[Thu Sep 24 11:39:12 2026] Trying to unpack rootfs image as initramfs...
+[Thu Sep 24 11:39:12 2026] kvm [1]: nv: 570 coarse grained trap handlers
+[Thu Sep 24 11:39:12 2026] kvm [1]: nv: 710 fine grained trap handlers
+[Thu Sep 24 11:39:12 2026] kvm [1]: IPA Size Limit: 42 bits
+[Thu Sep 24 11:39:12 2026] kvm [1]: Non-architectural vgic, tainting kernel
+[Thu Sep 24 11:39:12 2026] kvm [1]: GICv3: no GICV resource entry
+[Thu Sep 24 11:39:12 2026] kvm [1]: disabling GICv2 emulation
+[Thu Sep 24 11:39:12 2026] kvm [1]: GICv3 with broken locally generated SEI
+[Thu Sep 24 11:39:12 2026] kvm [1]: GICv3 sysreg trapping enabled ([G0G1D], reduced performance)
+[Thu Sep 24 11:39:12 2026] kvm [1]: GIC system register CPU interface enabled
+[Thu Sep 24 11:39:12 2026] kvm [1]: vgic interrupt IRQ33
+[Thu Sep 24 11:39:12 2026] kvm [1]: VHE mode initialized successfully
+[Thu Sep 24 11:39:12 2026] Initialise system trusted keyrings
+[Thu Sep 24 11:39:12 2026] workingset: timestamp_bits=46 (anon: 42) max_order=21 bucket_order=0 (anon: 0)
+[Thu Sep 24 11:39:12 2026] NFS: Registering the id_resolver key type
+[Thu Sep 24 11:39:12 2026] Key type id_resolver registered
+[Thu Sep 24 11:39:12 2026] Key type id_legacy registered
+[Thu Sep 24 11:39:12 2026] nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[Thu Sep 24 11:39:12 2026] nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[Thu Sep 24 11:39:12 2026] cryptd: max_cpu_qlen set to 1000
+[Thu Sep 24 11:39:12 2026] NET: Registered PF_ALG protocol family
+[Thu Sep 24 11:39:12 2026] Key type asymmetric registered
+[Thu Sep 24 11:39:12 2026] Asymmetric key parser 'x509' registered
+[Thu Sep 24 11:39:12 2026] Asymmetric key parser 'pkcs8' registered
+[Thu Sep 24 11:39:12 2026] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[Thu Sep 24 11:39:12 2026] io scheduler mq-deadline registered
+[Thu Sep 24 11:39:12 2026] io scheduler kyber registered
+[Thu Sep 24 11:39:12 2026] io scheduler bfq registered
+[Thu Sep 24 11:39:12 2026] ledtrig-cpu: registered to indicate activity on CPUs
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@240: always-on domain atc3_common is not on at boot
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@278: always-on domain atc0_pcie is not on at boot
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@288: always-on domain atc1_pcie is not on at boot
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@298: always-on domain atc2_pcie is not on at boot
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@2a8: always-on domain atc3_pcie is not on at boot
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@78: always-on domain msg is not on at boot
+[Thu Sep 24 11:39:12 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@a8: always-on domain atc3_usb_aon is not on at boot
+[Thu Sep 24 11:39:12 2026] 39b200000.serial: ttySAC0 at MMIO 0x39b200000 (irq = 69, base_baud = 0) is a APPLE S5L
+[Thu Sep 24 11:39:12 2026] apple-dart 28e300000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] platform 2a6980000.dma-controller: Adding to iommu group 0
+[Thu Sep 24 11:39:12 2026] platform 2a6c00000.aop: Adding to iommu group 1
+[Thu Sep 24 11:39:12 2026] apple-dart 2a6808000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 2a9808000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[Thu Sep 24 11:39:12 2026] platform 2a9400000.mtp: Adding to iommu group 2
+[Thu Sep 24 11:39:12 2026] platform 2a9b30000.input: Adding to iommu group 2
+[Thu Sep 24 11:39:12 2026] apple-dart 2a9808000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 3860e8000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[Thu Sep 24 11:39:12 2026] apple-dart 3860e8000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 3860f4000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[Thu Sep 24 11:39:12 2026] apple-dart 3860f4000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 3860fc000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[Thu Sep 24 11:39:12 2026] platform 384000000.isp: Adding to iommu group 3
+[Thu Sep 24 11:39:12 2026] apple-dart 3860fc000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 389304000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[Thu Sep 24 11:39:12 2026] apple-dart 389304000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 38930c000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[Thu Sep 24 11:39:12 2026] platform 389c00000.dcp: Adding to iommu group 4
+[Thu Sep 24 11:39:12 2026] apple-dart 38930c000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:39:12 2026] apple-dart 38930c000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 594000000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 595000000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] platform 287080000.avd: Adding to iommu group 5
+[Thu Sep 24 11:39:12 2026] apple-dart 287010000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 315304000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[Thu Sep 24 11:39:12 2026] apple-dart 315304000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 31530c000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[Thu Sep 24 11:39:12 2026] platform 315c00000.dcp: Adding to iommu group 6
+[Thu Sep 24 11:39:12 2026] apple-dart 31530c000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:39:12 2026] apple-dart 31530c000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] platform 39b400000.dma-controller: Adding to iommu group 7
+[Thu Sep 24 11:39:12 2026] platform 39bc00000.sio: Adding to iommu group 8
+[Thu Sep 24 11:39:12 2026] apple-dart 39b008000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 702f00000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] platform 702280000.usb: Adding to iommu group 9
+[Thu Sep 24 11:39:12 2026] apple-dart 702f80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart b02f00000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] platform b02280000.usb: Adding to iommu group 10
+[Thu Sep 24 11:39:12 2026] apple-dart b02f80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart f02f00000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] platform f02280000.usb: Adding to iommu group 11
+[Thu Sep 24 11:39:12 2026] apple-dart f02f80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] [drm] Initialized simpledrm 1.0.0 for 107ddd79c00.framebuffer on minor 0
+[Thu Sep 24 11:39:12 2026] Console: switching to colour frame buffer device 216x67
+[Thu Sep 24 11:39:12 2026] simple-framebuffer 107ddd79c00.framebuffer: [drm] fb0: simpledrmdrmfb frame buffer device
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: Probing...
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: Initializing...
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: Initializing kernel page table
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: Creating kernel page tables
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: Kernel page tables created
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: Initializing TTBs
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: initialized
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: GPU ID registers: 0x6031100 0x60602 0x21020a 0x40404 0x1320311 0x400c1802
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: Core masks: [
+                               0x7ffff,
+                               0x0,
+                               0x0,
+                           ]
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: GPU Information:
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   Type: G14S
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   Clusters: 2
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   Cores: 10 (20)
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   Frags: 10 (20)
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   GPs: 4 (8)
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   Core masks: [
+                               0x3ff,
+                               0x1ff,
+                           ]
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu:   Active cores: 19
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: Getting configuration from device tree...
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: Dynamic configuration fetched
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: !!! Hwdata A match
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: !!! Hwdata B match
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: !!! Globals match
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x404d00000:0x144000 -> 0xffffffaf00000000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x20e100000:0x4000 -> 0xffffffaf00148000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x28e104000:0x8000 -> 0xffffffaf00150000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x404000000:0x20000 -> 0xffffffaf0015c000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x28e460000:0x4000 -> 0xffffffaf00180000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x404e08000:0x8000 -> 0xffffffaf00188000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x200000000:0xd8000 -> 0xffffffaf00194000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x201000000:0xd8000 -> 0xffffffaf0026c000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x202000000:0xd8000 -> 0xffffffaf00344000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x203000000:0xd8000 -> 0xffffffaf0041c000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x28e118000:0x4000 -> 0xffffffaf004f8000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x28e3d0000:0x4000 -> 0xffffffaf00500000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x28e3c0000:0x4000 -> 0xffffffaf00508000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x28e3d8000:0x4000 -> 0xffffffaf00510000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x404eac000:0x4000 -> 0xffffffaf00518000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: MMU: IO map: 0x404d60000:0x20000 -> 0xffffffaf00520000
+[Thu Sep 24 11:39:12 2026] asahi 406400000.gpu: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:39:12 2026] [drm] Initialized asahi 0.0.0 for 406400000.gpu on minor 1
+[Thu Sep 24 11:39:12 2026] macsmc 2a2400000.smc: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:39:12 2026] macsmc-gpio macsmc-gpio: First GPIO key: gP01 (0x67503031)
+[Thu Sep 24 11:39:12 2026] macsmc-low-gpio: Failed to locate of_node [id: -1]
+[Thu Sep 24 11:39:12 2026] mousedev: PS/2 mouse device common for all mice
+[Thu Sep 24 11:39:12 2026] input: Apple SMC power/lid events as /devices/platform/soc/2a2400000.smc/macsmc-input/input/input0
+[Thu Sep 24 11:39:12 2026] hwmon hwmon2: temp1_input not attached to any thermal zone
+[Thu Sep 24 11:39:12 2026] hwmon hwmon2: temp2_input not attached to any thermal zone
+[Thu Sep 24 11:39:12 2026] hwmon hwmon2: temp3_input not attached to any thermal zone
+[Thu Sep 24 11:39:12 2026] hwmon hwmon2: temp4_input not attached to any thermal zone
+[Thu Sep 24 11:39:12 2026] device-mapper: uevent: version 1.0.3
+[Thu Sep 24 11:39:12 2026] device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[Thu Sep 24 11:39:12 2026] hid: raw HID events driver (C) Jiri Kosina
+[Thu Sep 24 11:39:12 2026] watchdog: NMI not fully supported
+[Thu Sep 24 11:39:12 2026] watchdog: Hard watchdog permanently disabled
+[Thu Sep 24 11:39:12 2026] hw perfevents: enabled with apple_blizzard_pmu PMU driver, 10 (0,000003ff) counters available
+[Thu Sep 24 11:39:12 2026] hw perfevents: enabled with apple_avalanche_pmu PMU driver, 10 (0,000003ff) counters available
+[Thu Sep 24 11:39:12 2026] Initializing XFRM netlink socket
+[Thu Sep 24 11:39:12 2026] NET: Registered PF_INET6 protocol family
+[Thu Sep 24 11:39:12 2026] Segment Routing with IPv6
+[Thu Sep 24 11:39:12 2026] In-situ OAM (IOAM) with IPv6
+[Thu Sep 24 11:39:12 2026] mip6: Mobile IPv6
+[Thu Sep 24 11:39:12 2026] NET: Registered PF_PACKET protocol family
+[Thu Sep 24 11:39:12 2026] Key type dns_resolver registered
+[Thu Sep 24 11:39:12 2026] registered taskstats version 1
+[Thu Sep 24 11:39:12 2026] Loading compiled-in X.509 certificates
+[Thu Sep 24 11:39:12 2026] Key type .fscrypt registered
+[Thu Sep 24 11:39:12 2026] Key type fscrypt-provisioning registered
+[Thu Sep 24 11:39:12 2026] Key type encrypted registered
+[Thu Sep 24 11:39:12 2026] AppArmor: AppArmor sha256 policy hashing enabled
+[Thu Sep 24 11:39:12 2026] leds_pwm led-controller: failed to read period for kbd_backlight, default to off
+[Thu Sep 24 11:39:12 2026] apple-admac 2a6980000.dma-controller: Audio DMA Controller
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 300006e69620420
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 400002000000105
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 400004001050000
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 400006000000000
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 50672694670744d
+[Thu Sep 24 11:39:12 2026] rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 56500657261776d
+[Thu Sep 24 11:39:12 2026] apple-dart 289304000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[Thu Sep 24 11:39:12 2026] platform soc:display-subsystem: Adding to iommu group 12
+[Thu Sep 24 11:39:12 2026] apple-dart 389304000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:39:12 2026] apple-dart 289304000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] apple-dart 28930c000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[Thu Sep 24 11:39:12 2026] platform 289c00000.dcp: Adding to iommu group 13
+[Thu Sep 24 11:39:12 2026] apple-dart 28930c000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:39:12 2026] apple-dart 28930c000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:39:12 2026] macsmc-rtc macsmc-rtc: registered as rtc0
+[Thu Sep 24 11:39:12 2026] macsmc-rtc macsmc-rtc: setting system clock to 2026-09-24T09:39:11 UTC (1790242751)
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: syslog message: apcie.c:1110: power up done[0]: PMU=Ocarina, PWR=0
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: syslog message: apcie.c:1110: power up done[1]: PMU=Undefined, PWR=0
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: syslog message: apcie.c:423: APCIe 1 is configured as unused.
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: syslog message: pre_nand_eng.c:6158: enabled 1p0v 1, enabled prog-no-exec 1
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: syslog message: pre_nand_eng.c:6158: enabled 1p0v 1, enabled prog-no-exec 1
+[Thu Sep 24 11:39:12 2026] nvme-apple 34bcc0000.nvme: RTKit: syslog message: cmd.c:6546:  boot mode normal
+[Thu Sep 24 11:39:12 2026] nvme nvme0: passthrough uses implicit buffer lengths
+[Thu Sep 24 11:39:12 2026]  nvme0n1: p1 p2 p3 p4 p5 p6
+[Thu Sep 24 11:39:12 2026] macsmc-reboot macsmc-reboot: Handling reboot and poweroff requests via SMC
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie: host bridge /soc/pcie@580000000 ranges:
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie:      MEM 0x05a0000000..0x05bfffffff -> 0x05a0000000
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie:      MEM 0x05c0000000..0x05ffffffff -> 0x00c0000000
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie: Using 0 auxiliary PERST#
+[Thu Sep 24 11:39:12 2026] Freeing initrd memory: 24928K
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie: Using 0 auxiliary PERST#
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie: ECAM at [mem 0x580000000-0x580ffffff] for [bus 00-04]
+[Thu Sep 24 11:39:12 2026] pcie-apple 580000000.pcie: PCI host bridge to bus 0000:00
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:00: root bus resource [bus 00-04]
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:00: root bus resource [mem 0x5a0000000-0x5bfffffff pref]
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:00: root bus resource [mem 0x5c0000000-0x5ffffffff] (bus address [0xc0000000-0xffffffff])
+[Thu Sep 24 11:39:12 2026] pci 0000:00:00.0: [106b:100c] type 01 class 0x060400 PCIe Root Port
+[Thu Sep 24 11:39:12 2026] pci 0000:00:00.0: PCI bridge to [bus 01]
+[Thu Sep 24 11:39:12 2026] pci 0000:00:00.0: PME# supported from D0 D3hot D3cold
+[Thu Sep 24 11:39:12 2026] OF: /soc/pcie@580000000: no iommu-map translation for id 0x0 on (null)
+[Thu Sep 24 11:39:12 2026] /soc/pcie@580000000/pci@0,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@0,0
+[Thu Sep 24 11:39:12 2026] pci 0000:00:01.0: [106b:100c] type 01 class 0x060400 PCIe Root Port
+[Thu Sep 24 11:39:12 2026] pci 0000:00:01.0: PCI bridge to [bus 02]
+[Thu Sep 24 11:39:12 2026] pci 0000:00:01.0: PME# supported from D0 D3hot D3cold
+[Thu Sep 24 11:39:12 2026] OF: /soc/pcie@580000000: no iommu-map translation for id 0x8 on (null)
+[Thu Sep 24 11:39:12 2026] /soc/pcie@580000000/pci@1,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@1,0
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: [14e4:4434] type 00 class 0x028000 PCIe Endpoint
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: BAR 0 [mem 0x00000000-0x0000ffff 64bit]
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: BAR 2 [mem 0x00000000-0x00ffffff 64bit]
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: supports D1 D2
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: PME# supported from D0 D1 D2 D3hot D3cold
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: Adding to iommu group 14
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: [14e4:5f72] type 00 class 0x028000 PCIe Endpoint
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: BAR 0 [mem 0x00000000-0x00007fff 64bit]
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: BAR 2 [mem 0x00000000-0x00ffffff 64bit]
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: supports D1 D2
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: PME# supported from D0 D1 D2 D3hot D3cold
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: Adding to iommu group 14
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: ASPM: default states L1
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:01: busn_res: [bus 01-04] end is updated to 01
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: [17a0:9755] type 00 class 0x080501 PCIe Endpoint
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: BAR 0 [mem 0x00000000-0x00000fff]
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: supports D1 D2
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: PME# supported from D1 D2 D3hot D3cold
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: Adding to iommu group 15
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: ASPM: default states L1
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:02: busn_res: [bus 02-04] end is updated to 02
+[Thu Sep 24 11:39:12 2026] pci 0000:00:00.0: bridge window [mem 0x5c0000000-0x5c20fffff]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:00:01.0: bridge window [mem 0x5c2100000-0x5c21fffff]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: BAR 2 [mem 0x5c0000000-0x5c0ffffff 64bit]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: BAR 2 [mem 0x5c1000000-0x5c1ffffff 64bit]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.0: BAR 0 [mem 0x5c2000000-0x5c200ffff 64bit]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:01:00.1: BAR 0 [mem 0x5c2010000-0x5c2017fff 64bit]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:00:00.0: PCI bridge to [bus 01]
+[Thu Sep 24 11:39:12 2026] pci 0000:00:00.0:   bridge window [mem 0x5c0000000-0x5c20fffff]
+[Thu Sep 24 11:39:12 2026] pci 0000:02:00.0: BAR 0 [mem 0x5c2100000-0x5c2100fff]: assigned
+[Thu Sep 24 11:39:12 2026] pci 0000:00:01.0: PCI bridge to [bus 02]
+[Thu Sep 24 11:39:12 2026] pci 0000:00:01.0:   bridge window [mem 0x5c2100000-0x5c21fffff]
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:00: resource 4 [mem 0x5a0000000-0x5bfffffff pref]
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:00: resource 5 [mem 0x5c0000000-0x5ffffffff]
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:01: resource 1 [mem 0x5c0000000-0x5c20fffff]
+[Thu Sep 24 11:39:12 2026] pci_bus 0000:02: resource 1 [mem 0x5c2100000-0x5c21fffff]
+[Thu Sep 24 11:39:12 2026] OF: /soc/pcie@580000000: no iommu-map translation for id 0x0 on (null)
+[Thu Sep 24 11:39:12 2026] pcieport 0000:00:00.0: PME: Signaling with IRQ 116
+[Thu Sep 24 11:39:12 2026] pcieport 0000:00:00.0: AER: enabled with IRQ 116
+[Thu Sep 24 11:39:12 2026] OF: /soc/pcie@580000000: no iommu-map translation for id 0x8 on (null)
+[Thu Sep 24 11:39:12 2026] pcieport 0000:00:01.0: PME: Signaling with IRQ 118
+[Thu Sep 24 11:39:12 2026] pcieport 0000:00:01.0: AER: enabled with IRQ 118
+[Thu Sep 24 11:39:12 2026] pcieport 0000:00:01.0: mask Replay Timer Timeout Correctable Errors due to 0000:02:00.0 hardware defect
+[Thu Sep 24 11:39:12 2026] apple-admac 39b400000.dma-controller: Audio DMA Controller
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@0
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@0
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@1
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@1
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@2
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@2
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:12 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[Thu Sep 24 11:39:12 2026] clk: Disabling unused clocks
+[Thu Sep 24 11:39:12 2026] PM: genpd: Disabling unused power domains
+[Thu Sep 24 11:39:12 2026] ALSA device list:
+[Thu Sep 24 11:39:12 2026]   No soundcards found.
+[Thu Sep 24 11:39:12 2026] Freeing unused kernel memory: 2048K
+[Thu Sep 24 11:39:12 2026] Checked W+X mappings: passed, no W+X pages found
+[Thu Sep 24 11:39:12 2026] Run /init as init process
+[Thu Sep 24 11:39:12 2026]   with arguments:
+[Thu Sep 24 11:39:12 2026]     /init
+[Thu Sep 24 11:39:12 2026]     splash
+[Thu Sep 24 11:39:12 2026]   with environment:
+[Thu Sep 24 11:39:12 2026]     HOME=/
+[Thu Sep 24 11:39:12 2026]     TERM=linux
+[Thu Sep 24 11:39:12 2026]     cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards
+[Thu Sep 24 11:39:12 2026] raid6: neonx8   gen()  9462 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: neonx4   gen() 11572 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: neonx2   gen() 11906 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: neonx1   gen() 24310 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: int64x8  gen() 12580 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: int64x4  gen() 12539 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: int64x2  gen() 12005 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: int64x1  gen() 10470 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: using algorithm neonx1 gen() 24310 MB/s
+[Thu Sep 24 11:39:12 2026] raid6: .... xor() 23657 MB/s, rmw enabled
+[Thu Sep 24 11:39:12 2026] raid6: using neon recovery algorithm
+[Thu Sep 24 11:39:12 2026] xor: measuring software checksum speed
+[Thu Sep 24 11:39:12 2026]    eor3            : 51769 MB/sec
+[Thu Sep 24 11:39:12 2026]    32regs          : 48636 MB/sec
+[Thu Sep 24 11:39:12 2026]    8regs           : 27105 MB/sec
+[Thu Sep 24 11:39:12 2026] xor: using function: eor3 (51769 MB/sec)
+[Thu Sep 24 11:39:12 2026] Btrfs loaded, zoned=yes, fsverity=no
+[Thu Sep 24 11:39:12 2026] thunderbolt: loading out-of-tree module taints kernel.
+[Thu Sep 24 11:39:13 2026] /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[Thu Sep 24 11:39:13 2026] /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[Thu Sep 24 11:39:13 2026] /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Initialized, awaiting packets
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Product name for stm: Apple Internal Keyboard / Trackpad
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Product name for multi-touch: Apple Internal Keyboard / Trackpad
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Product name for keyboard: Apple Internal Keyboard / Trackpad
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Product name for tp_accel: Apple Internal Keyboard / Trackpad
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Product name for actuator: Apple Internal Keyboard / Trackpad
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Product name for stm: Apple Internal Keyboard / Trackpad
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: New interface stm
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: stm_cr.c:98: ST management interface configuration completed
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Interface stm is now ready
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: stm.c:97: ST management ready
+[Thu Sep 24 11:39:13 2026] hid-generic 0019:0000:0000.0001: hidraw0: HOST HID v0.00 Device [Apple MTP stm] on 2a9b30000.input.3 (stm)
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] sdhci-pci 0000:02:00.0: SDHCI controller found [17a0:9755] (rev 1)
+[Thu Sep 24 11:39:13 2026] sdhci-pci 0000:02:00.0: enabling device (0000 -> 0002)
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: New interface multi-touch
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: New interface keyboard
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: New interface actuator
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: New interface tp_accel
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch_iface.c:212: Grape interface configuration completed
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: keyboard_cr.c:78: Keyboard interface configuration completed
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: keyboard.c:75: Keyboard ready
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Interface keyboard is now ready
+[Thu Sep 24 11:39:13 2026] input: Apple MTP keyboard as /devices/platform/soc/2a9b14000.fifo/2a9b30000.input/0019:05AC:0353.0003/input/input2
+[Thu Sep 24 11:39:13 2026] input: Apple MTP multi-touch as /devices/platform/soc/2a9b14000.fifo/2a9b30000.input/0019:05AC:0353.0002/input/input1
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: actuator_cr.c:88: Actuator interface configuration completed
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Interface actuator is now ready
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: actuator.c:72: Actuator ready
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: accel_cr.c:78: Accel interface configuration completed
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Interface tp_accel is now ready
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: accel.c:72: Accel ready
+[Thu Sep 24 11:39:13 2026] mmc0: SDHCI controller on PCI [0000:02:00.0] using ADMA 64-bit
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] apple 0019:05AC:0353.0003: input,hidraw1: HOST HID v2.70 Keyboard [Apple MTP keyboard] on 2a9b30000.input.2 (keyboard)
+[Thu Sep 24 11:39:13 2026] magicmouse 0019:05AC:0353.0002: input,hidraw2: HOST HID v2.70 Mouse [Apple MTP multi-touch] on 2a9b30000.input.1 (multi-touch)
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Starting interface multi-touch
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Requesting GPIO multi-touch#167: afe-reset
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Sending firmware for multi-touch
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: afe_transport.c:143: Z2 AFE transport initialized
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:151: [Touch]: AFE transport initialization complete
+[Thu Sep 24 11:39:13 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:153: [Touch]: Touch initialized
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Resetting multi-touch
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch.c:88: Touch Reset Ext Request: OK
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: GPIO command: multi-touch#167: 3
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:382: Calibration blob 'TCAL' updated
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:382: Calibration blob 'FCAL' updated
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: afe_transport.c:177: afe_transport_start() Z2 running
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch_pwr_mgr.c:216: [TPM] Mac Power Manager State Machine Started
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch.c:128: Touch interface ready
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch.c:143: Touch MT ready
+[Thu Sep 24 11:39:13 2026] dockchannel-hid 2a9b30000.input: Interface multi-touch is now ready
+[Thu Sep 24 11:39:13 2026] rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch_pwr_mgr_fsm.c:286: Sending Cumulus Report to enter Dependent Mode (9A)
+[Thu Sep 24 11:39:23 2026] apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[Thu Sep 24 11:39:23 2026] platform 315c00000.dcp: deferred probe pending: apple-dcp: /soc/dcp@315c00000/typec-routes/route@0: failed to get display crossbar
+[Thu Sep 24 11:39:23 2026] platform 289c00000.dcp: deferred probe pending: (reason unknown)
+[Thu Sep 24 11:39:23 2026] i2c 0-003f: deferred probe pending: (reason unknown)
+[Thu Sep 24 11:39:23 2026] i2c 0-0038: deferred probe pending: (reason unknown)
+[Thu Sep 24 11:39:23 2026] i2c 0-003b: deferred probe pending: (reason unknown)
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@268: sync_state() pending due to 287080000.avd
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@2d8: sync_state() pending due to 289c00000.dcp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@270: sync_state() pending due to 39b600000.mca
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@398: sync_state() pending due to 39b600000.mca
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@3a0: sync_state() pending due to 39b600000.mca
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@3a8: sync_state() pending due to 39b600000.mca
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@3b0: sync_state() pending due to 39b600000.mca
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4000: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4008: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4010: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4018: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4020: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4028: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@4030: sync_state() pending due to 384000000.isp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@2b8: sync_state() pending due to 315c00000.dcp
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 290280000.power-management:power-controller@1e0: sync_state() pending due to 39bc00000.sio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@278: sync_state() pending due to 701ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@2f0: sync_state() pending due to 701ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@2e8: sync_state() pending due to 701ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@270: sync_state() pending due to 701ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@c8: sync_state() pending due to 702280000.usb
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@c8: sync_state() pending due to 70304c000.mux
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@288: sync_state() pending due to b01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@300: sync_state() pending due to b01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@2f8: sync_state() pending due to b01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@280: sync_state() pending due to b01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@d0: sync_state() pending due to b02280000.usb
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@d0: sync_state() pending due to b0304c000.mux
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@298: sync_state() pending due to f01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@310: sync_state() pending due to f01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@308: sync_state() pending due to f01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 28e080000.power-management:power-controller@290: sync_state() pending due to f01ac0000.cio
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@d8: sync_state() pending due to f02280000.usb
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@d8: sync_state() pending due to f0304c000.mux
+[Thu Sep 24 11:39:23 2026] apple-pmgr-pwrstate 29e280000.power-management:power-controller@e0: sync_state() pending due to 130304c000.mux
+[Thu Sep 24 11:40:19 2026] BTRFS: device label asahi-root devid 1 transid 9880 /dev/mapper/root (252:0) scanned by mount (490)
+[Thu Sep 24 11:40:19 2026] BTRFS info (device dm-0): first mount of filesystem 725346d2-f127-47bc-b464-9dd46155e8d6
+[Thu Sep 24 11:40:19 2026] BTRFS info (device dm-0): using crc32c checksum algorithm
+[Thu Sep 24 11:40:19 2026] BTRFS info (device dm-0): enabling ssd optimizations
+[Thu Sep 24 11:40:19 2026] BTRFS info (device dm-0): turning on async discard
+[Thu Sep 24 11:40:19 2026] BTRFS info (device dm-0): enabling free space tree
+[Thu Sep 24 11:40:20 2026] systemd[1]: systemd 261.3-1-arch running in system mode (+PAM +AUDIT -SELINUX +APPARMOR -IMA +IPE +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF +XKBCOMMON +UTMP +LIBARCHIVE)
+[Thu Sep 24 11:40:20 2026] systemd[1]: Detected architecture arm64.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Hostname set to <omarchy-m2>.
+[Thu Sep 24 11:40:20 2026] systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+[Thu Sep 24 11:40:20 2026] zram: Added device: zram0
+[Thu Sep 24 11:40:20 2026] systemd[1]: Queued start job for default target Graphical Interface.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice CUPS Slice.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/dirmngr.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/getty.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/gpg-agent.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/gpg-agent-browser.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/gpg-agent-extra.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/gpg-agent-ssh.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/keyboxd.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/modprobe.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/systemd-fsck.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/systemd-growfs.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice Slice /system/systemd-zram-setup.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Created slice User and Session Slice.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Expecting device /dev/disk/by-uuid/530E-CC8F...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Expecting device /dev/disk/by-uuid/725346d2-f127-47bc-b464-9dd46155e8d6...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Expecting device /dev/zram0...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Login Prompts.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Image Downloads.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Local Integrity Protected Volumes.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Preparation for Network.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Remote Encrypted Volumes.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Remote File Systems.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Remote Integrity Protected Volumes.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Remote Verity Protected Volumes.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Slice Units.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Reached target Local Verity Protected Volumes.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Device-mapper event daemon FIFOs.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Query the User Interactively for a Password.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Process Core Dump Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Credential Encryption/Decryption.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Factory Reset Management.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Hostname Service Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Journal Audit Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Journal Socket (/dev/log).
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Journal Sockets.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on DDI File System Mounter Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Console Output Muting Service Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Namespace Resource Manager Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: TPM PCR Measurements skipped, unmet condition check ConditionSecurity=measured-os
+[Thu Sep 24 11:40:20 2026] systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Disk Repartitioning Service Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Report System Basic Metrics Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on CGroup Report Varlink Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Resolve Monitor Varlink Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Resolve Service Varlink Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Simple Block Device Backed Storage Provider.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on Simple File System Backed Storage Provider.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on udev Control Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on udev Kernel Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on udev Varlink Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Listening on User Database Manager Socket.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounting Huge Pages File System...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounting POSIX Message Queue File System...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounting Kernel Debug File System...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounting Kernel Trace File System...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Create List of Static Device Nodes...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounting Kernel Configuration File System...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[Thu Sep 24 11:40:20 2026] systemd[1]: Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Load Kernel Module fuse...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Clear SysFail Entry If The Boot Is Successful skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/LoaderEntrySysFail-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f
+[Thu Sep 24 11:40:20 2026] systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Journal Service...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Load Kernel Modules...
+[Thu Sep 24 11:40:20 2026] systemd[1]: TPM PCR Machine ID Measurement skipped, unmet condition check ConditionSecurity=measured-os
+[Thu Sep 24 11:40:20 2026] systemd[1]: TPM PCR OS Separator skipped, unmet condition check ConditionSecurity=measured-os
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Remount Root and Kernel File Systems...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-os
+[Thu Sep 24 11:40:20 2026] systemd[1]: TPM PCR NvPCR Initialization Separator skipped, unmet condition check ConditionPathExists=/etc/initrd-release
+[Thu Sep 24 11:40:20 2026] systemd[1]: TPM NvPCR Product ID Measurement skipped, unmet condition check ConditionSecurity=measured-os
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Load udev Rules from Credentials...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Coldplug All udev Devices...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Virtual Console Setup...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Create List of Static Device Nodes.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounted Huge Pages File System.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounted POSIX Message Queue File System.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounted Kernel Debug File System.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounted Kernel Trace File System.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Mounted Kernel Configuration File System.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Virtual Console Setup.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Load udev Rules from Credentials.
+[Thu Sep 24 11:40:20 2026] fuse: init (API version 7.45)
+[Thu Sep 24 11:40:20 2026] systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Load Kernel Module fuse.
+[Thu Sep 24 11:40:20 2026] i2c_dev: i2c /dev entries driver
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Load Kernel Modules.
+[Thu Sep 24 11:40:20 2026] systemd-journald[597]: Collecting audit messages is enabled.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Apply Kernel Variables...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Load Kernel Module tun...
+[Thu Sep 24 11:40:20 2026] audit: type=1334 audit(1790242819.874:2): prog-id=19 op=LOAD
+[Thu Sep 24 11:40:20 2026] audit: type=1334 audit(1790242819.874:3): prog-id=20 op=LOAD
+[Thu Sep 24 11:40:20 2026] audit: type=1334 audit(1790242819.874:4): prog-id=21 op=LOAD
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting User Database Manager...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Apply Kernel Variables.
+[Thu Sep 24 11:40:20 2026] audit: type=1130 audit(1790242819.875:5): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-sysctl comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting CLI Netfilter Manager...
+[Thu Sep 24 11:40:20 2026] tun: Universal TUN/TAP device driver, 1.6
+[Thu Sep 24 11:40:20 2026] systemd[1]: modprobe@tun.service: Deactivated successfully.
+[Thu Sep 24 11:40:20 2026] systemd[1]: Finished Load Kernel Module tun.
+[Thu Sep 24 11:40:20 2026] audit: type=1130 audit(1790242819.881:6): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=modprobe@tun comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:20 2026] audit: type=1131 audit(1790242819.881:7): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=modprobe@tun comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:20 2026] audit: type=1334 audit(1790242819.882:8): prog-id=22 op=LOAD
+[Thu Sep 24 11:40:20 2026] audit: type=1334 audit(1790242819.882:9): prog-id=23 op=LOAD
+[Thu Sep 24 11:40:20 2026] audit: type=1334 audit(1790242819.882:10): prog-id=24 op=LOAD
+[Thu Sep 24 11:40:20 2026] systemd[1]: Starting Namespace Resource Manager...
+[Thu Sep 24 11:40:20 2026] systemd[1]: Started Journal Service.
+[Thu Sep 24 11:40:20 2026] audit: type=1130 audit(1790242819.887:11): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-journald comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:20 2026] BTRFS info (device dm-0 state M): use zstd compression, level 1
+[Thu Sep 24 11:40:20 2026] zram0: detected capacity change from 0 to 65245184
+[Thu Sep 24 11:40:20 2026] mc: Linux media interface: v0.10
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: Switched dpphy to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: Switched dpin0 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: Switched dpin1 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: Switched dpphy to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: Switched dpin0 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: Switched dpin1 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: Switched dpphy to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: Switched dpin0 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: Switched dpin1 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: Switched dpphy to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: Switched dpin0 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: Switched dpin1 to disconnected state
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Thu Sep 24 11:40:20 2026] videodev: Linux video capture interface: v2.00
+[Thu Sep 24 11:40:20 2026] apple_aop 2a6c00000.aop: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:40:20 2026] apple_aop 2a6c00000.aop: RTKit: syslog message: AOP_oslog_init.cpp:96: Start AOP OSLog init
+[Thu Sep 24 11:40:20 2026] apple_aop 2a6c00000.aop: RTKit: syslog message: P_os_log_support.cpp:60: AOP os log initialized
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: Switched dpphy to dispext0,0 (t602x atc=0x100 mux=0x0)
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x dpphy: 000=00000001 004=000001fe 008=00000001 00c=00000001 014=000001fb 018=00000001 01c=00000100 024=00000011 028=00000100 02c=00000001 030=00000000 034=00000100 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:20 2026] apple-display-crossbar 130304c000.mux: t602x dpphy clk: 000=00000001 800=00000000 020=00000000 820=00000000 024=00000011 81c=00000011
+[Thu Sep 24 11:40:20 2026] apple-isp 384000000.isp: ISP firmware-compat: 13.5 (FW: 13.5)
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: typec_mux_set() returned: 0
+[Thu Sep 24 11:40:20 2026] apple-sio 39bc00000.sio: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: Detected display with notch of 74 pixel
+[Thu Sep 24 11:40:20 2026] platform 389c00000.dcp:piodma: Adding to iommu group 16
+[Thu Sep 24 11:40:20 2026] apple-dart 389304000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:40:20 2026] apple-sio 39bc00000.sio: SIO protocol v9
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:40:20 2026] apple-isp 384000000.isp: IPC surface iova: 0x10000f00000
+[Thu Sep 24 11:40:20 2026] apple-isp 384000000.isp: Data surface iova: 0x10000f1c000
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107ddbb4000 -> iomem: ffff80008eb30000
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff8000879d4000
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008e794000
+[Thu Sep 24 11:40:20 2026] apple-drm soc:display-subsystem: bound 389c00000.dcp (ops dcp_comp_ops [appledrm])
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: DCP index:1 dptx target phy: 3 dptx die: 0
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2611: IOMFB LACS_ERROR: DCP took too long to respond to LAS stats
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2646: IOMFB: BLM LTS data hasn't been read in more than 10 secs
+[Thu Sep 24 11:40:20 2026] platform 289c00000.dcp:piodma: Adding to iommu group 17
+[Thu Sep 24 11:40:20 2026] apple-dart 289304000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:40:20 2026] tas2764 1-003a: supply SDZ not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107dd8b4000 -> iomem: ffff80008eba0000
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff8000879cc000
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff800087968000
+[Thu Sep 24 11:40:20 2026] apple-drm soc:display-subsystem: bound 289c00000.dcp (ops dcp_comp_ops [appledrm])
+[Thu Sep 24 11:40:20 2026] apple-drm soc:display-subsystem: bound 39b540000.audio-controller (ops dcpaud_comp_ops [appledrm])
+[Thu Sep 24 11:40:20 2026] apple-dcp 315c00000.dcp: DCP index:2 dptx target phy: 1 dptx die: 0
+[Thu Sep 24 11:40:20 2026] avd 287080000.avd: booting hw version: 30010
+[Thu Sep 24 11:40:20 2026] platform 315c00000.dcp:piodma: Adding to iommu group 18
+[Thu Sep 24 11:40:20 2026] apple-dart 315304000.iommu: Limited to ias=36 due to lock
+[Thu Sep 24 11:40:20 2026] apple-dcp 315c00000.dcp: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:40:20 2026] apple-dcp 315c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107dc5b4000 -> iomem: ffff80008ec20000
+[Thu Sep 24 11:40:20 2026] apple-dcp 315c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff800083b04000
+[Thu Sep 24 11:40:20 2026] tas2764 1-0038: supply SDZ not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] spi-nor spi0.0: supply vcc not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] tas2764 1-0039: supply SDZ not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] apple-dcp 315c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008eb98000
+[Thu Sep 24 11:40:20 2026] apple-drm soc:display-subsystem: bound 315c00000.dcp (ops dcp_comp_ops [appledrm])
+[Thu Sep 24 11:40:20 2026] apple-drm soc:display-subsystem: bound 39b580000.audio-controller (ops dcpaud_comp_ops [appledrm])
+[Thu Sep 24 11:40:20 2026] tas2764 3-003d: supply SDZ not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] tas2764 3-003b: supply SDZ not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] tas2764 3-003c: supply SDZ not found, using dummy regulator
+[Thu Sep 24 11:40:20 2026] thunderbolt-apple-acio 701ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00680000
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[Thu Sep 24 11:40:20 2026] thunderbolt-apple-acio b01ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1864: start_ios_gated: trigger pending HPD notification
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: cb_hotplug() connected:1, valid_mode:0 nr_modes:0
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:0
+[Thu Sep 24 11:40:20 2026] 1 fixed-partitions partitions found on MTD device spi0.0
+[Thu Sep 24 11:40:20 2026] Creating 1 MTD partitions on "spi0.0":
+[Thu Sep 24 11:40:20 2026] 0x000000700000-0x000000800000 : "nvram"
+[Thu Sep 24 11:40:20 2026] thunderbolt-apple-acio f01ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ableCompensator.cpp:903: IOMFB setup_table: Could not find table 'display-backlight-compensation-v1' in registry. Using default table.
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPPipeDCP_H13P.cpp:1532: IOMFB: videoClock is zero, defaulting to 521065000
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[Thu Sep 24 11:40:20 2026] cs42l84 2-004b: Cirrus Logic CS42L84, Revision: 36
+[Thu Sep 24 11:40:20 2026] apple_aop 2a6c00000.aop: RTKit: syslog message: ALSVD6286.cpp:80: [ALS1] VD6286 device found. Calibration Override:0
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: AFK[ep:20]: new service system on channel 1
+[Thu Sep 24 11:40:20 2026] apple-dcp 289c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 3
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Int RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1208
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: AFK[ep:20]: new service system on channel 5
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 7
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: dpointInterface.cpp:606: [AFK][AFKMailboxSharedMemoryEndpointInterface:#62] if:1 inCmd:0 inResp:0 outRepErr:0 outCmdErr:0 t:2434425520
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: dpointInterface.cpp:606: [AFK][AFKMailboxSharedMemoryEndpointInterface:#65] if:3 inCmd:0 inResp:0 outRepErr:0 outCmdErr:0 t:2434430977
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2611: IOMFB LACS_ERROR: DCP took too long to respond to LAS stats
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: DCP booted
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: DCP is_main_display: 1
+[Thu Sep 24 11:40:20 2026] apple-dcp 389c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:6
+[Thu Sep 24 11:40:20 2026] cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[Thu Sep 24 11:40:20 2026] Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[Thu Sep 24 11:40:20 2026] Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[Thu Sep 24 11:40:20 2026] Bluetooth: Core ver 2.22
+[Thu Sep 24 11:40:20 2026] NET: Registered PF_BLUETOOTH protocol family
+[Thu Sep 24 11:40:20 2026] Bluetooth: HCI device and connection manager initialized
+[Thu Sep 24 11:40:20 2026] Bluetooth: HCI socket layer initialized
+[Thu Sep 24 11:40:20 2026] Bluetooth: L2CAP socket layer initialized
+[Thu Sep 24 11:40:20 2026] Bluetooth: SCO socket layer initialized
+[Thu Sep 24 11:40:20 2026] hci_bcm4377 0000:01:00.1: resetting
+[Thu Sep 24 11:40:20 2026] usbcore: registered new interface driver brcmfmac
+[Thu Sep 24 11:40:20 2026] brcmfmac 0000:01:00.0: enabling device (0000 -> 0002)
+[Thu Sep 24 11:40:20 2026] brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac4388c0-pcie for chip BCM4388/4
+[Thu Sep 24 11:40:20 2026] apple_aop 2a6c00000.aop: RTKit: syslog message: iggerController.cpp:129: VoiceTrig ready!! <AppleAOPVoiceTriggerController v240.2 built: Jun 30 202317:4
+[Thu Sep 24 11:40:20 2026] apple_aop 2a6c00000.aop: RTKit: syslog message: SPU_init.cpp:320: ===( AOP IS READY )===
+[Thu Sep 24 11:40:20 2026] Adding 32622576k swap on /dev/zram0.  Priority:100 extents:1 across:32622576k SSDsc
+[Thu Sep 24 11:40:20 2026] hci_bcm4377 0000:01:00.1: reset done
+[Thu Sep 24 11:40:20 2026] input: MacBook Pro J416 Headphone Jack as /devices/platform/sound/sound/card0/input3
+[Thu Sep 24 11:40:21 2026] hci_bcm4377 0000:01:00.1: enabling device (0000 -> 0002)
+[Thu Sep 24 11:40:21 2026] systemd-journald[597]: Received client request to flush runtime journal.
+[Thu Sep 24 11:40:21 2026] apple-isp: CISP_CMD_CONFIG_GET: 
+[Thu Sep 24 11:40:21 2026] apple-isp: 00000000 00000003 016e3600 00000001 0000000a 00000000 00000001
+[Thu Sep 24 11:40:21 2026] apple-isp 384000000.isp: found sensor 558 CC2248101BGPNTV7H on ch 0
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: CISP_CMD_CH_INFO_GET: 0
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000000 0000010d 00000000 07dc0001 00010090 00010007 00000006 00000001
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000558 00000009 00001410 00000002 00000000 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000000 00000000 00000000 00050000 00000001 00000000 00000004 00000020
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000006 00000000 00004680 00000040 00000001 00000002 00004000 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000001 00000000 00000000 00000036 00000000 00000000 000f4240 434300a0
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 38343232 42313031 544e5047 00483756 00000000 00000008 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000001 00000000 00000100 00000000 00000000 00000000 00000000 00ff0000
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000c00 00000000 0000001c 00000680 00000004 00000004 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ch: 00000000 00000000 00000000 00000000 07800000 00000780
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 0
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000000 00000106 00000000 00000000 07800780 07800780 00000000 00001df8
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 00000012 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000780 00000780
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00010000 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000780 00000780 00000100 00000000 00000000 00000780 00000780
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 1
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000000 00000106 00000000 00000001 08700780 08700780 00000000 00001df8
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 00000012 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000780 00000438
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000780 00000870 00000100 00000000 00000000 00000780 00000438
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 2
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000000 00000106 00000000 00000002 0f000438 0f000438 00000000 00001df8
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 0000000d 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000438 00000780
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000438 00000f00 00000100 00000000 00000000 00000438 00000780
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 3
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000000 00000106 00000000 00000003 0a6006e0 0a6006e0 00000000 00001df8
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 00000010 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 000006e0 00000530
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 000006e0 00000a60 00000100 00000000 00000000 000006e0 00000530
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 4
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000000 00000106 00000000 00000004 0dc00530 0dc00530 00000000 00001df8
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 0000000e 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000530 000006e0
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000530 00000dc0 00000100 00000000 00000000 00000530 000006e0
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 5
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000000 00000106 00000000 00000005 0c200610 0c200610 00000000 00001df8
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 0000000f 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000610 00000610
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[Thu Sep 24 11:40:21 2026] apple-isp: ps: 00000610 00000c20 00000100 00000000 00000000 00000610 00000610
+[Thu Sep 24 11:40:21 2026] apple-isp 384000000.isp: apple-isp probe!
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: AFK[ep:23]: new service disp0-service on channel 1
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 1
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 3
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00027000
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: read_edt_data key=initial-vbi-advance-lines count=1 default0=0x2 ret=0
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[Thu Sep 24 11:40:21 2026] apple-dcp 315c00000.dcp: AFK[ep:20]: new service system on channel 1
+[Thu Sep 24 11:40:21 2026] apple-dcp 315c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 3
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: DCP booted
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: DCP is_main_display: 0
+[Thu Sep 24 11:40:21 2026] apple-dcp 289c00000.dcp: dcp_hotplug() connected:0 valid_mode:0 nr_modes:0
+[Thu Sep 24 11:40:22 2026] brcmfmac: brcmf_c_process_txcap_blob: TxCap blob found, loading
+[Thu Sep 24 11:40:22 2026] brcmfmac: brcmf_c_process_cal_blob: Calibration blob provided by platform, loading
+[Thu Sep 24 11:40:22 2026] brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4388/4 wl0: Jun 11 2023 05:20:59 version 23.20.95.0.40.50.92 FWID 01-ec505a98
+[Thu Sep 24 11:40:22 2026] ieee80211 phy0: brcmf_c_set_joinpref_default: Set join_pref error (-52)
+[Thu Sep 24 11:40:22 2026] ieee80211 phy0: brcmf_c_set_joinpref_default: Set join_pref error (-52)
+[Thu Sep 24 11:40:22 2026] input: keyd virtual keyboard as /devices/virtual/input/input4
+[Thu Sep 24 11:40:22 2026] snd-soc-macaudio sound: Speaker volumes unlocked
+[Thu Sep 24 11:40:22 2026] Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[Thu Sep 24 11:40:22 2026] Bluetooth: BNEP filters: protocol multicast
+[Thu Sep 24 11:40:22 2026] Bluetooth: BNEP socket layer initialized
+[Thu Sep 24 11:40:22 2026] input: keyd virtual pointer as /devices/virtual/input/input5
+[Thu Sep 24 11:40:22 2026] ieee80211 phy0: brcmf_dongle_roam: WLC_SET_ROAM_DELTA error (-52)
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: AFK[ep:23]: new service disp0-service on channel 1
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 1
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 3
+[Thu Sep 24 11:40:22 2026] apple-dcp 289c00000.dcp: dcp_enable_dp2hdmi_hpd: DP2HDMI HPD connected:0
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00027000
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[Thu Sep 24 11:40:22 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:1962: IOMFB: swap_submit_dcp: swallowed swap ID 2 as fControllerPowerState is 0 for External Display
+[Thu Sep 24 11:40:22 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:1967: IOMFB: swap_submit_dcp: swallowed swap ID 2 as timinsg are not enabled for External Display
+[Thu Sep 24 11:40:22 2026] apple-dcp 289c00000.dcp: dcp_poweroff() done
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: read_edt_data key=initial-vbi-advance-lines count=1 default0=0x2 ret=0
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: DCP booted
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: DCP is_main_display: 0
+[Thu Sep 24 11:40:22 2026] Console: switching to colour dummy device 80x25
+[Thu Sep 24 11:40:22 2026] [drm] Initialized apple 1.0.0 for soc:display-subsystem on minor 2
+[Thu Sep 24 11:40:22 2026] Console: switching to colour frame buffer device 216x67
+[Thu Sep 24 11:40:22 2026] apple-drm soc:display-subsystem: [drm] fb0: appledrmfb frame buffer device
+[Thu Sep 24 11:40:22 2026] Bluetooth: hci0: HCI LE Coded PHY feature bit is set, but its usage is not supported.
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: typec mux set typec1 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0
+[Thu Sep 24 11:40:22 2026] apple-dcp 315c00000.dcp: typec mux set typec0 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0
+[Thu Sep 24 11:40:23 2026] apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Failed to read codec capabilities (-22)
+[Thu Sep 24 11:40:23 2026] Bluetooth: MGMT ver 1.23
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: dcp_poweron() starting
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: dcp_set_power_state_req returned, 10000 ms remaining
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: set_digital_out_mode(color:1 timing:2) "3456x2160": 120 1042130 3456 3464 3496 3536 2160 2278 2360 2456 0x48 0x0
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: set_digital_out_mode() color mode depth:8 format:0 colorimetry:16 eotf:0 range:0 vrr:1
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:5931: IOMFBParameter_adaptive_sync Req minRR = 0x0, mediaTargetRate = 0x0, Fractional Rate = 0
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7462: set_digital_out_mode: Modeset requested for colorID: 1, timingID: 2
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:18011: Dual pipe disabled offset 0
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 4 -> 1
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:150: IOMFBStatus IOMFB::UPTSQManager::power_down_M3(IOMFB::AppleRegisterStream *, UPTSQManager::ModeChangeWaiter *): request mode ch
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:162: IOMFBStatus IOMFB::UPTSQManager::power_down_M3(IOMFB::AppleRegisterStream *, UPTSQManager::ModeChangeWaiter *): disabling M3
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:3300: Quiescing callback
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[Thu Sep 24 11:40:23 2026] Bluetooth: hci0: Bad flag given (0x1) vs supported (0xe)
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7700: set_mode: timingID: 2 colorID: 1
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7356: IOMFBStatus UnifiedPipeline::mode_set_gated(uint32_t, uint32_t): 3456x2234@120 Hz link: 1
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 0, requested state: 1
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 0 -> 1
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ock_Tunables_v1.cpp:651: IOMFB: Writing tunables with target 4
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_Config_H13P.cpp:1771: program_frame_size: pixel_clock 1042130000, vid0 521065000, 00020910 0000007e
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LED M3 IMem : size 0x7b74
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LED M3 DMem : size 0x102e0
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ock_PCC2DLTM_v4.cpp:324: IOMFBStatus IOMFB::UPBlock_PCC2DLTM_v4::set_mcpu_power(IOMFB::AppleRegisterStream *, bool) Loading M3 Hal
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LTM M3 IMem : size 0x7308
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LTM M3 DMem : size 0xd190
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:4938: [set_lts_buffer] buffer 0x10001cc4000 Add_lo = 0x1cc4000, Add_hi = 0x100, size 0x2900 stride 0x100
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 2
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPPipeDCP_H13P.cpp:1532: IOMFB: videoClock is zero, defaulting to 521065000
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load BLM M3 IMem : size 0x764c
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load BLM M3 DMem : size 0xaf6c
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: FBPropertyManager.h:189: value_t<P> IOMFB::PropMgr::getVal(IOMFB::RuntimeProperty) [P = IOMFB::RuntimePropertyType::boolean]: WARNING - type mismatch on
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Int RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1208
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:296: IOMFB: VideoInterfaceIOAV::power_on: m_power_ctrl->setPower( 1 )
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: set_digital_out_mode finished:8379
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: MMailboxHandler.cpp:214: pcc firmware: MailBox Printf is enabled in BLM Pipe Line Init
+[Thu Sep 24 11:40:23 2026] apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:17179: handle_stage1_enable blm_en 1 ltm_en 0
+[Thu Sep 24 11:40:23 2026] ieee80211 phy0: brcmf_p2p_set_firmware: failed to update device address ret -52
+[Thu Sep 24 11:40:23 2026] ieee80211 phy0: brcmf_p2p_create_p2pdev: set p2p_disc error
+[Thu Sep 24 11:40:23 2026] ieee80211 phy0: brcmf_cfg80211_add_iface: add iface p2p-dev-wlan0 type 10 failed: err=-52
+[Thu Sep 24 11:40:23 2026] apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=4 dp=0 usb4=1 tbt=0
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: main.c:60: #ACIO FW IS READY# FW_VERSION_STRING=AppleCIOFirmware-475~290__2026-04-18-18:18
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: main.c:61: FW state=1
+[Thu Sep 24 11:40:23 2026] apple-dart f01a80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-nhi f01f00000.nhi: device links to tunneled native ports are missing!
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:181: Entering Phase 1. action=0
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:78: Lane init parmas = 0x00000011
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: xHCI Host Controller
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: new USB bus registered, assigned bus number 1
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: hcc params 0x0238ffcd hci version 0x110 quirks 0x0000808000000010
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: irq 167, io mem 0xf02280000
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: xHCI Host Controller
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: new USB bus registered, assigned bus number 2
+[Thu Sep 24 11:40:23 2026] xhci-hcd xhci-hcd.3.auto: Host supports USB 3.1 Enhanced SuperSpeed
+[Thu Sep 24 11:40:23 2026] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.01
+[Thu Sep 24 11:40:23 2026] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[Thu Sep 24 11:40:23 2026] usb usb1: Product: xHCI Host Controller
+[Thu Sep 24 11:40:23 2026] usb usb1: Manufacturer: Linux 7.1.12-2.5-1-ARCH xhci-hcd
+[Thu Sep 24 11:40:23 2026] usb usb1: SerialNumber: xhci-hcd.3.auto
+[Thu Sep 24 11:40:23 2026] hub 1-0:1.0: USB hub found
+[Thu Sep 24 11:40:23 2026] hub 1-0:1.0: 1 port detected
+[Thu Sep 24 11:40:23 2026] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[Thu Sep 24 11:40:23 2026] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.01
+[Thu Sep 24 11:40:23 2026] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[Thu Sep 24 11:40:23 2026] usb usb2: Product: xHCI Host Controller
+[Thu Sep 24 11:40:23 2026] usb usb2: Manufacturer: Linux 7.1.12-2.5-1-ARCH xhci-hcd
+[Thu Sep 24 11:40:23 2026] usb usb2: SerialNumber: xhci-hcd.3.auto
+[Thu Sep 24 11:40:23 2026] hub 2-0:1.0: USB hub found
+[Thu Sep 24 11:40:23 2026] hub 2-0:1.0: 1 port detected
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:343: Entering Phase 2
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:396: Entering Phase 3
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:882: Got AT register 12. 3 bytes. 0x00 0xf3 0x5f
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:1024: Entering Connected
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2212: RT Broadcast LOCAL: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2212: RT Broadcast LOCAL: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2219: RT Broadcast REMOTE: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2219: RT Broadcast REMOTE: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:40:23 2026] usb 1-1: new high-speed USB device number 2 using xhci-hcd
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=0, error=84
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=1, error=84
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_training_cl0.c:24: Gen2/3 lane=0 entered CL0!
+[Thu Sep 24 11:40:23 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_training_cl0.c:24: Gen2/3 lane=1 entered CL0!
+[Thu Sep 24 11:40:23 2026] thunderbolt 0-1: new device found, vendor=0x5a device=0xde81
+[Thu Sep 24 11:40:23 2026] thunderbolt 0-1: Other World Computing Thunderbolt 5 Hub
+[Thu Sep 24 11:40:23 2026] usb 1-1: New USB device found, idVendor=1d5c, idProduct=5801, bcdDevice= 1.01
+[Thu Sep 24 11:40:23 2026] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[Thu Sep 24 11:40:23 2026] usb 1-1: Product: USB2.0 Hub
+[Thu Sep 24 11:40:23 2026] usb 1-1: Manufacturer: Fresco Logic, Inc.
+[Thu Sep 24 11:40:23 2026] hub 1-1:1.0: USB hub found
+[Thu Sep 24 11:40:23 2026] hub 1-1:1.0: 5 ports detected
+[Thu Sep 24 11:40:24 2026] thunderbolt 0-0:1.1: new retimer found, vendor=0x5ac device=0x2200
+[Thu Sep 24 11:40:24 2026] Bluetooth: RFCOMM TTY layer initialized
+[Thu Sep 24 11:40:24 2026] Bluetooth: RFCOMM socket layer initialized
+[Thu Sep 24 11:40:24 2026] Bluetooth: RFCOMM ver 1.11
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: clx.c:776: CLX CFG: clx_en changed 0x0 --> 0x0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: clx.c:776: CLX CFG: clx_en changed 0x0 --> 0x3
+[Thu Sep 24 11:40:24 2026] usb 1-1.1: new full-speed USB device number 3 using xhci-hcd
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=14, null port=0, hopid=8
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=1, target port=14, hopid=8
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=13, null port=0, hopid=9
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=2, target port=13, hopid=8
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: error -ENODEV: PCIe-C requires a successful m1n1 preinit handoff
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: deferred PCIe-C activation failed: -19
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=15, null port=0, hopid=10
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=16, null port=0, hopid=11
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=3, target port=16, hopid=8
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: USB4 DPTX Discovery closed (CS13 writable, CS9 static); AE=0 VE=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: Apple: HPD propagated
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=24000000 COMMON=15402134 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[Thu Sep 24 11:40:24 2026] usb 1-1.1: New USB device found, idVendor=1e91, idProduct=de81, bcdDevice= 0.04
+[Thu Sep 24 11:40:24 2026] usb 1-1.1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[Thu Sep 24 11:40:24 2026] usb 1-1.1: Product: Thunderbolt 5 Hub
+[Thu Sep 24 11:40:24 2026] usb 1-1.1: Manufacturer: Other World Computing
+[Thu Sep 24 11:40:24 2026] usb 1-1.1: SerialNumber: 0052
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: DP OUT CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=2 (DPTX should use this adapter, not ATC)
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: DP IN tunnel routing: tunnel 0:5 <-> 1:19
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC ctrl 0x0: 000=00003010 004=00000011 018=00040000 01c=00000001 024=09600258 028=00000001 030=000007af 034=00000001 038=00000001 03c=9f2f0c2a 040=00000025 044=00000001 048=00000001 060=00000001 064=00000001 068=00000001 070=00000001 074=00000001 078=00000001 0a8=01000000 0ac=04000001 0d0=00000062
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0: Apple VSE cap=53: 00=ca0005ff 01=00000011 02=00000000 03=00000000 04=00000000 05=00000000 06=00000000 07=00000000 08=00000000 09=00000000 0a=00000000 0b=00000000 0c=00000fff 0d=00000fff 0e=00000000 0f=00000000
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: dcp_dptx_disconnect(port=0)
+[Thu Sep 24 11:40:24 2026] apple-display-crossbar 130304c000.mux: Switched dpphy to disconnected state
+[Thu Sep 24 11:40:24 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000011 028=00000000 02c=00000000 030=00000000 034=00000100 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:24 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000100 820=00000000 024=00000011 81c=00000011
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: allocated Type-C DPTX PHY 2
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: display routed to Thunderbolt DP tunnel dpin0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: dcp_dptx_connect(port=0) target=0:2 dfp=1 typec=1 route=borrowed conn_type=20 connected=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTX validate: call #1 this boot target=0x8021 core=1 atc=2 die=0 attrs=0x101 caller=dcp_dptx_connect+0x130/0x344 [appledrm]
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTX connect: call #1 this boot target=0x8021 unk=0x101 caller=dcp_dptx_connect+0x188/0x344 [appledrm]
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: host DP IN type=0e0101 cap=9 CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=24000000 COMMON=15402134 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTX request_display: call #1 this boot caller=dcp_dptx_connect+0x1bc/0x344 [appledrm]
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: AppleDCPDPTX.cpp:355: [AFK]powering nub 0x854670
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 18 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: GET_SUPPORTS_HPD 1 usb4=1
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:6: host DP IN type=0e0101 cap=9 CS0=00090400 CS1=00004008 CS2=00000000 CS3=00000000 LOCAL=15402334 REMOTE=00000000 STAT=00000000 COMMON=00000000 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=0 AE=0 HPD=0 DPRX=0 LCK=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:6: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN hop 8 enable=1 out=1 next=11 credits=1
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 10 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN hop 9 enable=1 out=1 next=10 credits=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 0 (16 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: hub DP OUT type=0e0102 cap=57 CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 CS9=00000000 CS10=00000000 ADP_CS4=40800000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: hub DP OUT CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP tunnel paths up, not waiting for DPRX
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: dpin0: active handshake=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTX request_display: call #1 result=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: DCPDP13Service.cpp:60: [AFK]version: 14
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: DCPDPService.cpp:76: [AFK]version: 14
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: AFK[ep:28]: new service DCPDP13Service on channel 1
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: AFK[ep:28]: new service DCPDP13Service on channel 3
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 21 (144 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000030: 00 00 00 00 00 00 00 00 00 0a 00 00 a0 05 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 7 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 13 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 7 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 15 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 5 (16 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 12 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 9 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: SET_LINK_RATE 0xa
+[Thu Sep 24 11:40:24 2026] phy-apple-atc f03000000.phy: USB4 tunnel clock preflight: +7000=0000e001 +2200=00002000 +2000=10000000 +7044=00000000
+[Thu Sep 24 11:40:24 2026] phy-apple-atc f03000000.phy: DP tunnel clock: rate=0xa result=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 6 (16 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-display-crossbar f0304c000.mux: Switched dpin0 to dispext0,0 (t602x atc=0x1 mux=0x0)
+[Thu Sep 24 11:40:24 2026] apple-display-crossbar f0304c000.mux: t602x dpin0: 000=00000001 004=000001fe 008=00000001 00c=00000001 014=000001fb 018=00000001 01c=00000001 024=00000110 028=00000001 02c=00000001 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Thu Sep 24 11:40:24 2026] apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000001 800=00000001 020=00000000 820=00000000 024=00000110 81c=00000110
+[Thu Sep 24 11:40:24 2026] thunderbolt-apple-acio f01ac0000.cio: dpin0: active handshake=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 13 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 12 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: set_active_lane_count: unexpected lane count:4 phy: 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: USB4/DPTX: SET_ACTIVE_LANE_COUNT 4
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 90 83 eb 40 ff ff ff ff 02 00 00 00 00 00 00 00  ...@............
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 04 00 00 00 00 00 00 00 0e 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: set_drive_settings: 4:0:14:0:0:0:0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: set_drive_settings: 4:0:0:0:0:0:0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: set_drive_settings: 4:0:0:0:0:0:0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000030: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: set_drive_settings: 4:0:0:0:0:0:0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:24 2026] usb 1-1.2: new high-speed USB device number 4 using xhci-hcd
+[Thu Sep 24 11:40:24 2026] usb 1-1.2: New USB device found, idVendor=06cb, idProduct=7100, bcdDevice= 1.c4
+[Thu Sep 24 11:40:24 2026] usb 1-1.2: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[Thu Sep 24 11:40:24 2026] usb 1-1.2: Product: VMM7100
+[Thu Sep 24 11:40:24 2026] usb 1-1.2: Manufacturer: Synaptics
+[Thu Sep 24 11:40:24 2026] usb 1-1.2: SerialNumber: 000000000000
+[Thu Sep 24 11:40:24 2026] usbhid 1-1.2:1.0: couldn't find an input interrupt endpoint
+[Thu Sep 24 11:40:24 2026] usbcore: registered new interface driver usbhid
+[Thu Sep 24 11:40:24 2026] usbhid: USB HID core driver
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:135: IOMFB: IOAVVideoInterface published
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:714: IOMFBStatus VideoInterfaceIOAV::plug_gated(IOAVVideoInterface *, bool): display HPD asserted
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DCP property key=ColorElements bytes=5049 accepted=1 nr_modes=0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DCP property key=TimingElements bytes=205757 accepted=1 nr_modes=22
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DCP property key=DisplayAttributes bytes=1285 accepted=1 nr_modes=22
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: DCP property key=Transport bytes=53 accepted=1 nr_modes=22
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 0
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: cb_hotplug() connected:1, valid_mode:0 nr_modes:22
+[Thu Sep 24 11:40:24 2026] apple-dcp 289c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:22
+[Thu Sep 24 11:40:24 2026] usb 2-1: new SuperSpeed Plus Gen 2x1 USB device number 2 using xhci-hcd
+[Thu Sep 24 11:40:24 2026] usb 2-1: New USB device found, idVendor=8087, idProduct=5787, bcdDevice= 0.00
+[Thu Sep 24 11:40:24 2026] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[Thu Sep 24 11:40:24 2026] usb 2-1: Product: USB3 HUB
+[Thu Sep 24 11:40:24 2026] usb 2-1: Manufacturer: Intel Corporation
+[Thu Sep 24 11:40:24 2026] hub 2-1:1.0: USB hub found
+[Thu Sep 24 11:40:24 2026] hub 2-1:1.0: 4 ports detected
+[Thu Sep 24 11:40:25 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS changed CS0=c0090400 CS2=241021c2 CS9=41000553 CS13=00000000 COMMON=b7402134 VE=1 AE=1 HPD=1 DPRX=1 disc=0
+[Thu Sep 24 11:40:25 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN DPRX_DONE=1 (ACIO AUX completed)
+[Thu Sep 24 11:40:25 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin0 analog DPRX done 0x4000: 000=80000000 004=00400040 008=00000004 00c=80000000 010=00000040 014=00000004 018=00000016 01c=00000010 020=00000000 024=00000004 028=80000000 02c=00000010 030=00000004 034=80000000 038=01010101 03c=00000101 040=00000001 044=01010101 048=00000001 04c=00000004 050=00000000 054=00000000 058=00000000
+[Thu Sep 24 11:40:25 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin0 analog DPRX done 0x4000: 05c=00000000 060=00000000 064=00000000 068=00000000 06c=00000000 070=00000000 074=00000000 078=00000000 07c=00000000
+[Thu Sep 24 11:40:25 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin1 analog 0x8000: 000=80000000 004=00040004 008=00000004 00c=00001007 010=00040004 014=00000000 018=00000004 01c=00000000 020=00040004 024=00000000 028=00000004 02c=80010000 030=00000004 034=80000000 038=00000004 03c=80000000 040=00000004 044=80000000 048=00000004 04c=80000000 050=00000004 054=80000000 058=00000004
+[Thu Sep 24 11:40:25 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin1 analog 0x8000: 05c=80000000 060=00000004 064=00000000 068=00000000 06c=00000000 070=00000000 074=00000000 078=00000000 07c=00000000
+[Thu Sep 24 11:40:26 2026] kauditd_printk_skb: 258 callbacks suppressed
+[Thu Sep 24 11:40:26 2026] audit: type=1130 audit(1790242825.827:158): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=udisks2 comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:27 2026] audit: type=1131 audit(1790242826.917:159): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-rfkill comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:28 2026] ieee80211 phy0: brcmf_set_key_mgmt: get okc_enable failed (-52)
+[Thu Sep 24 11:40:28 2026] ieee80211 phy0: brcmf_c_set_joinpref_default: Set join_pref error (-52)
+[Thu Sep 24 11:40:28 2026] audit: type=1334 audit(1790242828.126:160): prog-id=57 op=LOAD
+[Thu Sep 24 11:40:28 2026] audit: type=1300 audit(1790242828.126:160): arch=c00000b7 syscall=280 success=yes exit=26 a0=5 a1=ffffd70b2aa0 a2=a8 a3=fffed7a8c540 items=0 ppid=1 pid=879 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="NetworkManager" exe="/usr/bin/NetworkManager" subj=unconfined key=(null)
+[Thu Sep 24 11:40:28 2026] audit: type=1327 audit(1790242828.126:160): proctitle=2F7573722F62696E2F4E6574776F726B4D616E61676572002D2D6E6F2D6461656D6F6E
+[Thu Sep 24 11:40:28 2026] audit: type=1334 audit(1790242828.294:161): prog-id=58 op=LOAD
+[Thu Sep 24 11:40:28 2026] audit: type=1300 audit(1790242828.294:161): arch=c00000b7 syscall=280 success=yes exit=26 a0=5 a1=ffffd70b2aa0 a2=a8 a3=fffed7a8c540 items=0 ppid=1 pid=879 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="NetworkManager" exe="/usr/bin/NetworkManager" subj=unconfined key=(null)
+[Thu Sep 24 11:40:28 2026] audit: type=1327 audit(1790242828.294:161): proctitle=2F7573722F62696E2F4E6574776F726B4D616E61676572002D2D6E6F2D6461656D6F6E
+[Thu Sep 24 11:40:28 2026] audit: type=1334 audit(1790242828.301:162): prog-id=57 op=UNLOAD
+[Thu Sep 24 11:40:30 2026] audit: type=1325 audit(1790242829.940:163): table=filter:36 family=2 entries=1 op=nft_register_chain pid=3556 subj=unconfined comm="iptables"
+[Thu Sep 24 11:40:32 2026] kauditd_printk_skb: 98 callbacks suppressed
+[Thu Sep 24 11:40:32 2026] audit: type=1131 audit(1790242832.022:196): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:52 2026] audit: type=1131 audit(1790242852.645:197): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:40:52 2026] audit: type=1334 audit(1790242852.683:198): prog-id=38 op=UNLOAD
+[Thu Sep 24 11:40:54 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 5 (16 bytes)
+[Thu Sep 24 11:40:54 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:54 2026] thunderbolt-apple-acio f01ac0000.cio: dpin0: inactive handshake=0
+[Thu Sep 24 11:40:54 2026] apple-display-crossbar f0304c000.mux: dpin0: crossbar link down (dispext=0 atc=0x1)
+[Thu Sep 24 11:40:54 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 12 (32 bytes)
+[Thu Sep 24 11:40:54 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:54 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:54 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 9 (32 bytes)
+[Thu Sep 24 11:40:54 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:54 2026] DPTXPort: apcall data: 00000010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:40:54 2026] apple-dcp 289c00000.dcp: DPTXPort: SET_LINK_RATE 0x0
+[Thu Sep 24 11:40:54 2026] apple-display-crossbar f0304c000.mux: dpin0: crossbar link down (dispext=0 atc=0x1)
+[Thu Sep 24 11:40:54 2026] apple-dcp 289c00000.dcp: DPTXPort: APCALL 6 (16 bytes)
+[Thu Sep 24 11:40:54 2026] DPTXPort: apcall data: 00000000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+[Thu Sep 24 11:41:03 2026] audit: type=1101 audit(1790242863.560:199): pid=7111 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:41:03 2026] audit: type=1110 audit(1790242863.561:200): pid=7111 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:41:03 2026] audit: type=1105 audit(1790242863.562:201): pid=7111 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:41:03 2026] audit: type=1106 audit(1790242863.568:202): pid=7111 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:41:03 2026] audit: type=1104 audit(1790242863.568:203): pid=7111 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:43:18 2026] usb 1-1-port5: over-current condition
+[Thu Sep 24 11:43:19 2026] usb 2-1-port4: over-current condition
+[Thu Sep 24 11:43:19 2026] usb 2-1-port4: over-current condition
+[Thu Sep 24 11:43:19 2026] usb 1-1-port5: over-current condition
+[Thu Sep 24 11:43:19 2026] usb 2-1-port4: over-current condition
+[Thu Sep 24 11:43:31 2026] audit: type=1101 audit(1790243011.620:204): pid=14984 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:43:31 2026] audit: type=1110 audit(1790243011.621:205): pid=14984 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:43:31 2026] audit: type=1105 audit(1790243011.622:206): pid=14984 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:43:31 2026] audit: type=1106 audit(1790243011.628:207): pid=14984 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:43:31 2026] audit: type=1104 audit(1790243011.628:208): pid=14984 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=0, error=84
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=1, error=83
+[Thu Sep 24 11:46:05 2026] usb 1-1: USB disconnect, device number 2
+[Thu Sep 24 11:46:05 2026] usb 1-1.1: USB disconnect, device number 3
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:1044: SBX disconnected!
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:181: Entering Phase 1. action=0
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=0, error=87
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=1, error=87
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:78: Lane init parmas = 0x00000011
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=0, error=89
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=1, error=84
+[Thu Sep 24 11:46:05 2026] usb 1-1.2: USB disconnect, device number 4
+[Thu Sep 24 11:46:05 2026] thunderbolt 0-0:1.1: retimer disconnected
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:70: path_configuration_space_tx_path_tear_down - source_port=14, null_port_index=0.
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:166: path_configuration_space_rx_path_tear_down - null_port_index=0, physical_queue_
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:70: path_configuration_space_tx_path_tear_down - source_port=13, null_port_index=0.
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:166: path_configuration_space_rx_path_tear_down - null_port_index=0, physical_queue_
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:70: path_configuration_space_tx_path_tear_down - source_port=15, null_port_index=0.
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:70: path_configuration_space_tx_path_tear_down - source_port=16, null_port_index=0.
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:166: path_configuration_space_rx_path_tear_down - null_port_index=0, physical_queue_
+[Thu Sep 24 11:46:05 2026] thunderbolt 0-1: device disconnected
+[Thu Sep 24 11:46:05 2026] macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151: 	Elec: Elec Cause 0x0
+[Thu Sep 24 11:46:05 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:343: Entering Phase 2
+[Thu Sep 24 11:46:06 2026] xhci-hcd xhci-hcd.3.auto: remove, state 4
+[Thu Sep 24 11:46:06 2026] usb usb2: USB disconnect, device number 1
+[Thu Sep 24 11:46:06 2026] usb 2-1: USB disconnect, device number 2
+[Thu Sep 24 11:46:06 2026] xhci-hcd xhci-hcd.3.auto: USB bus 2 deregistered
+[Thu Sep 24 11:46:06 2026] xhci-hcd xhci-hcd.3.auto: remove, state 4
+[Thu Sep 24 11:46:06 2026] usb usb1: USB disconnect, device number 1
+[Thu Sep 24 11:46:06 2026] xhci-hcd xhci-hcd.3.auto: USB bus 1 deregistered
+[Thu Sep 24 11:46:06 2026] phy-apple-atc f03000000.phy: Pipehandler lock not acked.
+[Thu Sep 24 11:46:06 2026] phy-apple-atc f03000000.phy: Failed to lock pipehandler
+[Thu Sep 24 11:46:06 2026] apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0
+[Thu Sep 24 11:46:12 2026] macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151: 	Elec: Elec Cause 0x20
+[Thu Sep 24 11:46:12 2026] macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151: 	Elec: Elec Cause 0x200000
+[Thu Sep 24 11:46:12 2026] apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=4 dp=0 usb4=1 tbt=0
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: Initializing (protocol version 12)
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: main.c:60: #ACIO FW IS READY# FW_VERSION_STRING=AppleCIOFirmware-475~290__2026-04-18-18:18
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: main.c:61: FW state=1
+[Thu Sep 24 11:46:12 2026] apple-dart f01a80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-nhi f01f00000.nhi: device links to tunneled native ports are missing!
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:181: Entering Phase 1. action=0
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:78: Lane init parmas = 0x00000011
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: xHCI Host Controller
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: new USB bus registered, assigned bus number 1
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: hcc params 0x0238ffcd hci version 0x110 quirks 0x0000808000000010
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: irq 167, io mem 0xf02280000
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: xHCI Host Controller
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: new USB bus registered, assigned bus number 2
+[Thu Sep 24 11:46:12 2026] xhci-hcd xhci-hcd.3.auto: Host supports USB 3.1 Enhanced SuperSpeed
+[Thu Sep 24 11:46:12 2026] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.01
+[Thu Sep 24 11:46:12 2026] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[Thu Sep 24 11:46:12 2026] usb usb1: Product: xHCI Host Controller
+[Thu Sep 24 11:46:12 2026] usb usb1: Manufacturer: Linux 7.1.12-2.5-1-ARCH xhci-hcd
+[Thu Sep 24 11:46:12 2026] usb usb1: SerialNumber: xhci-hcd.3.auto
+[Thu Sep 24 11:46:12 2026] hub 1-0:1.0: USB hub found
+[Thu Sep 24 11:46:12 2026] hub 1-0:1.0: 1 port detected
+[Thu Sep 24 11:46:12 2026] usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[Thu Sep 24 11:46:12 2026] usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.01
+[Thu Sep 24 11:46:12 2026] usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[Thu Sep 24 11:46:12 2026] usb usb2: Product: xHCI Host Controller
+[Thu Sep 24 11:46:12 2026] usb usb2: Manufacturer: Linux 7.1.12-2.5-1-ARCH xhci-hcd
+[Thu Sep 24 11:46:12 2026] usb usb2: SerialNumber: xhci-hcd.3.auto
+[Thu Sep 24 11:46:12 2026] hub 2-0:1.0: USB hub found
+[Thu Sep 24 11:46:12 2026] hub 2-0:1.0: 1 port detected
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:343: Entering Phase 2
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:396: Entering Phase 3
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:882: Got AT register 12. 3 bytes. 0x00 0xf3 0x5f
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:1024: Entering Connected
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2212: RT Broadcast LOCAL: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2212: RT Broadcast LOCAL: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2219: RT Broadcast REMOTE: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:46:12 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2219: RT Broadcast REMOTE: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[Thu Sep 24 11:46:13 2026] usb 1-1: new high-speed USB device number 2 using xhci-hcd
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=0, error=82
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=1, error=84
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_training_cl0.c:24: Gen2/3 lane=0 entered CL0!
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_training_cl0.c:24: Gen2/3 lane=1 entered CL0!
+[Thu Sep 24 11:46:13 2026] thunderbolt 0-1: new device found, vendor=0x5a device=0xde81
+[Thu Sep 24 11:46:13 2026] thunderbolt 0-1: Other World Computing Thunderbolt 5 Hub
+[Thu Sep 24 11:46:13 2026] usb 1-1: New USB device found, idVendor=1d5c, idProduct=5801, bcdDevice= 1.01
+[Thu Sep 24 11:46:13 2026] usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[Thu Sep 24 11:46:13 2026] usb 1-1: Product: USB2.0 Hub
+[Thu Sep 24 11:46:13 2026] usb 1-1: Manufacturer: Fresco Logic, Inc.
+[Thu Sep 24 11:46:13 2026] hub 1-1:1.0: USB hub found
+[Thu Sep 24 11:46:13 2026] hub 1-1:1.0: 5 ports detected
+[Thu Sep 24 11:46:13 2026] thunderbolt 0-0:1.1: new retimer found, vendor=0x5ac device=0x2200
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: clx.c:776: CLX CFG: clx_en changed 0x0 --> 0x0
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: clx.c:776: CLX CFG: clx_en changed 0x0 --> 0x3
+[Thu Sep 24 11:46:13 2026] macsmc 2a2400000.smc: RTKit: syslog message: charger.cpp:3180: Not charging:400001
+[Thu Sep 24 11:46:13 2026] usb 1-1.1: new full-speed USB device number 3 using xhci-hcd
+[Thu Sep 24 11:46:13 2026] usb 1-1.1: New USB device found, idVendor=1e91, idProduct=de81, bcdDevice= 0.04
+[Thu Sep 24 11:46:13 2026] usb 1-1.1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[Thu Sep 24 11:46:13 2026] usb 1-1.1: Product: Thunderbolt 5 Hub
+[Thu Sep 24 11:46:13 2026] usb 1-1.1: Manufacturer: Other World Computing
+[Thu Sep 24 11:46:13 2026] usb 1-1.1: SerialNumber: 0052
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=14, null port=0, hopid=8
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=1, target port=14, hopid=8
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=13, null port=0, hopid=9
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=2, target port=13, hopid=8
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: error -ENODEV: PCIe-C requires a successful m1n1 preinit handoff
+[Thu Sep 24 11:46:13 2026] thunderbolt-apple-acio f01ac0000.cio: deferred PCIe-C activation failed: -19
+[Thu Sep 24 11:46:13 2026] usb 1-1.2: new high-speed USB device number 4 using xhci-hcd
+[Thu Sep 24 11:46:14 2026] usb 1-1.2: New USB device found, idVendor=06cb, idProduct=7100, bcdDevice= 1.c4
+[Thu Sep 24 11:46:14 2026] usb 1-1.2: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[Thu Sep 24 11:46:14 2026] usb 1-1.2: Product: VMM7100
+[Thu Sep 24 11:46:14 2026] usb 1-1.2: Manufacturer: Synaptics
+[Thu Sep 24 11:46:14 2026] usb 1-1.2: SerialNumber: 000000000000
+[Thu Sep 24 11:46:14 2026] usbhid 1-1.2:1.0: couldn't find an input interrupt endpoint
+[Thu Sep 24 11:46:14 2026] usb 2-1: new SuperSpeed Plus Gen 2x1 USB device number 2 using xhci-hcd
+[Thu Sep 24 11:46:14 2026] usb 2-1: New USB device found, idVendor=8087, idProduct=5787, bcdDevice= 0.00
+[Thu Sep 24 11:46:14 2026] usb 2-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[Thu Sep 24 11:46:14 2026] usb 2-1: Product: USB3 HUB
+[Thu Sep 24 11:46:14 2026] usb 2-1: Manufacturer: Intel Corporation
+[Thu Sep 24 11:46:14 2026] hub 2-1:1.0: USB hub found
+[Thu Sep 24 11:46:14 2026] hub 2-1:1.0: 4 ports detected
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=15, null port=0, hopid=10
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=16, null port=0, hopid=11
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=3, target port=16, hopid=8
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: USB4 DPTX Discovery closed (CS13 writable, CS9 static); AE=0 VE=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: Apple: HPD propagated
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=24000000 COMMON=15402134 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: DP OUT CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=2 (DPTX should use this adapter, not ATC)
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: DP IN tunnel routing: tunnel 0:5 <-> 1:19
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC ctrl 0x0: 000=00003010 004=00000011 018=00040000 01c=00000001 024=09600258 028=00000001 030=000007af 034=00000001 038=00000001 03c=c5185c2a 040=000000a2 044=00000001 048=00000001 060=00000001 064=00000001 068=00000001 070=00000001 074=00000001 078=00000003 0a8=01000000 0ac=04000001 0d0=00000062
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0: Apple VSE cap=53: 00=ca0005ff 01=00000011 02=00000000 03=00000000 04=00000000 05=00000000 06=00000000 07=00000000 08=00000000 09=00000000 0a=00000000 0b=00000000 0c=00000fff 0d=00000fff 0e=00000000 0f=00000000
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: host DP IN type=0e0101 cap=9 CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=24000000 COMMON=15402134 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:6: host DP IN type=0e0101 cap=9 CS0=00090400 CS1=00004008 CS2=00000000 CS3=00000000 LOCAL=15402334 REMOTE=00000000 STAT=00000000 COMMON=00000000 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=0 AE=0 HPD=0 DPRX=0 LCK=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:6: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN hop 8 enable=1 out=1 next=11 credits=1
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN hop 9 enable=1 out=1 next=10 credits=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: hub DP OUT type=0e0102 cap=57 CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 CS9=00000000 CS10=00000000 ADP_CS4=40800000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: hub DP OUT CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[Thu Sep 24 11:46:14 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP tunnel paths up, not waiting for DPRX
+[Thu Sep 24 11:46:18 2026] macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151: 	Elec: Elec Cause 0x1000
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DPRX timeout, keeping DP tunnel
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=24000000 COMMON=15402134 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-nhi f01f00000.nhi: 1:19: DP OUT CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=2 (DPTX should use this adapter, not ATC)
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin0 analog at timeout 0x4000: 000=80000000 004=00400040 008=00000004 00c=80000000 010=00000040 014=00000004 018=00001017 01c=00000010 020=00000000 024=00000004 028=80000000 02c=00000010 030=00000004 034=80000000 038=01010101 03c=00000101 040=00000001 044=01010101 048=00000001 04c=00000004 050=00000000 054=00000000 058=00000000
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin0 analog at timeout 0x4000: 05c=00000000 060=00000000 064=00000000 068=00000000 06c=00000000 070=00000000 074=00000000 078=00000000 07c=00000000
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin1 analog 0x8000: 000=80000000 004=00040004 008=00000004 00c=00040004 010=00040004 014=00000000 018=00000004 01c=00000000 020=00040004 024=00000000 028=00000004 02c=80010000 030=00000004 034=80000000 038=00000004 03c=80000000 040=00000004 044=80000000 048=00000004 04c=80000000 050=00000004 054=80000000 058=00000004
+[Thu Sep 24 11:46:26 2026] thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin1 analog 0x8000: 05c=80000000 060=00000004 064=00000000 068=00000000 06c=00000000 070=00000000 074=00000000 078=00000000 07c=00000000
+[Thu Sep 24 11:46:44 2026] audit: type=1101 audit(1790243204.328:209): pid=25009 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:46:44 2026] audit: type=1110 audit(1790243204.328:210): pid=25009 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:46:44 2026] audit: type=1105 audit(1790243204.328:211): pid=25009 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:46:44 2026] audit: type=1106 audit(1790243204.342:212): pid=25009 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:46:44 2026] audit: type=1104 audit(1790243204.342:213): pid=25009 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:30 2026] audit: type=1101 audit(1790243250.858:214): pid=27129 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:30 2026] audit: type=1110 audit(1790243250.859:215): pid=27129 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:30 2026] audit: type=1105 audit(1790243250.860:216): pid=27129 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:30 2026] audit: type=1106 audit(1790243250.866:217): pid=27129 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:30 2026] audit: type=1104 audit(1790243250.866:218): pid=27129 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:48 2026] audit: type=1101 audit(1790243268.514:219): pid=27943 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:48 2026] audit: type=1110 audit(1790243268.514:220): pid=27943 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:48 2026] audit: type=1105 audit(1790243268.515:221): pid=27943 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:48 2026] audit: type=1106 audit(1790243268.528:222): pid=27943 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:47:48 2026] audit: type=1104 audit(1790243268.528:223): pid=27943 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:49:10 2026] audit: type=1101 audit(1790243350.707:224): pid=31760 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:49:10 2026] audit: type=1110 audit(1790243350.708:225): pid=31760 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[Thu Sep 24 11:49:10 2026] audit: type=1105 audit(1790243350.709:226): pid=31760 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
