@@ -89,9 +89,18 @@ made the working configuration (prefer dcpext0 for a Type-C tunnel route)
 the unconditional, permanent default. Net -556/+43 lines across 10
 files. **The driver now needs zero special module options on this
 hardware.** Full detail in
-`notes/2026-09-24-0143-generalize-and-clean-up.md`. Installed
-(`scripts/manage-0143.py install`, 2026-09-24 ~16:00) -- awaiting a
-reboot and hardware confirmation before treating it as the final state.
+`notes/2026-09-24-0143-generalize-and-clean-up.md`.
+
+**Confirmed on hardware after a clean reboot (2026-09-24 16:07)**:
+loaded `appledrm.ko` hash matches 0143's build exactly
+(`6f262fc4...31cc`), no `/etc/modprobe.d/j416s-*.conf` file exists at
+all any more, `/sys/module/appledrm/parameters/` shows only the
+pre-existing generic opt-in diagnostics (`show_notch`, `hdmi_audio`,
+`unstable_edid`, `enable_verbose_logging`) -- none of the removed
+j416s-specific flags. `dmesg`: `display routed to Thunderbolt DP tunnel
+dpin0` then `DP IN DPRX_DONE=1` on boot, `hyprctl monitors` shows
+`USB-3` at `2560x1440@59.95100`. This is the final state -- ready for a
+PR.
 
 ## Separate, unresolved: Aquamarine (Hyprland's DRM backend) doesn't
 ## reliably commit a mode on a live runtime hotplug
