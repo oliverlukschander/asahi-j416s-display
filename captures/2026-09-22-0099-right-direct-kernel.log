@@ -1,0 +1,1571 @@
+[   45.649850] omarchy-m2 kernel: Booting Linux on physical CPU 0x0000000000 [0x611f0340]
+[   45.649864] omarchy-m2 kernel: Linux version 7.1.12-2.5-1-ARCH (linux-aurora@archlinux) (gcc (GCC) 16.1.1 20260430, GNU ld (GNU Binutils) 2.46.0) #1 SMP PREEMPT_DYNAMIC Sun, 20 Sep 2026 02:52:44 +0000
+[   45.649869] omarchy-m2 kernel: random: crng init done
+[   45.649873] omarchy-m2 kernel: Machine model: Apple MacBook Pro (16-inch, M2 Pro, 2023)
+[   45.649877] omarchy-m2 kernel: efi: EFI v2.11 by Das U-Boot
+[   45.649881] omarchy-m2 kernel: efi: RTPROP=0x107d4312040 SMBIOS 3.0=0x107d53c2000 INITRD=0x107d42f8040 MEMRESERVE=0x107d42f7040 
+[   45.649885] omarchy-m2 kernel: OF: reserved mem: 0x000001000196c000..0x0000010001c7ffff (3152 KiB) nomap non-reusable asc-firmware@1000196c000
+[   45.649888] omarchy-m2 kernel: OF: reserved mem: 0x00000100009fc000..0x000001000132ffff (9424 KiB) nomap non-reusable asc-firmware@100009fc000
+[   45.649891] omarchy-m2 kernel: OF: reserved mem: 0x00000107d9478000..0x00000107d947bfff (16 KiB) nomap non-reusable sio-firmware-data@107d9478000
+[   45.649895] omarchy-m2 kernel: OF: reserved mem: 0x00000107d947c000..0x00000107d947ffff (16 KiB) nomap non-reusable sio-firmware-data@107d947c000
+[   45.649898] omarchy-m2 kernel: OF: reserved mem: 0x00000107d9480000..0x00000107d949ffff (128 KiB) nomap non-reusable sio-firmware-data@107d9480000
+[   45.649902] omarchy-m2 kernel: OF: reserved mem: 0x00000107d94a0000..0x00000107d94a3fff (16 KiB) nomap non-reusable sio-firmware-data@107d94a0000
+[   45.649905] omarchy-m2 kernel: OF: reserved mem: 0x0000010001d48000..0x0000010001e3ffff (992 KiB) nomap non-reusable asc-firmware@10001d48000
+[   45.649909] omarchy-m2 kernel: OF: reserved mem: 0x00000100013e4000..0x00000100013fffff (112 KiB) nomap non-reusable asc-firmware@100013e4000
+[   45.649919] omarchy-m2 kernel: OF: reserved mem: 0x00000107ddc80000..0x00000107e4f43fff (117520 KiB) nomap non-reusable framebuffer@107ddc80000
+[   45.649923] omarchy-m2 kernel: OF: reserved mem: 0x00000107db37c000..0x00000107dc37bfff (16384 KiB) nomap non-reusable asc-firmware@107db37c000
+[   45.649926] omarchy-m2 kernel: OF: reserved mem: 0x00000107dc37c000..0x00000107dc67bfff (3072 KiB) nomap non-reusable asc-firmware@107dc37c000
+[   45.649929] omarchy-m2 kernel: OF: reserved mem: 0x00000107dc67c000..0x00000107dd67bfff (16384 KiB) nomap non-reusable asc-firmware@107dc67c000
+[   45.649933] omarchy-m2 kernel: OF: reserved mem: 0x00000107dd67c000..0x00000107dd97bfff (3072 KiB) nomap non-reusable asc-firmware@107dd67c000
+[   45.649937] omarchy-m2 kernel: OF: reserved mem: 0x00000107ddc7c000..0x00000107ddc7ffff (16 KiB) nomap non-reusable region157@107ddc7c000
+[   45.649940] omarchy-m2 kernel: OF: reserved mem: 0x00000107e4f44000..0x00000107e5003fff (768 KiB) nomap non-reusable region95@107e4f44000
+[   45.649944] omarchy-m2 kernel: OF: reserved mem: 0x00000107e5004000..0x00000107e5363fff (3456 KiB) nomap non-reusable region94@107e5004000
+[   45.649947] omarchy-m2 kernel: OF: reserved mem: 0x00000107e5364000..0x00000107e6363fff (16384 KiB) nomap non-reusable region57@107e5364000
+[   45.649950] omarchy-m2 kernel: OF: reserved mem: 0x00000107dd97c000..0x00000107ddc7bfff (3072 KiB) nomap non-reusable dcp_data@107dd97c000
+[   45.649953] omarchy-m2 kernel: OF: reserved mem: 0x0000010000230000..0x0000010000833fff (6160 KiB) nomap non-reusable asc-firmware@10000230000
+[   45.649957] omarchy-m2 kernel: OF: reserved mem: 0x00000107d94c8000..0x00000107d94cbfff (16 KiB) map non-reusable flash@107d94c8000
+[   45.649961] omarchy-m2 kernel: OF: reserved mem: 0x0000010003ea8000..0x0000010003f1ffff (480 KiB) map non-reusable flash@10003ea8000
+[   45.649965] omarchy-m2 kernel: OF: reserved mem: 0x00000107d94a4000..0x00000107d94bbfff (96 KiB) map non-reusable globals
+[   45.649968] omarchy-m2 kernel: OF: reserved mem: 0x00000107d94c0000..0x00000107d94c7fff (32 KiB) map non-reusable hw-cal-a
+[   45.649971] omarchy-m2 kernel: OF: reserved mem: 0x00000107d94bc000..0x00000107d94bffff (16 KiB) map non-reusable hw-cal-b
+[   45.649975] omarchy-m2 kernel: OF: reserved mem: 0x00000107fff70000..0x00000107fff73fff (16 KiB) map non-reusable uat-handoff
+[   45.649978] omarchy-m2 kernel: OF: reserved mem: 0x00000107fff78000..0x00000107fffb7fff (256 KiB) map non-reusable uat-pagetables
+[   45.649981] omarchy-m2 kernel: OF: reserved mem: 0x00000107fffb8000..0x00000107fffbbfff (16 KiB) map non-reusable uat-ttbs
+[   45.649984] omarchy-m2 kernel: OF: reserved mem: 0x00000107d94cc000..0x00000107d9783fff (2784 KiB) nomap non-reusable isp-heap
+[   45.649988] omarchy-m2 kernel: cma: Reserved 64 MiB at 0x0000010008000000
+[   45.649991] omarchy-m2 kernel: Zone ranges:
+[   45.649995] omarchy-m2 kernel:   DMA      [mem 0x0000010000230000-0x00000107fffbbfff]
+[   45.649998] omarchy-m2 kernel:   DMA32    empty
+[   45.650006] omarchy-m2 kernel:   Normal   empty
+[   45.650010] omarchy-m2 kernel: Movable zone start for each node
+[   45.650014] omarchy-m2 kernel: Early memory node ranges
+[   45.650017] omarchy-m2 kernel:   node   0: [mem 0x0000010000230000-0x0000010000833fff]
+[   45.650021] omarchy-m2 kernel:   node   0: [mem 0x00000100009fc000-0x000001000132ffff]
+[   45.650024] omarchy-m2 kernel:   node   0: [mem 0x00000100013e4000-0x00000100013fffff]
+[   45.650028] omarchy-m2 kernel:   node   0: [mem 0x000001000196c000-0x0000010001c7ffff]
+[   45.650031] omarchy-m2 kernel:   node   0: [mem 0x0000010001d48000-0x0000010001e3ffff]
+[   45.650034] omarchy-m2 kernel:   node   0: [mem 0x0000010001e40000-0x0000010003f77fff]
+[   45.650038] omarchy-m2 kernel:   node   0: [mem 0x0000010003f78000-0x0000010004087fff]
+[   45.650041] omarchy-m2 kernel:   node   0: [mem 0x0000010004088000-0x0000010006d13fff]
+[   45.650044] omarchy-m2 kernel:   node   0: [mem 0x0000010006d14000-0x0000010006d23fff]
+[   45.650047] omarchy-m2 kernel:   node   0: [mem 0x0000010006d24000-0x0000010006d27fff]
+[   45.650051] omarchy-m2 kernel:   node   0: [mem 0x0000010006d28000-0x0000010006d37fff]
+[   45.650054] omarchy-m2 kernel:   node   0: [mem 0x0000010006d38000-0x0000010006d3bfff]
+[   45.650057] omarchy-m2 kernel:   node   0: [mem 0x0000010006d3c000-0x0000010006d4bfff]
+[   45.650060] omarchy-m2 kernel:   node   0: [mem 0x0000010006d4c000-0x0000010006d4ffff]
+[   45.650063] omarchy-m2 kernel:   node   0: [mem 0x0000010006d50000-0x0000010006d5ffff]
+[   45.650067] omarchy-m2 kernel:   node   0: [mem 0x0000010006d60000-0x0000010006d63fff]
+[   45.650071] omarchy-m2 kernel:   node   0: [mem 0x0000010006d64000-0x0000010006d73fff]
+[   45.650074] omarchy-m2 kernel:   node   0: [mem 0x0000010006d74000-0x0000010006d77fff]
+[   45.650077] omarchy-m2 kernel:   node   0: [mem 0x0000010006d78000-0x0000010006d87fff]
+[   45.650081] omarchy-m2 kernel:   node   0: [mem 0x0000010006d88000-0x0000010006d8bfff]
+[   45.650085] omarchy-m2 kernel:   node   0: [mem 0x0000010006d8c000-0x0000010006d9bfff]
+[   45.650088] omarchy-m2 kernel:   node   0: [mem 0x0000010006d9c000-0x0000010006d9ffff]
+[   45.650092] omarchy-m2 kernel:   node   0: [mem 0x0000010006da0000-0x0000010006daffff]
+[   45.650095] omarchy-m2 kernel:   node   0: [mem 0x0000010006db0000-0x0000010006db3fff]
+[   45.650099] omarchy-m2 kernel:   node   0: [mem 0x0000010006db4000-0x0000010006dc3fff]
+[   45.650102] omarchy-m2 kernel:   node   0: [mem 0x0000010006dc4000-0x0000010006dc7fff]
+[   45.650106] omarchy-m2 kernel:   node   0: [mem 0x0000010006dc8000-0x0000010006dd7fff]
+[   45.650109] omarchy-m2 kernel:   node   0: [mem 0x0000010006dd8000-0x0000010006ddbfff]
+[   45.650112] omarchy-m2 kernel:   node   0: [mem 0x0000010006ddc000-0x0000010006debfff]
+[   45.650116] omarchy-m2 kernel:   node   0: [mem 0x0000010006dec000-0x0000010006deffff]
+[   45.650119] omarchy-m2 kernel:   node   0: [mem 0x0000010006df0000-0x0000010006e23fff]
+[   45.650122] omarchy-m2 kernel:   node   0: [mem 0x0000010006e24000-0x000001073b3fffff]
+[   45.650126] omarchy-m2 kernel:   node   0: [mem 0x000001073b400000-0x000001073b403fff]
+[   45.650136] omarchy-m2 kernel:   node   0: [mem 0x000001073b404000-0x00000107d430ffff]
+[   45.650139] omarchy-m2 kernel:   node   0: [mem 0x00000107d4310000-0x00000107d4337fff]
+[   45.650143] omarchy-m2 kernel:   node   0: [mem 0x00000107d4338000-0x00000107d53bffff]
+[   45.650146] omarchy-m2 kernel:   node   0: [mem 0x00000107d53c0000-0x00000107d53c3fff]
+[   45.650149] omarchy-m2 kernel:   node   0: [mem 0x00000107d53c4000-0x00000107d938ffff]
+[   45.650153] omarchy-m2 kernel:   node   0: [mem 0x00000107d9390000-0x00000107d939ffff]
+[   45.650158] omarchy-m2 kernel:   node   0: [mem 0x00000107d93a0000-0x00000107d9473fff]
+[   45.650162] omarchy-m2 kernel:   node   0: [mem 0x00000107d9478000-0x00000107d94a3fff]
+[   45.650165] omarchy-m2 kernel:   node   0: [mem 0x00000107d94a4000-0x00000107d94cbfff]
+[   45.650168] omarchy-m2 kernel:   node   0: [mem 0x00000107d94cc000-0x00000107d9783fff]
+[   45.650172] omarchy-m2 kernel:   node   0: [mem 0x00000107db37c000-0x00000107e6363fff]
+[   45.650175] omarchy-m2 kernel:   node   0: [mem 0x00000107fff70000-0x00000107fff73fff]
+[   45.650178] omarchy-m2 kernel:   node   0: [mem 0x00000107fff78000-0x00000107fffbbfff]
+[   45.650182] omarchy-m2 kernel: Initmem setup node 0 [mem 0x0000010000230000-0x00000107fffbbfff]
+[   45.650185] omarchy-m2 kernel: On node 0, zone DMA: 140 pages in unavailable ranges
+[   45.650189] omarchy-m2 kernel: On node 0, zone DMA: 114 pages in unavailable ranges
+[   45.650193] omarchy-m2 kernel: On node 0, zone DMA: 45 pages in unavailable ranges
+[   45.650196] omarchy-m2 kernel: On node 0, zone DMA: 347 pages in unavailable ranges
+[   45.650199] omarchy-m2 kernel: On node 0, zone DMA: 50 pages in unavailable ranges
+[   45.650202] omarchy-m2 kernel: On node 0, zone DMA: 1 pages in unavailable ranges
+[   45.650206] omarchy-m2 kernel: On node 0, zone DMA: 1790 pages in unavailable ranges
+[   45.650209] omarchy-m2 kernel: On node 0, zone DMA: 9987 pages in unavailable ranges
+[   45.650212] omarchy-m2 kernel: On node 0, zone DMA: 1 pages in unavailable ranges
+[   45.650216] omarchy-m2 kernel: On node 0, zone DMA: 17 pages in unavailable ranges
+[   45.650219] omarchy-m2 kernel: percpu: Embedded 9 pages/cpu s103320 r8192 d35944 u147456
+[   45.650223] omarchy-m2 kernel: pcpu-alloc: s103320 r8192 d35944 u147456 alloc=9*16384
+[   45.650226] omarchy-m2 kernel: pcpu-alloc: [0] 00 [0] 01 [0] 02 [0] 03 [0] 04 [0] 05 [0] 06 [0] 07 
+[   45.650230] omarchy-m2 kernel: pcpu-alloc: [0] 08 [0] 09 [0] 10 [0] 11 
+[   45.650233] omarchy-m2 kernel: Detected PIPT I-cache on CPU0
+[   45.650237] omarchy-m2 kernel: CPU features: detected: Address authentication (IMP DEF algorithm)
+[   45.650242] omarchy-m2 kernel: CPU features: detected: Virtualization Host Extensions
+[   45.650245] omarchy-m2 kernel: CPU features: detected: Spectre-v4
+[   45.650248] omarchy-m2 kernel: CPU features: detected: Spectre-BHB
+[   45.650252] omarchy-m2 kernel: CPU features: detected: Apple IMPDEF PMUv3 Traps
+[   45.650255] omarchy-m2 kernel: alternatives: applying boot alternatives
+[   45.650259] omarchy-m2 kernel: Kernel command line: BOOT_IMAGE=/vmlinuz-linux-aurora root=UUID=725346d2-f127-47bc-b464-9dd46155e8d6 rw rootflags=subvol=@ cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards loglevel=3 quiet splash
+[   45.650263] omarchy-m2 kernel: Unknown kernel command line parameters "splash cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards", will be passed to user space.
+[   45.650266] omarchy-m2 kernel: printk: log buffer data + meta data: 262144 + 1114112 = 1376256 bytes
+[   45.650270] omarchy-m2 kernel: Dentry cache hash table entries: 4194304 (order: 11, 33554432 bytes, linear)
+[   45.650273] omarchy-m2 kernel: Inode-cache hash table entries: 2097152 (order: 10, 16777216 bytes, linear)
+[   45.650276] omarchy-m2 kernel: software IO TLB: SWIOTLB bounce buffer size adjusted to 31MB
+[   45.650279] omarchy-m2 kernel: software IO TLB: area num 16.
+[   45.650283] omarchy-m2 kernel: software IO TLB: SWIOTLB bounce buffer size roundup to 32MB
+[   45.650286] omarchy-m2 kernel: software IO TLB: mapped [mem 0x00000107d228c000-0x00000107d428c000] (32MB)
+[   45.650292] omarchy-m2 kernel: Built 1 zonelists, mobility grouping on.  Total pages: 2068276
+[   45.650295] omarchy-m2 kernel: mem auto-init: stack:off, heap alloc:on, heap free:off
+[   45.650298] omarchy-m2 kernel: SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=12, Nodes=1
+[   45.650302] omarchy-m2 kernel: Dynamic Preempt: full
+[   45.650305] omarchy-m2 kernel: rcu: Preemptible hierarchical RCU implementation.
+[   45.650309] omarchy-m2 kernel: rcu:         RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=12.
+[   45.650313] omarchy-m2 kernel:         Trampoline variant of Tasks RCU enabled.
+[   45.650316] omarchy-m2 kernel:         Tracing variant of Tasks RCU enabled.
+[   45.650320] omarchy-m2 kernel: rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[   45.650323] omarchy-m2 kernel: rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=12
+[   45.650327] omarchy-m2 kernel: RCU Tasks: Setting shift to 4 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=12.
+[   45.650330] omarchy-m2 kernel: NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[   45.650333] omarchy-m2 kernel: Root IRQ handler: aic_handle_irq
+[   45.650337] omarchy-m2 kernel: Root FIQ handler: aic_handle_fiq
+[   45.650340] omarchy-m2 kernel: irq_apple_aic: Using Fast IPIs
+[   45.650343] omarchy-m2 kernel: irq_apple_aic: Initialized with 1961/4096 IRQs * 1/8 die(s), 7 FIQs, 32 vIPIs
+[   45.650353] omarchy-m2 kernel: rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[   45.650356] omarchy-m2 kernel: clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[   45.650360] omarchy-m2 kernel: arch_timer: cp15 timer running at 24.00MHz (phys).
+[   45.650364] omarchy-m2 kernel: clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x588fe9dc0, max_idle_ns: 440795202592 ns
+[   45.650367] omarchy-m2 kernel: sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 4398046511097ns
+[   45.650371] omarchy-m2 kernel: Console: colour dummy device 80x25
+[   45.650375] omarchy-m2 kernel: printk: legacy console [tty0] enabled
+[   45.650379] omarchy-m2 kernel: Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=24000)
+[   45.650383] omarchy-m2 kernel: pid_max: default: 32768 minimum: 301
+[   45.650387] omarchy-m2 kernel: landlock: Up and running.
+[   45.650391] omarchy-m2 kernel: Yama: becoming mindful.
+[   45.650394] omarchy-m2 kernel: AppArmor: AppArmor initialized
+[   45.650398] omarchy-m2 kernel: Mount-cache hash table entries: 65536 (order: 5, 524288 bytes, linear)
+[   45.650402] omarchy-m2 kernel: Mountpoint-cache hash table entries: 65536 (order: 5, 524288 bytes, linear)
+[   45.650406] omarchy-m2 kernel: VFS: Finished mounting rootfs on nullfs
+[   45.650410] omarchy-m2 kernel: rcu: Hierarchical SRCU implementation.
+[   45.650414] omarchy-m2 kernel: rcu:         Max phase no-delay instances is 400.
+[   45.650418] omarchy-m2 kernel: Timer migration: 2 hierarchy levels; 8 children per group; 2 crossnode level
+[   45.650421] omarchy-m2 kernel: Remapping and enabling EFI services.
+[   45.650425] omarchy-m2 kernel: smp: Bringing up secondary CPUs ...
+[   45.650429] omarchy-m2 kernel: Detected PIPT I-cache on CPU1
+[   45.650433] omarchy-m2 kernel: CPU1: Booted secondary processor 0x0000000001 [0x611f0340]
+[   45.650436] omarchy-m2 kernel: Detected PIPT I-cache on CPU2
+[   45.650440] omarchy-m2 kernel: CPU2: Booted secondary processor 0x0000000002 [0x611f0340]
+[   45.650444] omarchy-m2 kernel: Detected PIPT I-cache on CPU3
+[   45.650447] omarchy-m2 kernel: CPU3: Booted secondary processor 0x0000000003 [0x611f0340]
+[   45.650451] omarchy-m2 kernel: Detected PIPT I-cache on CPU4
+[   45.650454] omarchy-m2 kernel: CPU4: Booted secondary processor 0x0000010100 [0x611f0350]
+[   45.650458] omarchy-m2 kernel: Detected PIPT I-cache on CPU5
+[   45.650461] omarchy-m2 kernel: CPU5: Booted secondary processor 0x0000010101 [0x611f0350]
+[   45.650465] omarchy-m2 kernel: Detected PIPT I-cache on CPU6
+[   45.650469] omarchy-m2 kernel: CPU6: Booted secondary processor 0x0000010102 [0x611f0350]
+[   45.650473] omarchy-m2 kernel: Detected PIPT I-cache on CPU7
+[   45.650477] omarchy-m2 kernel: CPU7: Booted secondary processor 0x0000010103 [0x611f0350]
+[   45.650481] omarchy-m2 kernel: Detected PIPT I-cache on CPU8
+[   45.650484] omarchy-m2 kernel: CPU8: Booted secondary processor 0x0000010200 [0x611f0350]
+[   45.650488] omarchy-m2 kernel: Detected PIPT I-cache on CPU9
+[   45.650492] omarchy-m2 kernel: CPU9: Booted secondary processor 0x0000010201 [0x611f0350]
+[   45.650496] omarchy-m2 kernel: Detected PIPT I-cache on CPU10
+[   45.650499] omarchy-m2 kernel: CPU10: Booted secondary processor 0x0000010202 [0x611f0350]
+[   45.650503] omarchy-m2 kernel: Detected PIPT I-cache on CPU11
+[   45.650507] omarchy-m2 kernel: CPU11: Booted secondary processor 0x0000010203 [0x611f0350]
+[   45.650511] omarchy-m2 kernel: smp: Brought up 1 node, 12 CPUs
+[   45.650516] omarchy-m2 kernel: SMP: Total of 12 processors activated.
+[   45.650519] omarchy-m2 kernel: CPU: All CPU(s) started at EL2
+[   45.650523] omarchy-m2 kernel: CPU features: detected: Branch Target Identification
+[   45.650527] omarchy-m2 kernel: CPU features: detected: ARMv8.4 Translation Table Level
+[   45.650531] omarchy-m2 kernel: CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[   45.650534] omarchy-m2 kernel: CPU features: detected: Common not Private translations
+[   45.650539] omarchy-m2 kernel: CPU features: detected: CRC32 instructions
+[   45.650542] omarchy-m2 kernel: CPU features: detected: Data independent timing control (DIT)
+[   45.650546] omarchy-m2 kernel: CPU features: detected: E0PD
+[   45.650550] omarchy-m2 kernel: CPU features: detected: Enhanced Counter Virtualization
+[   45.650553] omarchy-m2 kernel: CPU features: detected: Enhanced Virtualization Traps
+[   45.650557] omarchy-m2 kernel: CPU features: detected: Fine Grained Traps
+[   45.650561] omarchy-m2 kernel: CPU features: detected: Generic authentication (IMP DEF algorithm)
+[   45.650564] omarchy-m2 kernel: CPU features: detected: RCpc load-acquire (LDAPR)
+[   45.650568] omarchy-m2 kernel: CPU features: detected: LSE atomic instructions
+[   45.650572] omarchy-m2 kernel: CPU features: detected: Privileged Access Never
+[   45.650576] omarchy-m2 kernel: CPU features: detected: RAS Extension Support
+[   45.650585] omarchy-m2 kernel: CPU features: detected: Speculation barrier (SB)
+[   45.650588] omarchy-m2 kernel: CPU features: detected: Stage-2 Force Write-Back
+[   45.650592] omarchy-m2 kernel: CPU features: detected: TLB range maintenance instructions
+[   45.650596] omarchy-m2 kernel: CPU features: detected: XNX
+[   45.650599] omarchy-m2 kernel: CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[   45.650603] omarchy-m2 kernel: alternatives: applying system-wide alternatives
+[   45.650607] omarchy-m2 kernel: CPU features: detected: ACTLR virtualization (architectural?)
+[   45.650610] omarchy-m2 kernel: CPU features: detected: ICV_DIR_EL1 trapping
+[   45.650614] omarchy-m2 kernel: CPU features: detected: TSO memory model (Apple)
+[   45.650618] omarchy-m2 kernel: Memory: 32517184K/33092416K available (16192K kernel code, 2850K rwdata, 11904K rodata, 2048K init, 664K bss, 496560K reserved, 65536K cma-reserved)
+[   45.650622] omarchy-m2 kernel: devtmpfs: initialized
+[   45.650626] omarchy-m2 kernel: posixtimers hash table entries: 8192 (order: 3, 131072 bytes, linear)
+[   45.650631] omarchy-m2 kernel: futex hash table entries: 4096 (262144 bytes on 1 NUMA nodes, total 256 KiB, linear).
+[   45.650635] omarchy-m2 kernel: 6060 pages in range for non-PLT usage
+[   45.650639] omarchy-m2 kernel: 128940 pages in range for PLT usage
+[   45.650643] omarchy-m2 kernel: DMI: SMBIOS 3.7.0 present.
+[   45.650646] omarchy-m2 kernel: DMI: Apple Inc. Mac14,10/J416s, BIOS 2026.07 07/01/2026
+[   45.650650] omarchy-m2 kernel: DMI: Memory slots populated: 1/1
+[   45.650654] omarchy-m2 kernel: NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[   45.650658] omarchy-m2 kernel: DMA: preallocated 4096 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[   45.650662] omarchy-m2 kernel: audit: initializing netlink subsys (disabled)
+[   45.650666] omarchy-m2 kernel: audit: type=2000 audit(0.011:1): state=initialized audit_enabled=0 res=1
+[   45.650670] omarchy-m2 kernel: thermal_sys: Registered thermal governor 'fair_share'
+[   45.650674] omarchy-m2 kernel: thermal_sys: Registered thermal governor 'bang_bang'
+[   45.650677] omarchy-m2 kernel: thermal_sys: Registered thermal governor 'step_wise'
+[   45.650680] omarchy-m2 kernel: thermal_sys: Registered thermal governor 'user_space'
+[   45.650684] omarchy-m2 kernel: thermal_sys: Registered thermal governor 'power_allocator'
+[   45.650688] omarchy-m2 kernel: cpuidle: using governor ladder
+[   45.650692] omarchy-m2 kernel: cpuidle: using governor menu
+[   45.650695] omarchy-m2 kernel: hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[   45.650699] omarchy-m2 kernel: ASID allocator initialised with 256 entries
+[   45.650703] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@0
+[   45.650706] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@0
+[   45.650710] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[   45.650715] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.650719] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[   45.650722] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@1
+[   45.650726] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@1
+[   45.650730] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[   45.650733] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.650737] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[   45.650742] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@2
+[   45.650745] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@2
+[   45.650749] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[   45.650752] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.650756] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[   45.650760] omarchy-m2 kernel: /soc/pcie@580000000: Fixed dependency cycle(s) with /soc/pcie@580000000
+[   45.650763] omarchy-m2 kernel: /soc/pcie@580000000/pci@0,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@0,0
+[   45.650767] omarchy-m2 kernel: /soc/pcie@580000000/pci@1,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@1,0
+[   45.650771] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b504000
+[   45.650774] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@1303000000
+[   45.650778] omarchy-m2 kernel: /soc/dcp@289c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.650782] omarchy-m2 kernel: /soc/dcp@289c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.650786] omarchy-m2 kernel: /soc/dcp@289c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.650789] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b508000
+[   45.650794] omarchy-m2 kernel: /soc/dcp@315c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.650798] omarchy-m2 kernel: /soc/dcp@315c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.650802] omarchy-m2 kernel: /soc/dcp@315c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.650805] omarchy-m2 kernel: /soc/audio-controller@39b504000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[   45.650809] omarchy-m2 kernel: /soc/audio-controller@39b508000: Fixed dependency cycle(s) with /soc/dcp@315c00000
+[   45.650818] omarchy-m2 kernel: /soc/cio@701ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.650821] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-0/pcie@730000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-0/pcie@730000000
+[   45.650825] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-0/pcie@730000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-0/pcie@730000000/pci@0,0
+[   45.650830] omarchy-m2 kernel: /soc/usb@702280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.650834] omarchy-m2 kernel: /soc/usb@702280000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.650837] omarchy-m2 kernel: /soc/phy@703000000: Fixed dependency cycle(s) with /soc/usb@702280000
+[   45.650841] omarchy-m2 kernel: /soc/phy@703000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.650844] omarchy-m2 kernel: /soc/cio@b01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.650848] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-1/pcie@b30000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-1/pcie@b30000000
+[   45.650852] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-1/pcie@b30000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-1/pcie@b30000000/pci@0,0
+[   45.650856] omarchy-m2 kernel: /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.650860] omarchy-m2 kernel: /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.650863] omarchy-m2 kernel: /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/usb@b02280000
+[   45.650867] omarchy-m2 kernel: /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.650871] omarchy-m2 kernel: /soc/cio@f01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.650874] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-2/pcie@f30000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-2/pcie@f30000000
+[   45.650879] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-2/pcie@f30000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-2/pcie@f30000000/pci@0,0
+[   45.650883] omarchy-m2 kernel: /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.650887] omarchy-m2 kernel: /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.650890] omarchy-m2 kernel: /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/usb@f02280000
+[   45.650894] omarchy-m2 kernel: /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.650898] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-3/pcie@1330000000: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-3/pcie@1330000000
+[   45.650902] omarchy-m2 kernel: /soc/usb4-pcie-tunnel-3/pcie@1330000000/pci@0,0: Fixed dependency cycle(s) with /soc/usb4-pcie-tunnel-3/pcie@1330000000/pci@0,0
+[   45.650906] omarchy-m2 kernel: /soc/phy@1303000000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[   45.650910] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@0
+[   45.650914] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@0
+[   45.650917] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[   45.650921] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.650925] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[   45.650929] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@1
+[   45.650932] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@1
+[   45.650936] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[   45.650939] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.650943] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[   45.650946] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@2
+[   45.650950] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@2
+[   45.650953] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[   45.650956] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.650960] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[   45.650964] omarchy-m2 kernel: /soc/pcie@580000000: Fixed dependency cycle(s) with /soc/pcie@580000000
+[   45.650967] omarchy-m2 kernel: /soc/pcie@580000000/pci@0,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@0,0
+[   45.650971] omarchy-m2 kernel: /soc/pcie@580000000/pci@1,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@1,0
+[   45.650974] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b504000
+[   45.650978] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.650982] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.650985] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.650989] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@1303000000
+[   45.650992] omarchy-m2 kernel: /soc/dcp@289c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.650996] omarchy-m2 kernel: /soc/dcp@289c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.651002] omarchy-m2 kernel: /soc/dcp@289c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.651006] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b508000
+[   45.651009] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.651013] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.651017] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.651020] omarchy-m2 kernel: /soc/dcp@315c00000/typec-routes/route@0: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.651025] omarchy-m2 kernel: /soc/dcp@315c00000/typec-routes/route@1: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.651029] omarchy-m2 kernel: /soc/dcp@315c00000/typec-routes/route@2: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.651033] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b504000
+[   45.651037] omarchy-m2 kernel: /soc/audio-controller@39b504000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[   45.651041] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/audio-controller@39b508000
+[   45.651050] omarchy-m2 kernel: /soc/audio-controller@39b508000: Fixed dependency cycle(s) with /soc/dcp@315c00000
+[   45.651053] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[   45.651057] omarchy-m2 kernel: /soc/cio@701ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.651061] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[   45.651064] omarchy-m2 kernel: /soc/usb@702280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.651068] omarchy-m2 kernel: /soc/usb@702280000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.651071] omarchy-m2 kernel: /soc/usb@702280000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.651075] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.651078] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.651082] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.651086] omarchy-m2 kernel: /soc/phy@703000000: Fixed dependency cycle(s) with /soc/usb@702280000
+[   45.651090] omarchy-m2 kernel: /soc/phy@703000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@38/connector
+[   45.651094] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[   45.651097] omarchy-m2 kernel: /soc/cio@b01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.651101] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[   45.651105] omarchy-m2 kernel: /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.651108] omarchy-m2 kernel: /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.651112] omarchy-m2 kernel: /soc/usb@b02280000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.651115] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.651119] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.651122] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.651126] omarchy-m2 kernel: /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/usb@b02280000
+[   45.651129] omarchy-m2 kernel: /soc/phy@b03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3f/connector
+[   45.651133] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[   45.651136] omarchy-m2 kernel: /soc/cio@f01ac0000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.651140] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[   45.651144] omarchy-m2 kernel: /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.651147] omarchy-m2 kernel: /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.651151] omarchy-m2 kernel: /soc/usb@f02280000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.651154] omarchy-m2 kernel: /soc/dcp@315c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.651158] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.651161] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.651165] omarchy-m2 kernel: /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/usb@f02280000
+[   45.651168] omarchy-m2 kernel: /soc/phy@f03000000: Fixed dependency cycle(s) with /soc/i2c@39b040000/usb-pd@3b/connector
+[   45.651172] omarchy-m2 kernel: /soc/dcp@289c00000: Fixed dependency cycle(s) with /soc/phy@1303000000
+[   45.651175] omarchy-m2 kernel: /soc/phy@1303000000: Fixed dependency cycle(s) with /soc/dcp@289c00000
+[   45.651179] omarchy-m2 kernel: HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[   45.651182] omarchy-m2 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[   45.651187] omarchy-m2 kernel: HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[   45.651192] omarchy-m2 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[   45.651195] omarchy-m2 kernel: HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[   45.651199] omarchy-m2 kernel: HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[   45.651202] omarchy-m2 kernel: iommu: Default domain type: Translated
+[   45.651206] omarchy-m2 kernel: iommu: DMA domain TLB invalidation policy: strict mode
+[   45.651210] omarchy-m2 kernel: SCSI subsystem initialized
+[   45.651213] omarchy-m2 kernel: usbcore: registered new interface driver usbfs
+[   45.651217] omarchy-m2 kernel: usbcore: registered new interface driver hub
+[   45.651220] omarchy-m2 kernel: usbcore: registered new device driver usb
+[   45.651224] omarchy-m2 kernel: pps_core: LinuxPPS API ver. 1 registered
+[   45.651227] omarchy-m2 kernel: pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[   45.651231] omarchy-m2 kernel: efivars: Registered efivars operations
+[   45.651234] omarchy-m2 kernel: Advanced Linux Sound Architecture Driver Initialized.
+[   45.651238] omarchy-m2 kernel: NetLabel: Initializing
+[   45.651241] omarchy-m2 kernel: NetLabel:  domain hash size = 128
+[   45.651245] omarchy-m2 kernel: NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[   45.651248] omarchy-m2 kernel: NetLabel:  unlabeled traffic allowed by default
+[   45.651252] omarchy-m2 kernel: vgaarb: loaded
+[   45.651255] omarchy-m2 kernel: clocksource: Switched to clocksource arch_sys_counter
+[   45.651259] omarchy-m2 kernel: VFS: Disk quotas dquot_6.6.0
+[   45.651263] omarchy-m2 kernel: VFS: Dquot-cache hash table entries: 2048 (order 0, 16384 bytes)
+[   45.651270] omarchy-m2 kernel: AppArmor: AppArmor Filesystem Enabled
+[   45.651274] omarchy-m2 kernel: NET: Registered PF_INET protocol family
+[   45.651277] omarchy-m2 kernel: IP idents hash table entries: 262144 (order: 7, 2097152 bytes, linear)
+[   45.651281] omarchy-m2 kernel: tcp_listen_portaddr_hash hash table entries: 16384 (order: 4, 262144 bytes, linear)
+[   45.651284] omarchy-m2 kernel: Table-perturb hash table entries: 65536 (order: 4, 262144 bytes, linear)
+[   45.651289] omarchy-m2 kernel: TCP established hash table entries: 262144 (order: 7, 2097152 bytes, linear)
+[   45.651292] omarchy-m2 kernel: TCP bind hash table entries: 65536 (order: 7, 2097152 bytes, linear)
+[   45.651295] omarchy-m2 kernel: TCP: Hash tables configured (established 262144 bind 65536)
+[   45.651299] omarchy-m2 kernel: MPTCP token hash table entries: 32768 (order: 6, 786432 bytes, linear)
+[   45.651304] omarchy-m2 kernel: UDP hash table entries: 16384 (order: 6, 1048576 bytes, linear)
+[   45.651307] omarchy-m2 kernel: NET: Registered PF_UNIX/PF_LOCAL protocol family
+[   45.651311] omarchy-m2 kernel: RPC: Registered named UNIX socket transport module.
+[   45.651314] omarchy-m2 kernel: RPC: Registered udp transport module.
+[   45.651318] omarchy-m2 kernel: RPC: Registered tcp transport module.
+[   45.651321] omarchy-m2 kernel: RPC: Registered tcp-with-tls transport module.
+[   45.651325] omarchy-m2 kernel: RPC: Registered tcp NFSv4.1 backchannel transport module.
+[   45.651328] omarchy-m2 kernel: PCI: CLS 0 bytes, default 64
+[   45.651332] omarchy-m2 kernel: Trying to unpack rootfs image as initramfs...
+[   45.651335] omarchy-m2 kernel: kvm [1]: nv: 570 coarse grained trap handlers
+[   45.651339] omarchy-m2 kernel: kvm [1]: nv: 710 fine grained trap handlers
+[   45.651342] omarchy-m2 kernel: kvm [1]: IPA Size Limit: 42 bits
+[   45.651346] omarchy-m2 kernel: kvm [1]: Non-architectural vgic, tainting kernel
+[   45.651349] omarchy-m2 kernel: kvm [1]: GICv3: no GICV resource entry
+[   45.651353] omarchy-m2 kernel: kvm [1]: disabling GICv2 emulation
+[   45.651356] omarchy-m2 kernel: kvm [1]: GICv3 with broken locally generated SEI
+[   45.651359] omarchy-m2 kernel: kvm [1]: GICv3 sysreg trapping enabled ([G0G1D], reduced performance)
+[   45.651363] omarchy-m2 kernel: kvm [1]: GIC system register CPU interface enabled
+[   45.651366] omarchy-m2 kernel: kvm [1]: vgic interrupt IRQ33
+[   45.651370] omarchy-m2 kernel: kvm [1]: VHE mode initialized successfully
+[   45.651374] omarchy-m2 kernel: Initialise system trusted keyrings
+[   45.651377] omarchy-m2 kernel: workingset: timestamp_bits=46 (anon: 42) max_order=21 bucket_order=0 (anon: 0)
+[   45.651381] omarchy-m2 kernel: NFS: Registering the id_resolver key type
+[   45.651385] omarchy-m2 kernel: Key type id_resolver registered
+[   45.651388] omarchy-m2 kernel: Key type id_legacy registered
+[   45.651392] omarchy-m2 kernel: nfs4filelayout_init: NFSv4 File Layout Driver Registering...
+[   45.651396] omarchy-m2 kernel: nfs4flexfilelayout_init: NFSv4 Flexfile Layout Driver Registering...
+[   45.651399] omarchy-m2 kernel: cryptd: max_cpu_qlen set to 1000
+[   45.651403] omarchy-m2 kernel: NET: Registered PF_ALG protocol family
+[   45.651407] omarchy-m2 kernel: Key type asymmetric registered
+[   45.651411] omarchy-m2 kernel: Asymmetric key parser 'x509' registered
+[   45.651414] omarchy-m2 kernel: Asymmetric key parser 'pkcs8' registered
+[   45.651418] omarchy-m2 kernel: Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[   45.651422] omarchy-m2 kernel: io scheduler mq-deadline registered
+[   45.651425] omarchy-m2 kernel: io scheduler kyber registered
+[   45.651429] omarchy-m2 kernel: io scheduler bfq registered
+[   45.651433] omarchy-m2 kernel: ledtrig-cpu: registered to indicate activity on CPUs
+[   45.651476] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@240: always-on domain atc3_common is not on at boot
+[   45.651502] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@278: always-on domain atc0_pcie is not on at boot
+[   45.651529] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@288: always-on domain atc1_pcie is not on at boot
+[   45.651556] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@298: always-on domain atc2_pcie is not on at boot
+[   45.651582] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@2a8: always-on domain atc3_pcie is not on at boot
+[   45.651610] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@78: always-on domain msg is not on at boot
+[   45.651639] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@a8: always-on domain atc3_usb_aon is not on at boot
+[   45.651644] omarchy-m2 kernel: 39b200000.serial: ttySAC0 at MMIO 0x39b200000 (irq = 69, base_baud = 0) is a APPLE S5L
+[   45.651749] omarchy-m2 kernel: apple-dart 28e300000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.651842] omarchy-m2 kernel: platform 2a6980000.dma-controller: Adding to iommu group 0
+[   45.651920] omarchy-m2 kernel: platform 2a6c00000.aop: Adding to iommu group 1
+[   45.651999] omarchy-m2 kernel: apple-dart 2a6808000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.652122] omarchy-m2 kernel: apple-dart 2a9808000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[   45.652206] omarchy-m2 kernel: platform 2a9400000.mtp: Adding to iommu group 2
+[   45.652294] omarchy-m2 kernel: platform 2a9b30000.input: Adding to iommu group 2
+[   45.652369] omarchy-m2 kernel: apple-dart 2a9808000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.652440] omarchy-m2 kernel: apple-dart 3860e8000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[   45.652516] omarchy-m2 kernel: apple-dart 3860e8000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.652590] omarchy-m2 kernel: apple-dart 3860f4000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[   45.652661] omarchy-m2 kernel: apple-dart 3860f4000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.652736] omarchy-m2 kernel: apple-dart 3860fc000.iommu: Limiting DMA range to 0x0000010000000000..0x00000100ffffffff
+[   45.652808] omarchy-m2 kernel: platform 384000000.isp: Adding to iommu group 3
+[   45.652883] omarchy-m2 kernel: apple-dart 3860fc000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.652957] omarchy-m2 kernel: apple-dart 389304000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[   45.653033] omarchy-m2 kernel: apple-dart 389304000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.653104] omarchy-m2 kernel: apple-dart 38930c000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[   45.653184] omarchy-m2 kernel: platform 389c00000.dcp: Adding to iommu group 4
+[   45.653254] omarchy-m2 kernel: apple-dart 38930c000.iommu: Limited to ias=36 due to lock
+[   45.653325] omarchy-m2 kernel: apple-dart 38930c000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.653402] omarchy-m2 kernel: apple-dart 594000000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.653477] omarchy-m2 kernel: apple-dart 595000000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.653549] omarchy-m2 kernel: platform 287080000.avd: Adding to iommu group 5
+[   45.653621] omarchy-m2 kernel: apple-dart 287010000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.653698] omarchy-m2 kernel: apple-dart 315304000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[   45.653773] omarchy-m2 kernel: apple-dart 315304000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.653845] omarchy-m2 kernel: apple-dart 31530c000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[   45.653921] omarchy-m2 kernel: platform 315c00000.dcp: Adding to iommu group 6
+[   45.653991] omarchy-m2 kernel: apple-dart 31530c000.iommu: Limited to ias=36 due to lock
+[   45.654064] omarchy-m2 kernel: apple-dart 31530c000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.654141] omarchy-m2 kernel: platform 39b400000.dma-controller: Adding to iommu group 7
+[   45.654214] omarchy-m2 kernel: platform 39bc00000.sio: Adding to iommu group 8
+[   45.654290] omarchy-m2 kernel: apple-dart 39b008000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654371] omarchy-m2 kernel: apple-dart 702f00000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654447] omarchy-m2 kernel: platform 702280000.usb: Adding to iommu group 9
+[   45.654525] omarchy-m2 kernel: apple-dart 702f80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654603] omarchy-m2 kernel: apple-dart b02f00000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654677] omarchy-m2 kernel: platform b02280000.usb: Adding to iommu group 10
+[   45.654752] omarchy-m2 kernel: apple-dart b02f80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654822] omarchy-m2 kernel: apple-dart f02f00000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654897] omarchy-m2 kernel: platform f02280000.usb: Adding to iommu group 11
+[   45.654971] omarchy-m2 kernel: apple-dart f02f80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[   45.654975] omarchy-m2 kernel: [drm] Initialized simpledrm 1.0.0 for 107ddd79c00.framebuffer on minor 0
+[   45.654979] omarchy-m2 kernel: Console: switching to colour frame buffer device 216x67
+[   45.655057] omarchy-m2 kernel: simple-framebuffer 107ddd79c00.framebuffer: [drm] fb0: simpledrmdrmfb frame buffer device
+[   45.655134] omarchy-m2 kernel: asahi 406400000.gpu: Probing...
+[   45.655207] omarchy-m2 kernel: asahi 406400000.gpu: MMU: Initializing...
+[   45.655281] omarchy-m2 kernel: asahi 406400000.gpu: MMU: Initializing kernel page table
+[   45.655355] omarchy-m2 kernel: asahi 406400000.gpu: MMU: Creating kernel page tables
+[   45.655424] omarchy-m2 kernel: asahi 406400000.gpu: MMU: Kernel page tables created
+[   45.655493] omarchy-m2 kernel: asahi 406400000.gpu: MMU: Initializing TTBs
+[   45.655567] omarchy-m2 kernel: asahi 406400000.gpu: MMU: initialized
+[   45.655640] omarchy-m2 kernel: asahi 406400000.gpu: GPU ID registers: 0x6031100 0x60602 0x21020a 0x40404 0x1320311 0x400c1802
+[   45.655711] omarchy-m2 kernel: asahi 406400000.gpu: Core masks: [
+                                      0x7ffff,
+                                      0x0,
+                                      0x0,
+                                  ]
+[   45.655786] omarchy-m2 kernel: asahi 406400000.gpu: GPU Information:
+[   45.655858] omarchy-m2 kernel: asahi 406400000.gpu:   Type: G14S
+[   45.655916] omarchy-m2 kernel: asahi 406400000.gpu:   Clusters: 2
+[   45.655992] omarchy-m2 kernel: asahi 406400000.gpu:   Cores: 10 (20)
+[   45.656079] omarchy-m2 kernel: asahi 406400000.gpu:   Frags: 10 (20)
+[   45.656151] omarchy-m2 kernel: asahi 406400000.gpu:   GPs: 4 (8)
+[   45.656222] omarchy-m2 kernel: asahi 406400000.gpu:   Core masks: [
+                                      0x3ff,
+                                      0x1ff,
+                                  ]
+[   45.656291] omarchy-m2 kernel: asahi 406400000.gpu:   Active cores: 19
+[   45.656365] omarchy-m2 kernel: asahi 406400000.gpu: Getting configuration from device tree...
+[   45.656436] omarchy-m2 kernel: asahi 406400000.gpu: Dynamic configuration fetched
+[   45.656511] omarchy-m2 kernel: asahi 406400000.gpu: !!! Hwdata A match
+[   45.656586] omarchy-m2 kernel: asahi 406400000.gpu: !!! Hwdata B match
+[   45.656654] omarchy-m2 kernel: asahi 406400000.gpu: !!! Globals match
+[   45.656726] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x404d00000:0x144000 -> 0xffffffaf00000000
+[   45.656796] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x20e100000:0x4000 -> 0xffffffaf00148000
+[   45.656871] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x28e104000:0x8000 -> 0xffffffaf00150000
+[   45.656946] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x404000000:0x20000 -> 0xffffffaf0015c000
+[   45.657017] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x28e460000:0x4000 -> 0xffffffaf00180000
+[   45.657092] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x404e08000:0x8000 -> 0xffffffaf00188000
+[   45.657158] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x200000000:0xd8000 -> 0xffffffaf00194000
+[   45.657233] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x201000000:0xd8000 -> 0xffffffaf0026c000
+[   45.657300] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x202000000:0xd8000 -> 0xffffffaf00344000
+[   45.657376] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x203000000:0xd8000 -> 0xffffffaf0041c000
+[   45.657443] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x28e118000:0x4000 -> 0xffffffaf004f8000
+[   45.657515] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x28e3d0000:0x4000 -> 0xffffffaf00500000
+[   45.657587] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x28e3c0000:0x4000 -> 0xffffffaf00508000
+[   45.657661] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x28e3d8000:0x4000 -> 0xffffffaf00510000
+[   45.657734] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x404eac000:0x4000 -> 0xffffffaf00518000
+[   45.657804] omarchy-m2 kernel: asahi 406400000.gpu: MMU: IO map: 0x404d60000:0x20000 -> 0xffffffaf00520000
+[   45.657874] omarchy-m2 kernel: asahi 406400000.gpu: RTKit: Initializing (protocol version 12)
+[   45.657879] omarchy-m2 kernel: [drm] Initialized asahi 0.0.0 for 406400000.gpu on minor 1
+[   45.657959] omarchy-m2 kernel: macsmc 2a2400000.smc: RTKit: Initializing (protocol version 12)
+[   45.658028] omarchy-m2 kernel: macsmc-gpio macsmc-gpio: First GPIO key: gP01 (0x67503031)
+[   45.658032] omarchy-m2 kernel: macsmc-low-gpio: Failed to locate of_node [id: -1]
+[   45.658036] omarchy-m2 kernel: mousedev: PS/2 mouse device common for all mice
+[   45.658040] omarchy-m2 kernel: input: Apple SMC power/lid events as /devices/platform/soc/2a2400000.smc/macsmc-input/input/input0
+[   45.658126] omarchy-m2 kernel: hwmon hwmon2: temp1_input not attached to any thermal zone
+[   45.658201] omarchy-m2 kernel: hwmon hwmon2: temp2_input not attached to any thermal zone
+[   45.658279] omarchy-m2 kernel: hwmon hwmon2: temp3_input not attached to any thermal zone
+[   45.658353] omarchy-m2 kernel: hwmon hwmon2: temp4_input not attached to any thermal zone
+[   45.658357] omarchy-m2 kernel: device-mapper: uevent: version 1.0.3
+[   45.658361] omarchy-m2 kernel: device-mapper: ioctl: 4.50.0-ioctl (2025-04-28) initialised: dm-devel@lists.linux.dev
+[   45.658365] omarchy-m2 kernel: hid: raw HID events driver (C) Jiri Kosina
+[   45.658369] omarchy-m2 kernel: watchdog: NMI not fully supported
+[   45.658373] omarchy-m2 kernel: watchdog: Hard watchdog permanently disabled
+[   45.658377] omarchy-m2 kernel: hw perfevents: enabled with apple_blizzard_pmu PMU driver, 10 (0,000003ff) counters available
+[   45.658381] omarchy-m2 kernel: hw perfevents: enabled with apple_avalanche_pmu PMU driver, 10 (0,000003ff) counters available
+[   45.658386] omarchy-m2 kernel: Initializing XFRM netlink socket
+[   45.658390] omarchy-m2 kernel: NET: Registered PF_INET6 protocol family
+[   45.658393] omarchy-m2 kernel: Segment Routing with IPv6
+[   45.658397] omarchy-m2 kernel: In-situ OAM (IOAM) with IPv6
+[   45.658401] omarchy-m2 kernel: mip6: Mobile IPv6
+[   45.658405] omarchy-m2 kernel: NET: Registered PF_PACKET protocol family
+[   45.658408] omarchy-m2 kernel: Key type dns_resolver registered
+[   45.658412] omarchy-m2 kernel: registered taskstats version 1
+[   45.658416] omarchy-m2 kernel: Loading compiled-in X.509 certificates
+[   45.658419] omarchy-m2 kernel: Key type .fscrypt registered
+[   45.658423] omarchy-m2 kernel: Key type fscrypt-provisioning registered
+[   45.658426] omarchy-m2 kernel: Key type encrypted registered
+[   45.658430] omarchy-m2 kernel: AppArmor: AppArmor sha256 policy hashing enabled
+[   45.658500] omarchy-m2 kernel: leds_pwm led-controller: failed to read period for kbd_backlight, default to off
+[   45.658577] omarchy-m2 kernel: apple-admac 2a6980000.dma-controller: Audio DMA Controller
+[   45.658650] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Initializing (protocol version 12)
+[   45.658727] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 300006e69620420
+[   45.658798] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 400002000000105
+[   45.658876] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 400004001050000
+[   45.658947] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 400006000000000
+[   45.659024] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 50672694670744d
+[   45.659094] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: Unknown oslog message: 56500657261776d
+[   45.659167] omarchy-m2 kernel: apple-dart 289304000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[   45.659245] omarchy-m2 kernel: platform soc:display-subsystem: Adding to iommu group 12
+[   45.659317] omarchy-m2 kernel: apple-dart 389304000.iommu: Limited to ias=36 due to lock
+[   45.659394] omarchy-m2 kernel: apple-dart 289304000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.659465] omarchy-m2 kernel: apple-dart 28930c000.iommu: Limiting DMA range to 0x0000010000000000..0x0000010fffffffff
+[   45.659541] omarchy-m2 kernel: platform 289c00000.dcp: Adding to iommu group 13
+[   45.659614] omarchy-m2 kernel: apple-dart 28930c000.iommu: Limited to ias=36 due to lock
+[   45.659688] omarchy-m2 kernel: apple-dart 28930c000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 1, AS 42 -> 42] initialized
+[   45.659760] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: Initializing (protocol version 12)
+[   45.659841] omarchy-m2 kernel: macsmc-rtc macsmc-rtc: registered as rtc0
+[   45.659921] omarchy-m2 kernel: macsmc-rtc macsmc-rtc: setting system clock to 2026-09-22T07:56:12 UTC (1790063772)
+[   45.659991] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: syslog message: apcie.c:1110: power up done[0]: PMU=Ocarina, PWR=0
+[   45.660065] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: syslog message: apcie.c:1110: power up done[1]: PMU=Undefined, PWR=0
+[   45.660142] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: syslog message: apcie.c:423: APCIe 1 is configured as unused.
+[   45.660213] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: syslog message: pre_nand_eng.c:6158: enabled 1p0v 1, enabled prog-no-exec 1
+[   45.660291] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: syslog message: pre_nand_eng.c:6158: enabled 1p0v 1, enabled prog-no-exec 1
+[   45.660361] omarchy-m2 kernel: nvme-apple 34bcc0000.nvme: RTKit: syslog message: cmd.c:6546:  boot mode normal
+[   45.660428] omarchy-m2 kernel: nvme nvme0: passthrough uses implicit buffer lengths
+[   45.660433] omarchy-m2 kernel:  nvme0n1: p1 p2 p3 p4 p5 p6
+[   45.660507] omarchy-m2 kernel: macsmc-reboot macsmc-reboot: Handling reboot and poweroff requests via SMC
+[   45.660587] omarchy-m2 kernel: pcie-apple 580000000.pcie: host bridge /soc/pcie@580000000 ranges:
+[   45.660657] omarchy-m2 kernel: pcie-apple 580000000.pcie:      MEM 0x05a0000000..0x05bfffffff -> 0x05a0000000
+[   45.660732] omarchy-m2 kernel: pcie-apple 580000000.pcie:      MEM 0x05c0000000..0x05ffffffff -> 0x00c0000000
+[   45.660802] omarchy-m2 kernel: pcie-apple 580000000.pcie: Using 0 auxiliary PERST#
+[   45.660806] omarchy-m2 kernel: Freeing initrd memory: 24912K
+[   45.660878] omarchy-m2 kernel: pcie-apple 580000000.pcie: Using 0 auxiliary PERST#
+[   45.660950] omarchy-m2 kernel: pcie-apple 580000000.pcie: ECAM at [mem 0x580000000-0x580ffffff] for [bus 00-04]
+[   45.661021] omarchy-m2 kernel: pcie-apple 580000000.pcie: PCI host bridge to bus 0000:00
+[   45.661101] omarchy-m2 kernel: pci_bus 0000:00: root bus resource [bus 00-04]
+[   45.661179] omarchy-m2 kernel: pci_bus 0000:00: root bus resource [mem 0x5a0000000-0x5bfffffff pref]
+[   45.661254] omarchy-m2 kernel: pci_bus 0000:00: root bus resource [mem 0x5c0000000-0x5ffffffff] (bus address [0xc0000000-0xffffffff])
+[   45.661346] omarchy-m2 kernel: pci 0000:00:00.0: [106b:100c] type 01 class 0x060400 PCIe Root Port
+[   45.661423] omarchy-m2 kernel: pci 0000:00:00.0: PCI bridge to [bus 01]
+[   45.661506] omarchy-m2 kernel: pci 0000:00:00.0: PME# supported from D0 D3hot D3cold
+[   45.661511] omarchy-m2 kernel: OF: /soc/pcie@580000000: no iommu-map translation for id 0x0 on (null)
+[   45.661515] omarchy-m2 kernel: /soc/pcie@580000000/pci@0,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@0,0
+[   45.661598] omarchy-m2 kernel: pci 0000:00:01.0: [106b:100c] type 01 class 0x060400 PCIe Root Port
+[   45.661678] omarchy-m2 kernel: pci 0000:00:01.0: PCI bridge to [bus 02]
+[   45.661756] omarchy-m2 kernel: pci 0000:00:01.0: PME# supported from D0 D3hot D3cold
+[   45.661760] omarchy-m2 kernel: OF: /soc/pcie@580000000: no iommu-map translation for id 0x8 on (null)
+[   45.661764] omarchy-m2 kernel: /soc/pcie@580000000/pci@1,0: Fixed dependency cycle(s) with /soc/pcie@580000000/pci@1,0
+[   45.661851] omarchy-m2 kernel: pci 0000:01:00.0: [14e4:4434] type 00 class 0x028000 PCIe Endpoint
+[   45.661938] omarchy-m2 kernel: pci 0000:01:00.0: BAR 0 [mem 0x00000000-0x0000ffff 64bit]
+[   45.662027] omarchy-m2 kernel: pci 0000:01:00.0: BAR 2 [mem 0x00000000-0x00ffffff 64bit]
+[   45.662105] omarchy-m2 kernel: pci 0000:01:00.0: supports D1 D2
+[   45.662191] omarchy-m2 kernel: pci 0000:01:00.0: PME# supported from D0 D1 D2 D3hot D3cold
+[   45.662269] omarchy-m2 kernel: pci 0000:01:00.0: Adding to iommu group 14
+[   45.662357] omarchy-m2 kernel: pci 0000:01:00.1: [14e4:5f72] type 00 class 0x028000 PCIe Endpoint
+[   45.662444] omarchy-m2 kernel: pci 0000:01:00.1: BAR 0 [mem 0x00000000-0x00007fff 64bit]
+[   45.662530] omarchy-m2 kernel: pci 0000:01:00.1: BAR 2 [mem 0x00000000-0x00ffffff 64bit]
+[   45.662612] omarchy-m2 kernel: pci 0000:01:00.1: supports D1 D2
+[   45.662695] omarchy-m2 kernel: pci 0000:01:00.1: PME# supported from D0 D1 D2 D3hot D3cold
+[   45.662779] omarchy-m2 kernel: pci 0000:01:00.1: Adding to iommu group 14
+[   45.662865] omarchy-m2 kernel: pci 0000:01:00.0: ASPM: default states L1
+[   45.662950] omarchy-m2 kernel: pci_bus 0000:01: busn_res: [bus 01-04] end is updated to 01
+[   45.663035] omarchy-m2 kernel: pci 0000:02:00.0: [17a0:9755] type 00 class 0x080501 PCIe Endpoint
+[   45.663119] omarchy-m2 kernel: pci 0000:02:00.0: BAR 0 [mem 0x00000000-0x00000fff]
+[   45.663208] omarchy-m2 kernel: pci 0000:02:00.0: supports D1 D2
+[   45.663299] omarchy-m2 kernel: pci 0000:02:00.0: PME# supported from D1 D2 D3hot D3cold
+[   45.663385] omarchy-m2 kernel: pci 0000:02:00.0: Adding to iommu group 15
+[   45.663469] omarchy-m2 kernel: pci 0000:02:00.0: ASPM: default states L1
+[   45.663550] omarchy-m2 kernel: pci_bus 0000:02: busn_res: [bus 02-04] end is updated to 02
+[   45.663633] omarchy-m2 kernel: pci 0000:00:00.0: bridge window [mem 0x5c0000000-0x5c20fffff]: assigned
+[   45.663714] omarchy-m2 kernel: pci 0000:00:01.0: bridge window [mem 0x5c2100000-0x5c21fffff]: assigned
+[   45.663800] omarchy-m2 kernel: pci 0000:01:00.0: BAR 2 [mem 0x5c0000000-0x5c0ffffff 64bit]: assigned
+[   45.663892] omarchy-m2 kernel: pci 0000:01:00.1: BAR 2 [mem 0x5c1000000-0x5c1ffffff 64bit]: assigned
+[   45.663976] omarchy-m2 kernel: pci 0000:01:00.0: BAR 0 [mem 0x5c2000000-0x5c200ffff 64bit]: assigned
+[   45.664057] omarchy-m2 kernel: pci 0000:01:00.1: BAR 0 [mem 0x5c2010000-0x5c2017fff 64bit]: assigned
+[   45.664141] omarchy-m2 kernel: pci 0000:00:00.0: PCI bridge to [bus 01]
+[   45.664218] omarchy-m2 kernel: pci 0000:00:00.0:   bridge window [mem 0x5c0000000-0x5c20fffff]
+[   45.664301] omarchy-m2 kernel: pci 0000:02:00.0: BAR 0 [mem 0x5c2100000-0x5c2100fff]: assigned
+[   45.664384] omarchy-m2 kernel: pci 0000:00:01.0: PCI bridge to [bus 02]
+[   45.664459] omarchy-m2 kernel: pci 0000:00:01.0:   bridge window [mem 0x5c2100000-0x5c21fffff]
+[   45.664541] omarchy-m2 kernel: pci_bus 0000:00: resource 4 [mem 0x5a0000000-0x5bfffffff pref]
+[   45.664616] omarchy-m2 kernel: pci_bus 0000:00: resource 5 [mem 0x5c0000000-0x5ffffffff]
+[   45.664693] omarchy-m2 kernel: pci_bus 0000:01: resource 1 [mem 0x5c0000000-0x5c20fffff]
+[   45.664772] omarchy-m2 kernel: pci_bus 0000:02: resource 1 [mem 0x5c2100000-0x5c21fffff]
+[   45.664776] omarchy-m2 kernel: OF: /soc/pcie@580000000: no iommu-map translation for id 0x0 on (null)
+[   45.664856] omarchy-m2 kernel: pcieport 0000:00:00.0: PME: Signaling with IRQ 116
+[   45.664936] omarchy-m2 kernel: pcieport 0000:00:00.0: AER: enabled with IRQ 116
+[   45.664941] omarchy-m2 kernel: OF: /soc/pcie@580000000: no iommu-map translation for id 0x8 on (null)
+[   45.665018] omarchy-m2 kernel: pcieport 0000:00:01.0: PME: Signaling with IRQ 118
+[   45.665103] omarchy-m2 kernel: pcieport 0000:00:01.0: AER: enabled with IRQ 118
+[   45.665186] omarchy-m2 kernel: pcieport 0000:00:01.0: mask Replay Timer Timeout Correctable Errors due to 0000:02:00.0 hardware defect
+[   45.665258] omarchy-m2 kernel: apple-admac 39b400000.dma-controller: Audio DMA Controller
+[   45.665263] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@0
+[   45.665266] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@0
+[   45.665270] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/cio@701ac0000
+[   45.665274] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.665278] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/usb@702280000
+[   45.665281] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@1
+[   45.665285] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@1
+[   45.665288] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/cio@b01ac0000
+[   45.665292] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.665295] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/usb@b02280000
+[   45.665299] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@289c00000/typec-routes/route@2
+[   45.665302] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/dcp@315c00000/typec-routes/route@2
+[   45.665306] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/cio@f01ac0000
+[   45.665309] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.665313] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/usb@f02280000
+[   45.665316] omarchy-m2 kernel: clk: Disabling unused clocks
+[   45.665320] omarchy-m2 kernel: PM: genpd: Disabling unused power domains
+[   45.665324] omarchy-m2 kernel: ALSA device list:
+[   45.665328] omarchy-m2 kernel:   No soundcards found.
+[   45.665331] omarchy-m2 kernel: Freeing unused kernel memory: 2048K
+[   45.665335] omarchy-m2 kernel: Checked W+X mappings: passed, no W+X pages found
+[   45.665338] omarchy-m2 kernel: Run /init as init process
+[   45.665342] omarchy-m2 kernel:   with arguments:
+[   45.665345] omarchy-m2 kernel:     /init
+[   45.665349] omarchy-m2 kernel:     splash
+[   45.665353] omarchy-m2 kernel:   with environment:
+[   45.665356] omarchy-m2 kernel:     HOME=/
+[   45.665360] omarchy-m2 kernel:     TERM=linux
+[   45.665363] omarchy-m2 kernel:     cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards
+[   45.665367] omarchy-m2 kernel: raid6: neonx8   gen()  7681 MB/s
+[   45.665370] omarchy-m2 kernel: raid6: neonx4   gen()  9556 MB/s
+[   45.665373] omarchy-m2 kernel: raid6: neonx2   gen() 11179 MB/s
+[   45.665377] omarchy-m2 kernel: raid6: neonx1   gen() 22060 MB/s
+[   45.665380] omarchy-m2 kernel: raid6: int64x8  gen() 11718 MB/s
+[   45.665384] omarchy-m2 kernel: raid6: int64x4  gen() 11964 MB/s
+[   45.665387] omarchy-m2 kernel: raid6: int64x2  gen() 11906 MB/s
+[   45.665391] omarchy-m2 kernel: raid6: int64x1  gen() 10464 MB/s
+[   45.665394] omarchy-m2 kernel: raid6: using algorithm neonx1 gen() 22060 MB/s
+[   45.665398] omarchy-m2 kernel: raid6: .... xor() 23645 MB/s, rmw enabled
+[   45.665401] omarchy-m2 kernel: raid6: using neon recovery algorithm
+[   45.665405] omarchy-m2 kernel: xor: measuring software checksum speed
+[   45.665408] omarchy-m2 kernel:    eor3            : 51498 MB/sec
+[   45.665412] omarchy-m2 kernel:    32regs          : 48605 MB/sec
+[   45.665415] omarchy-m2 kernel:    8regs           : 27086 MB/sec
+[   45.665419] omarchy-m2 kernel: xor: using function: eor3 (51498 MB/sec)
+[   45.665422] omarchy-m2 kernel: Btrfs loaded, zoned=yes, fsverity=no
+[   45.665426] omarchy-m2 kernel: thunderbolt: loading out-of-tree module taints kernel.
+[   45.665503] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[   45.665575] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[   45.665579] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@38/connector: Fixed dependency cycle(s) with /soc/phy@703000000
+[   45.665651] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[   45.665655] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3f/connector: Fixed dependency cycle(s) with /soc/phy@b03000000
+[   45.665722] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[   45.665726] omarchy-m2 kernel: /soc/i2c@39b040000/usb-pd@3b/connector: Fixed dependency cycle(s) with /soc/phy@f03000000
+[   45.665800] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-phy: -517
+[   45.665870] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Initialized, awaiting packets
+[   45.665950] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Product name for stm: Apple Internal Keyboard / Trackpad
+[   45.666027] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Product name for multi-touch: Apple Internal Keyboard / Trackpad
+[   45.666101] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Product name for keyboard: Apple Internal Keyboard / Trackpad
+[   45.666172] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Product name for tp_accel: Apple Internal Keyboard / Trackpad
+[   45.666248] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Product name for actuator: Apple Internal Keyboard / Trackpad
+[   45.666324] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Product name for stm: Apple Internal Keyboard / Trackpad
+[   45.666399] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: New interface stm
+[   45.666470] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: stm_cr.c:98: ST management interface configuration completed
+[   45.666547] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: stm.c:97: ST management ready
+[   45.666621] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Interface stm is now ready
+[   45.666709] omarchy-m2 kernel: hid-generic 0019:0000:0000.0001: hidraw0: HOST HID v0.00 Device [Apple MTP stm] on 2a9b30000.input.3 (stm)
+[   45.666780] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.666849] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.666934] omarchy-m2 kernel: sdhci-pci 0000:02:00.0: SDHCI controller found [17a0:9755] (rev 1)
+[   45.667021] omarchy-m2 kernel: sdhci-pci 0000:02:00.0: enabling device (0000 -> 0002)
+[   45.667090] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.667169] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: New interface multi-touch
+[   45.667241] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: New interface keyboard
+[   45.667316] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch_iface.c:212: Grape interface configuration completed
+[   45.667385] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: New interface actuator
+[   45.667389] omarchy-m2 kernel: input: Apple MTP multi-touch as /devices/platform/soc/2a9b14000.fifo/2a9b30000.input/0019:05AC:0353.0002/input/input1
+[   45.667465] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: New interface tp_accel
+[   45.667535] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: accel_cr.c:78: Accel interface configuration completed
+[   45.667619] omarchy-m2 kernel: magicmouse 0019:05AC:0353.0002: input,hidraw1: HOST HID v2.70 Mouse [Apple MTP multi-touch] on 2a9b30000.input.1 (multi-touch)
+[   45.667696] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: accel.c:72: Accel ready
+[   45.667769] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Interface tp_accel is now ready
+[   45.667848] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: keyboard_cr.c:78: Keyboard interface configuration completed
+[   45.667919] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: keyboard.c:75: Keyboard ready
+[   45.667996] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Interface keyboard is now ready
+[   45.668003] omarchy-m2 kernel: input: Apple MTP keyboard as /devices/platform/soc/2a9b14000.fifo/2a9b30000.input/0019:05AC:0353.0004/input/input2
+[   45.668072] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: actuator_cr.c:88: Actuator interface configuration completed
+[   45.668158] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: actuator.c:72: Actuator ready
+[   45.668230] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Interface actuator is now ready
+[   45.668306] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.668310] omarchy-m2 kernel: mmc0: SDHCI controller on PCI [0000:02:00.0] using ADMA 64-bit
+[   45.668383] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.668454] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Starting interface multi-touch
+[   45.668535] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Requesting GPIO multi-touch#167: afe-reset
+[   45.668610] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Sending firmware for multi-touch
+[   45.668680] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: afe_transport.c:143: Z2 AFE transport initialized
+[   45.668760] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:151: [Touch]: AFE transport initialization complete
+[   45.668829] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:153: [Touch]: Touch initialized
+[   45.668906] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Resetting multi-touch
+[   45.668981] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch.c:88: Touch Reset Ext Request: OK
+[   45.669055] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: GPIO command: multi-touch#167: 3
+[   45.669140] omarchy-m2 kernel: apple 0019:05AC:0353.0004: input,hidraw2: HOST HID v2.70 Keyboard [Apple MTP keyboard] on 2a9b30000.input.2 (keyboard)
+[   45.669211] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.669289] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:382: Calibration blob 'TCAL' updated
+[   45.669362] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: boot.c:382: Calibration blob 'FCAL' updated
+[   45.669437] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: afe_transport.c:177: afe_transport_start() Z2 running
+[   45.669506] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch_pwr_mgr.c:216: [TPM] Mac Power Manager State Machine Started
+[   45.669583] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch.c:128: Touch interface ready
+[   45.669660] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch.c:143: Touch MT ready
+[   45.669733] omarchy-m2 kernel: dockchannel-hid 2a9b30000.input: Interface multi-touch is now ready
+[   45.669810] omarchy-m2 kernel: rtkit-helper 2a9400000.mtp: RTKit: syslog message: touch_pwr_mgr_fsm.c:286: Sending Cumulus Report to enter Dependent Mode (9A)
+[   45.669880] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.669952] omarchy-m2 kernel: platform 289c00000.dcp: deferred probe pending: (reason unknown)
+[   45.670036] omarchy-m2 kernel: i2c 0-003f: deferred probe pending: (reason unknown)
+[   45.670121] omarchy-m2 kernel: i2c 0-0038: deferred probe pending: (reason unknown)
+[   45.670196] omarchy-m2 kernel: platform 315c00000.dcp: deferred probe pending: apple-dcp: /soc/dcp@315c00000/typec-routes/route@0: failed to get display crossbar
+[   45.670277] omarchy-m2 kernel: i2c 0-003b: deferred probe pending: (reason unknown)
+[   45.670304] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@268: sync_state() pending due to 287080000.avd
+[   45.670328] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@2d8: sync_state() pending due to 289c00000.dcp
+[   45.670357] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@270: sync_state() pending due to 39b600000.mca
+[   45.670383] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@398: sync_state() pending due to 39b600000.mca
+[   45.670408] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@3a0: sync_state() pending due to 39b600000.mca
+[   45.670429] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@3a8: sync_state() pending due to 39b600000.mca
+[   45.670460] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@3b0: sync_state() pending due to 39b600000.mca
+[   45.670485] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4000: sync_state() pending due to 384000000.isp
+[   45.670510] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4008: sync_state() pending due to 384000000.isp
+[   45.670540] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4010: sync_state() pending due to 384000000.isp
+[   45.670567] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4018: sync_state() pending due to 384000000.isp
+[   45.670593] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4020: sync_state() pending due to 384000000.isp
+[   45.670615] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4028: sync_state() pending due to 384000000.isp
+[   45.670643] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@4030: sync_state() pending due to 384000000.isp
+[   45.670666] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@2b8: sync_state() pending due to 315c00000.dcp
+[   45.670692] omarchy-m2 kernel: apple-pmgr-pwrstate 290280000.power-management:power-controller@1e0: sync_state() pending due to 39bc00000.sio
+[   45.670719] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@278: sync_state() pending due to 701ac0000.cio
+[   45.670746] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@2f0: sync_state() pending due to 701ac0000.cio
+[   45.670771] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@2e8: sync_state() pending due to 701ac0000.cio
+[   45.670793] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@270: sync_state() pending due to 701ac0000.cio
+[   45.670823] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@c8: sync_state() pending due to 702280000.usb
+[   45.670849] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@c8: sync_state() pending due to 70304c000.mux
+[   45.670874] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@288: sync_state() pending due to b01ac0000.cio
+[   45.670895] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@300: sync_state() pending due to b01ac0000.cio
+[   45.670925] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@2f8: sync_state() pending due to b01ac0000.cio
+[   45.670949] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@280: sync_state() pending due to b01ac0000.cio
+[   45.670974] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@d0: sync_state() pending due to b02280000.usb
+[   45.671005] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@d0: sync_state() pending due to b0304c000.mux
+[   45.671031] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@298: sync_state() pending due to f01ac0000.cio
+[   45.671056] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@310: sync_state() pending due to f01ac0000.cio
+[   45.671079] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@308: sync_state() pending due to f01ac0000.cio
+[   45.671107] omarchy-m2 kernel: apple-pmgr-pwrstate 28e080000.power-management:power-controller@290: sync_state() pending due to f01ac0000.cio
+[   45.671129] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@d8: sync_state() pending due to f02280000.usb
+[   45.671158] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@d8: sync_state() pending due to f0304c000.mux
+[   45.671180] omarchy-m2 kernel: apple-pmgr-pwrstate 29e280000.power-management:power-controller@e0: sync_state() pending due to 130304c000.mux
+[   45.671185] omarchy-m2 kernel: BTRFS: device label asahi-root devid 1 transid 6026 /dev/mapper/root (252:0) scanned by mount (493)
+[   45.671189] omarchy-m2 kernel: BTRFS info (device dm-0): first mount of filesystem 725346d2-f127-47bc-b464-9dd46155e8d6
+[   45.671193] omarchy-m2 kernel: BTRFS info (device dm-0): using crc32c checksum algorithm
+[   45.671196] omarchy-m2 kernel: BTRFS info (device dm-0): enabling ssd optimizations
+[   45.671200] omarchy-m2 kernel: BTRFS info (device dm-0): turning on async discard
+[   45.671204] omarchy-m2 kernel: BTRFS info (device dm-0): enabling free space tree
+[   45.671209] omarchy-m2 systemd[1]: systemd 261.3-1-arch running in system mode (+PAM +AUDIT -SELINUX +APPARMOR -IMA +IPE +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF +XKBCOMMON +UTMP +LIBARCHIVE)
+[   45.671215] omarchy-m2 systemd[1]: Detected architecture arm64.
+[   45.671219] omarchy-m2 systemd[1]: Hostname set to <omarchy-m2>.
+[   45.671223] omarchy-m2 systemd[1]: bpf-restrict-fs: BPF LSM hook not enabled in the kernel, BPF LSM not supported.
+[   45.671227] omarchy-m2 kernel: zram: Added device: zram0
+[   45.671231] omarchy-m2 systemd[1]: Condition check resulted in System Slice being skipped.
+[   45.671235] omarchy-m2 systemd[1]: Queued start job for default target Graphical Interface.
+[   45.671240] omarchy-m2 systemd[1]: Created slice CUPS Slice.
+[   45.671244] omarchy-m2 systemd[1]: Created slice Slice /system/dirmngr.
+[   45.671248] omarchy-m2 systemd[1]: Created slice Slice /system/getty.
+[   45.671251] omarchy-m2 systemd[1]: Created slice Slice /system/gpg-agent.
+[   45.671256] omarchy-m2 systemd[1]: Created slice Slice /system/gpg-agent-browser.
+[   45.671260] omarchy-m2 systemd[1]: Created slice Slice /system/gpg-agent-extra.
+[   45.671264] omarchy-m2 systemd[1]: Created slice Slice /system/gpg-agent-ssh.
+[   45.671268] omarchy-m2 systemd[1]: Created slice Slice /system/keyboxd.
+[   45.671272] omarchy-m2 systemd[1]: Created slice Slice /system/modprobe.
+[   45.671276] omarchy-m2 systemd[1]: Created slice Slice /system/systemd-fsck.
+[   45.671281] omarchy-m2 systemd[1]: Created slice Slice /system/systemd-growfs.
+[   45.671285] omarchy-m2 systemd[1]: Created slice Slice /system/systemd-zram-setup.
+[   45.671289] omarchy-m2 systemd[1]: Created slice User and Session Slice.
+[   45.671293] omarchy-m2 systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[   45.671298] omarchy-m2 systemd[1]: Set up automount Arbitrary Executable File Formats File System Automount Point.
+[   45.671302] omarchy-m2 systemd[1]: Expecting device /dev/disk/by-uuid/530E-CC8F...
+[   45.671306] omarchy-m2 systemd[1]: Expecting device /dev/disk/by-uuid/725346d2-f127-47bc-b464-9dd46155e8d6...
+[   45.671310] omarchy-m2 systemd[1]: Expecting device /dev/zram0...
+[   45.671314] omarchy-m2 systemd[1]: Reached target Login Prompts.
+[   45.671318] omarchy-m2 systemd[1]: Reached target Image Downloads.
+[   45.671322] omarchy-m2 systemd[1]: Reached target Local Integrity Protected Volumes.
+[   45.671326] omarchy-m2 systemd[1]: Reached target Preparation for Network.
+[   45.671330] omarchy-m2 systemd[1]: Reached target Remote Encrypted Volumes.
+[   45.671334] omarchy-m2 systemd[1]: Reached target Remote File Systems.
+[   45.671338] omarchy-m2 systemd[1]: Reached target Remote Integrity Protected Volumes.
+[   45.671342] omarchy-m2 systemd[1]: Reached target Remote Verity Protected Volumes.
+[   45.671345] omarchy-m2 systemd[1]: Reached target Slice Units.
+[   45.671349] omarchy-m2 systemd[1]: Reached target Local Verity Protected Volumes.
+[   45.671353] omarchy-m2 systemd[1]: Listening on Device-mapper event daemon FIFOs.
+[   45.671357] omarchy-m2 systemd[1]: Listening on Query the User Interactively for a Password.
+[   45.671361] omarchy-m2 systemd[1]: Listening on Process Core Dump Socket.
+[   45.671365] omarchy-m2 systemd[1]: Listening on Credential Encryption/Decryption.
+[   45.671369] omarchy-m2 systemd[1]: Listening on Factory Reset Management.
+[   45.671374] omarchy-m2 systemd[1]: Listening on Hostname Service Socket.
+[   45.671378] omarchy-m2 systemd[1]: Listening on Journal Audit Socket.
+[   45.671382] omarchy-m2 systemd[1]: Listening on Journal Socket (/dev/log).
+[   45.671386] omarchy-m2 systemd[1]: Listening on Journal Sockets.
+[   45.671390] omarchy-m2 systemd[1]: Listening on DDI File System Mounter Socket.
+[   45.671394] omarchy-m2 systemd[1]: Listening on Console Output Muting Service Socket.
+[   45.671398] omarchy-m2 systemd[1]: Listening on Namespace Resource Manager Socket.
+[   45.671402] omarchy-m2 systemd[1]: Listening on Userspace Out-Of-Memory (OOM) Killer Socket.
+[   45.671406] omarchy-m2 systemd[1]: TPM PCR Measurements skipped, unmet condition check ConditionSecurity=measured-os
+[   45.671410] omarchy-m2 systemd[1]: Make TPM PCR Policy skipped, unmet condition check ConditionSecurity=measured-uki
+[   45.671414] omarchy-m2 systemd[1]: Listening on Disk Repartitioning Service Socket.
+[   45.671418] omarchy-m2 systemd[1]: Listening on Report System Basic Metrics Socket.
+[   45.671422] omarchy-m2 systemd[1]: Listening on CGroup Report Varlink Socket.
+[   45.671426] omarchy-m2 systemd[1]: Listening on Resolve Monitor Varlink Socket.
+[   45.671431] omarchy-m2 systemd[1]: Listening on Resolve Service Varlink Socket.
+[   45.671434] omarchy-m2 systemd[1]: Listening on Simple Block Device Backed Storage Provider.
+[   45.671438] omarchy-m2 systemd[1]: Listening on Simple File System Backed Storage Provider.
+[   45.671442] omarchy-m2 systemd[1]: Listening on udev Control Socket.
+[   45.671446] omarchy-m2 systemd[1]: Listening on udev Kernel Socket.
+[   45.671450] omarchy-m2 systemd[1]: Listening on udev Varlink Socket.
+[   45.671454] omarchy-m2 systemd[1]: Listening on User Database Manager Socket.
+[   45.671458] omarchy-m2 systemd[1]: Mounting Huge Pages File System...
+[   45.671462] omarchy-m2 systemd[1]: Mounting POSIX Message Queue File System...
+[   45.671466] omarchy-m2 systemd[1]: Mounting Kernel Debug File System...
+[   45.671469] omarchy-m2 systemd[1]: Mounting Kernel Trace File System...
+[   45.671473] omarchy-m2 systemd[1]: Starting Create List of Static Device Nodes...
+[   45.671478] omarchy-m2 systemd[1]: Load Kernel Module configfs skipped, unmet condition check ConditionKernelModuleLoaded=!configfs
+[   45.671482] omarchy-m2 systemd[1]: Mounting Kernel Configuration File System...
+[   45.671486] omarchy-m2 systemd[1]: Load Kernel Module drm skipped, unmet condition check ConditionKernelModuleLoaded=!drm
+[   45.671490] omarchy-m2 systemd[1]: Load Kernel Module efi_pstore skipped, unmet condition check ConditionKernelModuleLoaded=!efi_pstore
+[   45.671494] omarchy-m2 systemd[1]: Starting Load Kernel Module fuse...
+[   45.671498] omarchy-m2 systemd[1]: Clear SysFail Entry If The Boot Is Successful skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/LoaderEntrySysFail-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f
+[   45.671503] omarchy-m2 systemd[1]: Clear Stale Hibernate Storage Info skipped, unmet condition check ConditionPathExists=/sys/firmware/efi/efivars/HibernateLocation-8cf2644b-4b0b-428f-9387-6d876050dc67
+[   45.671507] omarchy-m2 systemd[1]: Starting Journal Service...
+[   45.671511] omarchy-m2 systemd[1]: Starting Load Kernel Modules...
+[   45.671515] omarchy-m2 systemd[1]: TPM PCR Machine ID Measurement skipped, unmet condition check ConditionSecurity=measured-os
+[   45.671519] omarchy-m2 systemd[1]: TPM PCR OS Separator skipped, unmet condition check ConditionSecurity=measured-os
+[   45.671523] omarchy-m2 systemd[1]: Starting Remount Root and Kernel File Systems...
+[   45.671528] omarchy-m2 systemd[1]: Early TPM SRK Setup skipped, unmet condition check ConditionSecurity=measured-os
+[   45.671532] omarchy-m2 systemd[1]: TPM PCR NvPCR Initialization Separator skipped, unmet condition check ConditionPathExists=/etc/initrd-release
+[   45.671536] omarchy-m2 systemd[1]: TPM NvPCR Product ID Measurement skipped, unmet condition check ConditionSecurity=measured-os
+[   45.671540] omarchy-m2 systemd[1]: Starting Load udev Rules from Credentials...
+[   45.671544] omarchy-m2 systemd[1]: Starting Coldplug All udev Devices...
+[   45.671548] omarchy-m2 systemd[1]: Starting Virtual Console Setup...
+[   45.671552] omarchy-m2 systemd[1]: Finished Create List of Static Device Nodes.
+[   45.671556] omarchy-m2 systemd[1]: Starting Create Static Device Nodes in /dev gracefully...
+[   45.671560] omarchy-m2 systemd[1]: Mounted Huge Pages File System.
+[   45.671564] omarchy-m2 systemd[1]: Mounted POSIX Message Queue File System.
+[   45.671569] omarchy-m2 systemd[1]: Mounted Kernel Debug File System.
+[   45.671573] omarchy-m2 systemd[1]: Mounted Kernel Trace File System.
+[   45.671577] omarchy-m2 systemd[1]: Mounted Kernel Configuration File System.
+[   45.671580] omarchy-m2 kernel: fuse: init (API version 7.45)
+[   45.671584] omarchy-m2 systemd[1]: modprobe@fuse.service: Deactivated successfully.
+[   45.671588] omarchy-m2 systemd[1]: Finished Load Kernel Module fuse.
+[   45.671592] omarchy-m2 systemd[1]: Finished Load udev Rules from Credentials.
+[   45.671596] omarchy-m2 systemd[1]: Finished Virtual Console Setup.
+[   45.671608] omarchy-m2 systemd-journald[597]: Collecting audit messages is enabled.
+[   45.671617] omarchy-m2 kernel: i2c_dev: i2c /dev entries driver
+[   45.671621] omarchy-m2 systemd[1]: Finished Load Kernel Modules.
+[   45.671625] omarchy-m2 kernel: audit: type=1130 audit(1790063817.975:2): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-modules-load comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   45.671629] omarchy-m2 systemd[1]: Starting Apply Kernel Variables...
+[   45.730007] omarchy-m2 systemd[1]: Starting Load Kernel Module tun...
+[   45.731008] omarchy-m2 kernel: audit: type=1334 audit(1790063818.055:3): prog-id=19 op=LOAD
+[   45.732004] omarchy-m2 kernel: audit: type=1334 audit(1790063818.056:4): prog-id=20 op=LOAD
+[   45.732012] omarchy-m2 kernel: audit: type=1334 audit(1790063818.056:5): prog-id=21 op=LOAD
+[   45.732018] omarchy-m2 systemd[1]: Starting User Database Manager...
+[   45.732025] omarchy-m2 systemd[1]: Started Journal Service.
+[   45.732031] omarchy-m2 kernel: audit: type=1130 audit(1790063818.056:6): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-journald comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   45.734004] omarchy-m2 kernel: tun: Universal TUN/TAP device driver, 1.6
+[   45.735008] omarchy-m2 kernel: audit: type=1130 audit(1790063818.059:7): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=modprobe@tun comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   45.735034] omarchy-m2 kernel: audit: type=1131 audit(1790063818.059:8): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=modprobe@tun comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   45.736009] omarchy-m2 kernel: audit: type=1130 audit(1790063818.060:9): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-sysctl comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   45.737012] omarchy-m2 kernel: BTRFS info (device dm-0 state M): use zstd compression, level 1
+[   45.738009] omarchy-m2 kernel: audit: type=1334 audit(1790063818.062:10): prog-id=22 op=LOAD
+[   45.738026] omarchy-m2 kernel: audit: type=1334 audit(1790063818.062:11): prog-id=23 op=LOAD
+[   45.880042] omarchy-m2 kernel: zram0: detected capacity change from 0 to 65245184
+[   45.895008] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: Switched dpphy to disconnected state
+[   45.898672] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.901555] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.905119] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: Switched dpin0 to disconnected state
+[   45.907026] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.907137] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.907217] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: Switched dpin1 to disconnected state
+[   45.907302] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.909529] omarchy-m2 kernel: apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.913931] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: Switched dpphy to disconnected state
+[   45.917818] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.917965] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.919881] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: Switched dpin0 to disconnected state
+[   45.922869] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.925121] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.925231] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: Switched dpin1 to disconnected state
+[   45.925378] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.929179] omarchy-m2 kernel: apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.933958] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpphy to disconnected state
+[   45.936200] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.936430] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.937056] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin0 to disconnected state
+[   45.940046] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.943175] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.943298] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin1 to disconnected state
+[   45.944355] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.946435] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.948806] omarchy-m2 kernel: apple-dcp 289c00000.dcp: Failed to get dp-xbar: -517
+[   45.952480] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: Switched dpphy to disconnected state
+[   45.958800] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.960254] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.965102] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: Switched dpin0 to disconnected state
+[   45.967497] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.968435] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.969019] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: Switched dpin1 to disconnected state
+[   45.969165] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.969269] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[   45.969383] omarchy-m2 kernel: mc: Linux media interface: v0.10
+[   45.969389] omarchy-m2 kernel: Adding 32622576k swap on /dev/zram0.  Priority:100 extents:1 across:32622576k SSDsc
+[   45.969400] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec0 USB4 DP IN using crossbar mux 1
+[   45.969557] omarchy-m2 kernel: videodev: Linux video capture interface: v2.00
+[   45.969563] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec1 USB4 DP IN using crossbar mux 1
+[   45.969647] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec2 USB4 DP IN using crossbar mux 1
+[   45.969731] omarchy-m2 kernel: apple_aop 2a6c00000.aop: RTKit: Initializing (protocol version 12)
+[   45.969824] omarchy-m2 kernel: apple_aop 2a6c00000.aop: RTKit: syslog message: AOP_oslog_init.cpp:96: Start AOP OSLog init
+[   45.969895] omarchy-m2 kernel: apple_aop 2a6c00000.aop: RTKit: syslog message: P_os_log_support.cpp:60: AOP os log initialized
+[   45.969997] omarchy-m2 kernel: apple-sio 39bc00000.sio: RTKit: Initializing (protocol version 12)
+[   45.970155] omarchy-m2 kernel: apple-isp 384000000.isp: ISP firmware-compat: 13.5 (FW: 13.5)
+[   45.970286] omarchy-m2 kernel: apple-sio 39bc00000.sio: SIO protocol v9
+[   45.970405] omarchy-m2 kernel: apple-isp 384000000.isp: IPC surface iova: 0x10000f00000
+[   45.970512] omarchy-m2 kernel: apple-isp 384000000.isp: Data surface iova: 0x10000f1c000
+[   45.970613] omarchy-m2 kernel: tas2764 1-003a: supply SDZ not found, using dummy regulator
+[   45.970727] omarchy-m2 kernel: tas2764 1-0038: supply SDZ not found, using dummy regulator
+[   45.970837] omarchy-m2 kernel: tas2764 1-0039: supply SDZ not found, using dummy regulator
+[   45.970991] omarchy-m2 kernel: tas2764 3-003d: supply SDZ not found, using dummy regulator
+[   45.971109] omarchy-m2 kernel: tas2764 3-003b: supply SDZ not found, using dummy regulator
+[   45.971205] omarchy-m2 kernel: tas2764 3-003c: supply SDZ not found, using dummy regulator
+[   45.973009] omarchy-m2 kernel: avd 287080000.avd: booting hw version: 30010
+[   45.979007] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: Switched dpphy to dispext0,0 (t602x atc=0x100 mux=0x0)
+[   45.979637] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x dpphy: 000=00000001 004=000001fe 008=00000001 00c=00000001 014=000001fb 018=00000001 01c=00000100 024=00000011 028=00000100 02c=00000001 030=00000000 034=00000100 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[   45.980079] omarchy-m2 kernel: apple-display-crossbar 130304c000.mux: t602x dpphy clk: 000=00000001 800=00000000 020=00000000 820=00000000 024=00000011 81c=00000011
+[   45.982409] omarchy-m2 kernel: apple-dcp 289c00000.dcp: typec_mux_set() returned: 0
+[   45.984337] omarchy-m2 kernel: apple-dcp 289c00000.dcp: typec0 USB4 DP IN using crossbar mux 1
+[   45.985597] omarchy-m2 kernel: apple-dcp 289c00000.dcp: typec1 USB4 DP IN using crossbar mux 1
+[   45.987748] omarchy-m2 kernel: apple-dcp 289c00000.dcp: typec2 USB4 DP IN using crossbar mux 1
+[   45.989894] omarchy-m2 kernel: thunderbolt-apple-acio 701ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[   45.992027] omarchy-m2 kernel: apple-dcp 389c00000.dcp: Detected display with notch of 74 pixel
+[   45.993211] omarchy-m2 kernel: spi-nor spi0.0: supply vcc not found, using dummy regulator
+[   45.993425] omarchy-m2 kernel: platform 389c00000.dcp:piodma: Adding to iommu group 16
+[   45.995400] omarchy-m2 kernel: apple-dart 389304000.iommu: Limited to ias=36 due to lock
+[   45.995843] omarchy-m2 kernel: apple_aop 2a6c00000.aop: RTKit: syslog message: ALSVD6286.cpp:80: [ALS1] VD6286 device found. Calibration Override:0
+[   45.996129] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: Initializing (protocol version 12)
+[   45.996319] omarchy-m2 kernel: apple-dcp 389c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107ddbb4000 -> iomem: ffff80008f0e0000
+[   45.996479] omarchy-m2 kernel: apple-dcp 389c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff80008ee54000
+[   45.996628] omarchy-m2 kernel: apple-dcp 389c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008eed4000
+[   45.996779] omarchy-m2 kernel: apple-drm soc:display-subsystem: bound 389c00000.dcp (ops dcp_comp_ops [appledrm])
+[   45.996966] omarchy-m2 kernel: apple-dcp 289c00000.dcp: DCP index:1 dptx target phy: 3 dptx die: 0
+[   45.997156] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2611: IOMFB LACS_ERROR: DCP took too long to respond to LAS stats
+[   45.997313] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2646: IOMFB: BLM LTS data hasn't been read in more than 10 secs
+[   45.997463] omarchy-m2 kernel: platform 289c00000.dcp:piodma: Adding to iommu group 17
+[   45.997629] omarchy-m2 kernel: apple-dart 289304000.iommu: Limited to ias=36 due to lock
+[   45.997794] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: Initializing (protocol version 12)
+[   45.997952] omarchy-m2 kernel: thunderbolt-apple-acio b01ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[   45.998097] omarchy-m2 kernel: apple-dcp 289c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107dd8b4000 -> iomem: ffff80008f180000
+[   45.998192] omarchy-m2 kernel: apple-dcp 289c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff80008f0a4000
+[   45.998277] omarchy-m2 kernel: 1 fixed-partitions partitions found on MTD device spi0.0
+[   45.998283] omarchy-m2 kernel: Creating 1 MTD partitions on "spi0.0":
+[   45.998287] omarchy-m2 kernel: 0x000000700000-0x000000800000 : "nvram"
+[   45.998292] omarchy-m2 kernel: apple-dcp 289c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff8000897ec000
+[   45.998391] omarchy-m2 kernel: apple-drm soc:display-subsystem: bound 289c00000.dcp (ops dcp_comp_ops [appledrm])
+[   45.998474] omarchy-m2 kernel: cs42l84 2-004b: Cirrus Logic CS42L84, Revision: 36
+[   45.998612] omarchy-m2 kernel: apple-drm soc:display-subsystem: bound 39b540000.audio-controller (ops dcpaud_comp_ops [appledrm])
+[   45.998705] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP index:2 dptx target phy: 1 dptx die: 0
+[   45.998788] omarchy-m2 kernel: platform 315c00000.dcp:piodma: Adding to iommu group 18
+[   45.998948] omarchy-m2 kernel: apple-dart 315304000.iommu: Limited to ias=36 due to lock
+[   45.999046] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[   45.999134] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: Initializing (protocol version 12)
+[   45.999221] omarchy-m2 kernel: apple-dcp 315c00000.dcp: shmem_setup: iova: 10080238000 -> pa: 107dc5b4000 -> iomem: ffff80008f3e0000
+[   45.999302] omarchy-m2 kernel: apple-dcp 315c00000.dcp: shmem_setup: iova: 10fffffc000, buffer: ffff80008f194000
+[   45.999380] omarchy-m2 kernel: apple-dcp 315c00000.dcp: shmem_setup: iova: 10fffff8000, buffer: ffff80008f1c4000
+[   45.999454] omarchy-m2 kernel: apple-drm soc:display-subsystem: bound 315c00000.dcp (ops dcp_comp_ops [appledrm])
+[   45.999542] omarchy-m2 kernel: apple-drm soc:display-subsystem: bound 39b580000.audio-controller (ops dcpaud_comp_ops [appledrm])
+[   45.999611] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00680000
+[   45.999679] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[   45.999743] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[   45.999805] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[   45.999873] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[   45.999946] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1864: start_ios_gated: trigger pending HPD notification
+[   46.000037] omarchy-m2 kernel: apple-dcp 389c00000.dcp: cb_hotplug() connected:1, valid_mode:0 nr_modes:0
+[   46.000111] omarchy-m2 kernel: apple-dcp 389c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:0
+[   46.003005] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[   46.003127] omarchy-m2 kernel: Bluetooth: Core ver 2.22
+[   46.003132] omarchy-m2 kernel: NET: Registered PF_BLUETOOTH protocol family
+[   46.003137] omarchy-m2 kernel: Bluetooth: HCI device and connection manager initialized
+[   46.003143] omarchy-m2 kernel: Bluetooth: HCI socket layer initialized
+[   46.003147] omarchy-m2 kernel: Bluetooth: L2CAP socket layer initialized
+[   46.003152] omarchy-m2 kernel: Bluetooth: SCO socket layer initialized
+[   46.003157] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ableCompensator.cpp:903: IOMFB setup_table: Could not find table 'display-backlight-compensation-v1' in registry. Using default table.
+[   46.003346] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[   46.004389] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[   46.005141] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPPipeDCP_H13P.cpp:1532: IOMFB: videoClock is zero, defaulting to 521065000
+[   46.005464] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[   46.005626] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[   46.005793] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[   46.006020] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[   46.006657] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[   46.007282] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[   46.007538] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[   46.007705] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[   46.008103] omarchy-m2 kernel: cfg80211: Loading compiled-in X.509 certificates for regulatory database
+[   46.008110] omarchy-m2 kernel: apple-dcp 289c00000.dcp: AFK[ep:20]: new service system on channel 1
+[   46.008305] omarchy-m2 kernel: apple-dcp 289c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 3
+[   46.008852] omarchy-m2 kernel: Loaded X.509 cert 'sforshee: 00b28ddf47aef9cea7'
+[   46.008858] omarchy-m2 kernel: Loaded X.509 cert 'wens: 61c038651aabdcf94bd0ac7ff06c7248db18c600'
+[   46.008864] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Int RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1208
+[   46.012749] omarchy-m2 kernel: apple-dcp 389c00000.dcp: AFK[ep:20]: new service system on channel 5
+[   46.013790] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: dpointInterface.cpp:606: [AFK][AFKMailboxSharedMemoryEndpointInterface:#62] if:1 inCmd:0 inResp:0 outRepErr:0 outCmdErr:0 t:1896738488
+[   46.013959] omarchy-m2 kernel: apple-dcp 389c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 7
+[   46.014135] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: dpointInterface.cpp:606: [AFK][AFKMailboxSharedMemoryEndpointInterface:#65] if:3 inCmd:0 inResp:0 outRepErr:0 outCmdErr:0 t:1896739549
+[   46.014287] omarchy-m2 kernel: hci_bcm4377 0000:01:00.1: resetting
+[   46.014501] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[   46.015010] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[   46.020029] omarchy-m2 kernel: usbcore: registered new interface driver brcmfmac
+[   46.020057] omarchy-m2 kernel: brcmfmac 0000:01:00.0: enabling device (0000 -> 0002)
+[   46.025012] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[   46.027310] omarchy-m2 kernel: apple_aop 2a6c00000.aop: RTKit: syslog message: iggerController.cpp:129: VoiceTrig ready!! <AppleAOPVoiceTriggerController v240.2 built: Jun 30 202317:4
+[   46.029423] omarchy-m2 kernel: apple_aop 2a6c00000.aop: RTKit: syslog message: SPU_init.cpp:320: ===( AOP IS READY )===
+[   46.029739] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:2611: IOMFB LACS_ERROR: DCP took too long to respond to LAS stats
+[   46.030722] omarchy-m2 kernel: apple-dcp 389c00000.dcp: DCP booted
+[   46.030814] omarchy-m2 kernel: apple-dcp 389c00000.dcp: DCP is_main_display: 1
+[   46.030909] omarchy-m2 kernel: apple-dcp 389c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:6
+[   46.034004] omarchy-m2 kernel: brcmfmac: brcmf_fw_alloc_request: using brcm/brcmfmac4388c0-pcie for chip BCM4388/4
+[   46.126015] omarchy-m2 kernel: hci_bcm4377 0000:01:00.1: reset done
+[   46.232063] omarchy-m2 kernel: hci_bcm4377 0000:01:00.1: enabling device (0000 -> 0002)
+[   46.719433] omarchy-m2 systemd-journald[597]: Received client request to flush runtime journal.
+[   46.826154] omarchy-m2 kernel: input: keyd virtual keyboard as /devices/virtual/input/input3
+[   46.854008] omarchy-m2 kernel: input: keyd virtual pointer as /devices/virtual/input/input4
+[   46.930008] omarchy-m2 kernel: apple-isp: CISP_CMD_CONFIG_GET: 
+[   46.930032] omarchy-m2 kernel: apple-isp: 00000000 00000003 016e3600 00000001 0000000a 00000000 00000001
+[   46.930042] omarchy-m2 kernel: apple-isp 384000000.isp: found sensor 558 CC2248101BGPNTV7H on ch 0
+[   46.930167] omarchy-m2 kernel: apple-isp: ch: CISP_CMD_CH_INFO_GET: 0
+[   46.930176] omarchy-m2 kernel: apple-isp: ch: 00000000 0000010d 00000000 07dc0001 00010090 00010007 00000006 00000001
+[   46.930181] omarchy-m2 kernel: apple-isp: ch: 00000558 00000009 00001410 00000002 00000000 00000000 00000000 00000000
+[   46.930185] omarchy-m2 kernel: apple-isp: ch: 00000000 00000000 00000000 00050000 00000001 00000000 00000004 00000020
+[   46.930193] omarchy-m2 kernel: apple-isp: ch: 00000006 00000000 00004680 00000040 00000001 00000002 00004000 00000040
+[   46.930200] omarchy-m2 kernel: apple-isp: ch: 00000001 00000000 00000000 00000036 00000000 00000000 000f4240 434300a0
+[   46.930204] omarchy-m2 kernel: apple-isp: ch: 38343232 42313031 544e5047 00483756 00000000 00000008 00000000 00000000
+[   46.930211] omarchy-m2 kernel: apple-isp: ch: 00000001 00000000 00000100 00000000 00000000 00000000 00000000 00ff0000
+[   46.930215] omarchy-m2 kernel: apple-isp: ch: 00000c00 00000000 0000001c 00000680 00000004 00000004 00000000 00000000
+[   46.930220] omarchy-m2 kernel: apple-isp: ch: 00000000 00000000 00000000 00000000 07800000 00000780
+[   46.930224] omarchy-m2 kernel: apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 0
+[   46.930231] omarchy-m2 kernel: apple-isp: ps: 00000000 00000106 00000000 00000000 07800780 07800780 00000000 00001df8
+[   46.930237] omarchy-m2 kernel: apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[   46.930248] omarchy-m2 kernel: apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[   46.930252] omarchy-m2 kernel: apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 00000012 00000000
+[   46.930260] omarchy-m2 kernel: apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000780 00000780
+[   46.930267] omarchy-m2 kernel: apple-isp: ps: 00010000 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[   46.930271] omarchy-m2 kernel: apple-isp: ps: 00000780 00000780 00000100 00000000 00000000 00000780 00000780
+[   46.930280] omarchy-m2 kernel: apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 1
+[   46.930286] omarchy-m2 kernel: apple-isp: ps: 00000000 00000106 00000000 00000001 08700780 08700780 00000000 00001df8
+[   46.930292] omarchy-m2 kernel: apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[   46.930299] omarchy-m2 kernel: apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[   46.930303] omarchy-m2 kernel: apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 00000012 00000000
+[   46.930307] omarchy-m2 kernel: apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000780 00000438
+[   46.930314] omarchy-m2 kernel: apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[   46.930320] omarchy-m2 kernel: apple-isp: ps: 00000780 00000870 00000100 00000000 00000000 00000780 00000438
+[   46.931005] omarchy-m2 kernel: apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 2
+[   46.931018] omarchy-m2 kernel: apple-isp: ps: 00000000 00000106 00000000 00000002 0f000438 0f000438 00000000 00001df8
+[   46.931023] omarchy-m2 kernel: apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[   46.931028] omarchy-m2 kernel: apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[   46.931033] omarchy-m2 kernel: apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 0000000d 00000000
+[   46.931038] omarchy-m2 kernel: apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000438 00000780
+[   46.931042] omarchy-m2 kernel: apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[   46.931051] omarchy-m2 kernel: apple-isp: ps: 00000438 00000f00 00000100 00000000 00000000 00000438 00000780
+[   46.931055] omarchy-m2 kernel: apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 3
+[   46.931061] omarchy-m2 kernel: apple-isp: ps: 00000000 00000106 00000000 00000003 0a6006e0 0a6006e0 00000000 00001df8
+[   46.931067] omarchy-m2 kernel: apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[   46.931072] omarchy-m2 kernel: apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[   46.931078] omarchy-m2 kernel: apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 00000010 00000000
+[   46.931086] omarchy-m2 kernel: apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 000006e0 00000530
+[   46.931093] omarchy-m2 kernel: apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[   46.931098] omarchy-m2 kernel: apple-isp: ps: 000006e0 00000a60 00000100 00000000 00000000 000006e0 00000530
+[   46.931102] omarchy-m2 kernel: apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 4
+[   46.931110] omarchy-m2 kernel: apple-isp: ps: 00000000 00000106 00000000 00000004 0dc00530 0dc00530 00000000 00001df8
+[   46.931116] omarchy-m2 kernel: apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[   46.931119] omarchy-m2 kernel: apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[   46.931127] omarchy-m2 kernel: apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 0000000e 00000000
+[   46.931131] omarchy-m2 kernel: apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000530 000006e0
+[   46.931136] omarchy-m2 kernel: apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[   46.931141] omarchy-m2 kernel: apple-isp: ps: 00000530 00000dc0 00000100 00000000 00000000 00000530 000006e0
+[   46.931145] omarchy-m2 kernel: apple-isp: ps: CISP_CMD_CH_CAMERA_CONFIG_GET: 5
+[   46.931154] omarchy-m2 kernel: apple-isp: ps: 00000000 00000106 00000000 00000005 0c200610 0c200610 00000000 00001df8
+[   46.931164] omarchy-m2 kernel: apple-isp: ps: 00000100 00000001 00000040 00000040 00000040 00000040 00000040 00000040
+[   46.931168] omarchy-m2 kernel: apple-isp: ps: 00000003 00000040 00000040 00000005 00000000 0100041e 00000001 00000000
+[   46.931175] omarchy-m2 kernel: apple-isp: ps: 0bdebefc 00000006 00000007 00000000 00000009 000f4240 0000000f 00000000
+[   46.931182] omarchy-m2 kernel: apple-isp: ps: 00008000 00000014 00000015 00000000 00000000 00000000 00000610 00000610
+[   46.931185] omarchy-m2 kernel: apple-isp: ps: 00010001 00000000 93f00000 00000040 0000001f 00000000 00000000 00000000
+[   46.931193] omarchy-m2 kernel: apple-isp: ps: 00000610 00000c20 00000100 00000000 00000000 00000610 00000610
+[   46.939012] omarchy-m2 kernel: apple-isp 384000000.isp: apple-isp probe!
+[   47.013005] omarchy-m2 kernel: apple-dcp 289c00000.dcp: AFK[ep:23]: new service disp0-service on channel 1
+[   47.019006] omarchy-m2 kernel: apple-dcp 289c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 1
+[   47.019081] omarchy-m2 kernel: apple-dcp 289c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 3
+[   47.019150] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00027000
+[   47.019216] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[   47.020005] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[   47.020072] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[   47.020136] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[   47.023006] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[   47.024005] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   47.024076] omarchy-m2 kernel: apple-dcp 289c00000.dcp: read_edt_data key=initial-vbi-advance-lines count=1 default0=0x2 ret=0
+[   47.025005] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[   47.025079] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   47.027004] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[   47.027072] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[   47.027139] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:20]: new service system on channel 1
+[   47.027230] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:20]: new service powerlog-service on channel 3
+[   47.027296] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[   47.027358] omarchy-m2 kernel: apple-dcp 289c00000.dcp: DCP booted
+[   47.027433] omarchy-m2 kernel: apple-dcp 289c00000.dcp: DCP is_main_display: 0
+[   47.027512] omarchy-m2 kernel: apple-dcp 289c00000.dcp: dcp_hotplug() connected:0 valid_mode:0 nr_modes:0
+[   47.344005] omarchy-m2 kernel: brcmfmac: brcmf_c_process_txcap_blob: TxCap blob found, loading
+[   47.346035] omarchy-m2 kernel: brcmfmac: brcmf_c_process_cal_blob: Calibration blob provided by platform, loading
+[   47.359012] omarchy-m2 kernel: brcmfmac: brcmf_c_preinit_dcmds: Firmware: BCM4388/4 wl0: Jun 11 2023 05:20:59 version 23.20.95.0.40.50.92 FWID 01-ec505a98
+[   47.365030] omarchy-m2 kernel: ieee80211 phy0: brcmf_c_set_joinpref_default: Set join_pref error (-52)
+[   47.627012] omarchy-m2 kernel: ieee80211 phy0: brcmf_c_set_joinpref_default: Set join_pref error (-52)
+[   47.713014] omarchy-m2 kernel: ieee80211 phy0: brcmf_dongle_roam: WLC_SET_ROAM_DELTA error (-52)
+[   47.828013] omarchy-m2 kernel: Bluetooth: BNEP (Ethernet Emulation) ver 1.3
+[   47.828065] omarchy-m2 kernel: Bluetooth: BNEP filters: protocol multicast
+[   47.828125] omarchy-m2 kernel: Bluetooth: BNEP socket layer initialized
+[   48.036027] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:23]: new service disp0-service on channel 1
+[   48.042025] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 1
+[   48.042165] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:2a]: new service AppleDCPDPTXRemotePort on channel 3
+[   48.042304] omarchy-m2 kernel: apple-dcp 289c00000.dcp: dcp_enable_dp2hdmi_hpd: DP2HDMI HPD connected:0
+[   48.042424] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: ap_link.c:299: shared memory dva: 0x10fffe00000 0xffffffff00027000
+[   48.042538] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: ap_link.c:276: ap_link: IOMFB: DCP heap size: 0x1030000 [iBoot:0x1030000] [LinkService:0x0]
+[   48.042655] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:1962: IOMFB: swap_submit_dcp: swallowed swap ID 2 as fControllerPowerState is 0 for External Display
+[   48.042783] omarchy-m2 kernel: apple-dcp 289c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:1967: IOMFB: swap_submit_dcp: swallowed swap ID 2 as timinsg are not enabled for External Display
+[   48.042908] omarchy-m2 kernel: apple-dcp 289c00000.dcp: dcp_poweroff() done
+[   48.043038] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4191: IOMFB: Could not find Backlight service
+[   48.043167] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:4199: IOMFB: Could not find nvram service
+[   48.043294] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1838: virtual bool UnifiedPipeline::start_ios_gated(): Created AP Services
+[   48.046005] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1871: virtual bool UnifiedPipeline::start_ios_gated(): Flushed RTPs
+[   48.046125] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   48.046235] omarchy-m2 kernel: apple-dcp 315c00000.dcp: read_edt_data key=initial-vbi-advance-lines count=1 default0=0x2 ret=0
+[   48.048007] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 1
+[   48.048161] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11122: IOMFB setup_video_limits called on secondary display with no timing set
+[   48.049007] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[   48.049128] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[   48.050005] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[   48.050120] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP booted
+[   48.050221] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP is_main_display: 0
+[   48.156030] omarchy-m2 kernel: Console: switching to colour dummy device 80x25
+[   48.158027] omarchy-m2 kernel: [drm] Initialized apple 1.0.0 for soc:display-subsystem on minor 2
+[   48.160019] omarchy-m2 kernel: apple-dcp 389c00000.dcp: dcp_poweron() starting
+[   48.160425] omarchy-m2 kernel: apple-dcp 389c00000.dcp: dcp_set_power_state_req returned, 10000 ms remaining
+[   48.160764] omarchy-m2 kernel: apple-dcp 389c00000.dcp: set_digital_out_mode(color:1 timing:2) "3456x2160": 120 1042130 3456 3464 3496 3536 2160 2278 2360 2456 0x48 0x0
+[   48.161097] omarchy-m2 kernel: apple-dcp 389c00000.dcp: set_digital_out_mode() color mode depth:8 format:0 colorimetry:16 eotf:0 range:0 vrr:1
+[   48.161404] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:5931: IOMFBParameter_adaptive_sync Req minRR = 0x0, mediaTargetRate = 0x0, Fractional Rate = 0
+[   48.161575] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7462: set_digital_out_mode: Modeset requested for colorID: 1, timingID: 2
+[   48.161751] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:18011: Dual pipe disabled offset 0
+[   48.161931] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 4 -> 1
+[   48.162215] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[   48.162403] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:150: IOMFBStatus IOMFB::UPTSQManager::power_down_M3(IOMFB::AppleRegisterStream *, UPTSQManager::ModeChangeWaiter *): request mode ch
+[   48.162541] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:162: IOMFBStatus IOMFB::UPTSQManager::power_down_M3(IOMFB::AppleRegisterStream *, UPTSQManager::ModeChangeWaiter *): disabling M3
+[   48.162688] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[   48.162842] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:3300: Quiescing callback
+[   48.224015] omarchy-m2 kernel: Bluetooth: hci0: HCI LE Coded PHY feature bit is set, but its usage is not supported.
+[   48.241003] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[   48.241392] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7700: set_mode: timingID: 2 colorID: 1
+[   48.242004] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[   48.242328] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (257142848) < videoClock 521064960! Giving up on frequencies.
+[   48.242717] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7356: IOMFBStatus UnifiedPipeline::mode_set_gated(uint32_t, uint32_t): 3456x2234@120 Hz link: 1
+[   48.242828] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 0, requested state: 1
+[   48.242889] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 0 -> 1
+[   48.242949] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ock_Tunables_v1.cpp:651: IOMFB: Writing tunables with target 4
+[   48.244016] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ck_Config_H13P.cpp:1771: program_frame_size: pixel_clock 1042130000, vid0 521065000, 00020910 0000007e
+[   48.244389] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LED M3 IMem : size 0x7b74
+[   48.244690] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LED M3 DMem : size 0x102e0
+[   48.247012] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ock_PCC2DLTM_v4.cpp:324: IOMFBStatus IOMFB::UPBlock_PCC2DLTM_v4::set_mcpu_power(IOMFB::AppleRegisterStream *, bool) Loading M3 Hal
+[   48.247150] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LTM M3 IMem : size 0x7308
+[   48.248006] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load LTM M3 DMem : size 0xd190
+[   48.249006] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: ck_PCC2DBlm_v5.cpp:4938: [set_lts_buffer] buffer 0x10001cc4000 Add_lo = 0x1cc4000, Add_hi = 0x100, size 0x2900 stride 0x100
+[   48.256015] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 2
+[   48.256192] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPPipeDCP_H13P.cpp:1532: IOMFB: videoClock is zero, defaulting to 521065000
+[   48.256393] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load BLM M3 IMem : size 0x764c
+[   48.256576] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load BLM M3 DMem : size 0xaf6c
+[   48.258007] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: FBPropertyManager.h:189: value_t<P> IOMFB::PropMgr::getVal(IOMFB::RuntimeProperty) [P = IOMFB::RuntimePropertyType::boolean]: WARNING - type mismatch on
+[   48.258199] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[   48.258386] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[   48.258560] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[   48.258732] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[   48.258914] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[   48.259137] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Int RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1208
+[   48.259443] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[   48.259687] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[   48.271009] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.272009] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.273008] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[   48.273101] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:296: IOMFB: VideoInterfaceIOAV::power_on: m_power_ctrl->setPower( 1 )
+[   48.273172] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.275008] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.276006] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.277006] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.278009] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.279016] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.279073] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: MMailboxHandler.cpp:214: pcc firmware: MailBox Printf is enabled in BLM Pipe Line Init
+[   48.279321] omarchy-m2 kernel: apple-dcp 389c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:17179: handle_stage1_enable blm_en 1 ltm_en 0
+[   48.279478] omarchy-m2 kernel: apple-dcp 389c00000.dcp: set_digital_out_mode finished:8380
+[   48.279655] omarchy-m2 kernel: Console: switching to colour frame buffer device 216x67
+[   48.279675] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.281006] omarchy-m2 kernel: Bluetooth: hci0: Failed to read codec capabilities (-22)
+[   48.285014] omarchy-m2 kernel: Bluetooth: MGMT ver 1.23
+[   48.302703] omarchy-m2 kernel: apple-drm soc:display-subsystem: [drm] fb0: appledrmfb frame buffer device
+[   48.307847] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec mux set typec1 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[   48.310024] omarchy-m2 kernel: Bluetooth: hci0: Bad flag given (0x1) vs supported (0xe)
+[   48.316892] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec mux set typec0 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[   48.326007] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[   48.408027] omarchy-m2 kernel: ieee80211 phy0: brcmf_p2p_set_firmware: failed to update device address ret -52
+[   48.408440] omarchy-m2 kernel: ieee80211 phy0: brcmf_p2p_create_p2pdev: set p2p_disc error
+[   48.408642] omarchy-m2 kernel: ieee80211 phy0: brcmf_cfg80211_add_iface: add iface p2p-dev-wlan0 type 10 failed: err=-52
+[   48.482033] omarchy-m2 kernel: input: MacBook Pro J416 Headphone Jack as /devices/platform/sound/sound/card1/input5
+[   48.919018] omarchy-m2 kernel: Bluetooth: RFCOMM TTY layer initialized
+[   48.919092] omarchy-m2 kernel: Bluetooth: RFCOMM socket layer initialized
+[   48.919136] omarchy-m2 kernel: Bluetooth: RFCOMM ver 1.11
+[   49.113017] omarchy-m2 kernel: snd-soc-macaudio sound: Speaker volumes unlocked
+[   51.371011] omarchy-m2 kernel: kauditd_printk_skb: 261 callbacks suppressed
+[   51.371035] omarchy-m2 kernel: audit: type=1130 audit(1790063823.695:161): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=udisks2 comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   52.797010] omarchy-m2 kernel: audit: type=1131 audit(1790063825.121:162): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-rfkill comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   53.368016] omarchy-m2 kernel: ieee80211 phy0: brcmf_set_key_mgmt: get okc_enable failed (-52)
+[   53.372013] omarchy-m2 kernel: ieee80211 phy0: brcmf_c_set_joinpref_default: Set join_pref error (-52)
+[   53.629117] omarchy-m2 kernel: audit: type=1334 audit(1790063825.953:163): prog-id=57 op=LOAD
+[   53.629168] omarchy-m2 kernel: audit: type=1300 audit(1790063825.953:163): arch=c00000b7 syscall=280 success=yes exit=26 a0=5 a1=ffffc3ccbbb0 a2=a8 a3=fffef3f9c540 items=0 ppid=1 pid=859 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="NetworkManager" exe="/usr/bin/NetworkManager" subj=unconfined key=(null)
+[   53.629210] omarchy-m2 kernel: audit: type=1327 audit(1790063825.953:163): proctitle=2F7573722F62696E2F4E6574776F726B4D616E61676572002D2D6E6F2D6461656D6F6E
+[   53.800019] omarchy-m2 kernel: audit: type=1334 audit(1790063826.123:164): prog-id=58 op=LOAD
+[   53.800116] omarchy-m2 kernel: audit: type=1300 audit(1790063826.123:164): arch=c00000b7 syscall=280 success=yes exit=26 a0=5 a1=ffffc3ccbbb0 a2=a8 a3=fffef3f9c540 items=0 ppid=1 pid=859 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="NetworkManager" exe="/usr/bin/NetworkManager" subj=unconfined key=(null)
+[   53.800146] omarchy-m2 kernel: audit: type=1327 audit(1790063826.123:164): proctitle=2F7573722F62696E2F4E6574776F726B4D616E61676572002D2D6E6F2D6461656D6F6E
+[   53.800201] omarchy-m2 kernel: audit: type=1334 audit(1790063826.124:165): prog-id=57 op=UNLOAD
+[   53.801016] omarchy-m2 kernel: audit: type=1300 audit(1790063826.124:165): arch=c00000b7 syscall=82 success=yes exit=0 a0=1c a1=0 a2=0 a3=0 items=0 ppid=1 pid=859 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm="NetworkManager" exe="/usr/bin/NetworkManager" subj=unconfined key=(null)
+[   56.932200] omarchy-m2 kernel: kauditd_printk_skb: 100 callbacks suppressed
+[   56.932245] omarchy-m2 kernel: audit: type=1131 audit(1790063829.256:199): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=NetworkManager-dispatcher comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   77.861020] omarchy-m2 kernel: audit: type=1131 audit(1790063850.184:200): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=systemd-hostnamed comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[   77.888013] omarchy-m2 kernel: audit: type=1334 audit(1790063850.211:201): prog-id=38 op=UNLOAD
+[  101.212098] omarchy-m2 kernel: audit: type=1101 audit(1790063873.535:202): pid=4876 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  101.213547] omarchy-m2 kernel: audit: type=1110 audit(1790063873.537:203): pid=4876 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  101.213605] omarchy-m2 kernel: audit: type=1105 audit(1790063873.537:204): pid=4876 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  101.246009] omarchy-m2 kernel: audit: type=1106 audit(1790063873.570:205): pid=4876 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  101.246028] omarchy-m2 kernel: audit: type=1104 audit(1790063873.570:206): pid=4876 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  162.390050] omarchy-m2 kernel: audit: type=1101 audit(1790063934.714:207): pid=5894 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  162.391011] omarchy-m2 kernel: audit: type=1110 audit(1790063934.715:208): pid=5894 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  162.392014] omarchy-m2 kernel: audit: type=1105 audit(1790063934.716:209): pid=5894 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  169.912013] omarchy-m2 kernel: audit: type=1106 audit(1790063942.235:210): pid=5894 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_close grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  169.912111] omarchy-m2 kernel: audit: type=1104 audit(1790063942.235:211): pid=5894 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  249.055008] omarchy-m2 kernel: macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151:         Elec: Elec Cause 0x20
+[  249.233018] omarchy-m2 kernel: macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151:         Elec: Elec Cause 0x200000
+[  249.445013] omarchy-m2 kernel: macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151:         Elec: Elec Cause 0x0
+[  249.792122] omarchy-m2 kernel: apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=4 dp=0 usb4=1 tbt=0 usb4_xbar=yes
+[  249.792692] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_dptx_disconnect(port=0)
+[  249.793095] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[  249.793496] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0: 000=00000004 004=000001fb 008=00000004 00c=00000004 014=000001fb 018=00000010 01c=00000001 024=00000110 028=00000001 02c=00000004 030=00002002 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[  249.793855] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  249.794238] omarchy-m2 kernel: apple-dcp 315c00000.dcp: allocated Type-C DPTX PHY 4 (USB4 DP IN, ACIO AUX)
+[  249.794607] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 dpin mux typec2; waiting for DP IN HPD
+[  249.796018] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: Initializing (protocol version 12)
+[  249.796595] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: main.c:60: #ACIO FW IS READY# FW_VERSION_STRING=AppleCIOFirmware-475~290__2026-04-18-18:18
+[  249.797031] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: main.c:61: FW state=1
+[  249.797373] omarchy-m2 kernel: apple-dart f01a80000.iommu: DART [pagesize 4000, 16 streams, bypass support: 1, bypass forced: 0, locked: 0, AS 42 -> 42] initialized
+[  249.797757] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: device links to tunneled native ports are missing!
+[  249.809005] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:181: Entering Phase 1. action=0
+[  249.809118] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:78: Lane init parmas = 0x00000011
+[  249.830016] omarchy-m2 kernel: phy-apple-atc f03000000.phy: ATCPHY_PIPEHANDLER_STATE_USB4 not implemented; falling back to USB2
+[  249.830412] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: xHCI Host Controller
+[  249.831244] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: new USB bus registered, assigned bus number 1
+[  249.831600] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: hcc params 0x0238ffcd hci version 0x110 quirks 0x0000808000000010
+[  249.832040] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: irq 167, io mem 0xf02280000
+[  249.832263] omarchy-m2 kernel: phy-apple-atc f03000000.phy: ATCPHY_PIPEHANDLER_STATE_USB4 not implemented; falling back to USB2
+[  249.832415] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: xHCI Host Controller
+[  249.832548] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: new USB bus registered, assigned bus number 2
+[  249.832692] omarchy-m2 kernel: xhci-hcd xhci-hcd.3.auto: Host supports USB 3.1 Enhanced SuperSpeed
+[  249.832842] omarchy-m2 kernel: usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 7.01
+[  249.833080] omarchy-m2 kernel: usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[  249.833295] omarchy-m2 kernel: usb usb1: Product: xHCI Host Controller
+[  249.833481] omarchy-m2 kernel: usb usb1: Manufacturer: Linux 7.1.12-2.5-1-ARCH xhci-hcd
+[  249.833683] omarchy-m2 kernel: usb usb1: SerialNumber: xhci-hcd.3.auto
+[  249.833876] omarchy-m2 kernel: hub 1-0:1.0: USB hub found
+[  249.834087] omarchy-m2 kernel: hub 1-0:1.0: 1 port detected
+[  249.834282] omarchy-m2 kernel: usb usb2: We don't know the algorithms for LPM for this host, disabling LPM.
+[  249.834555] omarchy-m2 kernel: usb usb2: New USB device found, idVendor=1d6b, idProduct=0003, bcdDevice= 7.01
+[  249.834792] omarchy-m2 kernel: usb usb2: New USB device strings: Mfr=3, Product=2, SerialNumber=1
+[  249.835086] omarchy-m2 kernel: usb usb2: Product: xHCI Host Controller
+[  249.835461] omarchy-m2 kernel: usb usb2: Manufacturer: Linux 7.1.12-2.5-1-ARCH xhci-hcd
+[  249.835727] omarchy-m2 kernel: usb usb2: SerialNumber: xhci-hcd.3.auto
+[  249.835976] omarchy-m2 kernel: hub 2-0:1.0: USB hub found
+[  249.836154] omarchy-m2 kernel: hub 2-0:1.0: 1 port detected
+[  249.836315] omarchy-m2 kernel: audit: type=1130 audit(1790064022.159:212): pid=1 uid=0 auid=4294967295 ses=4294967295 subj=unconfined msg='unit=bolt comm="systemd" exe="/usr/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'
+[  249.859019] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:343: Entering Phase 2
+[  249.866016] omarchy-m2 kernel: macsmc 2a2400000.smc: RTKit: syslog message: charger.cpp:3180: Not charging:0
+[  249.875016] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:396: Entering Phase 3
+[  249.876012] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:882: Got AT register 12. 3 bytes. 0x00 0xf3 0x5f
+[  249.876203] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_init.c:1024: Entering Connected
+[  249.876376] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2212: RT Broadcast LOCAL: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[  249.876545] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2212: RT Broadcast LOCAL: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[  249.912028] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2219: RT Broadcast REMOTE: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[  249.912335] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:2219: RT Broadcast REMOTE: gen=2, legacy=0, rs_fec=1, usb4=1, l0_en=1, l1_en=1
+[  250.074098] omarchy-m2 kernel: usb 1-1: new high-speed USB device number 2 using xhci-hcd
+[  250.142027] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=0, error=84
+[  250.142509] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: high_speed_lane.c:289: Gen2/3 link error. lane=1, error=84
+[  250.142851] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_training_cl0.c:24: Gen2/3 lane=0 entered CL0!
+[  250.143158] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: lane_training_cl0.c:24: Gen2/3 lane=1 entered CL0!
+[  250.160018] omarchy-m2 kernel: thunderbolt 0-1: new device found, vendor=0x5a device=0xde81
+[  250.160439] omarchy-m2 kernel: thunderbolt 0-1: Other World Computing Thunderbolt 5 Hub
+[  250.199015] omarchy-m2 kernel: usb 1-1: New USB device found, idVendor=1d5c, idProduct=5801, bcdDevice= 1.01
+[  250.199292] omarchy-m2 kernel: usb 1-1: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  250.199469] omarchy-m2 kernel: usb 1-1: Product: USB2.0 Hub
+[  250.199642] omarchy-m2 kernel: usb 1-1: Manufacturer: Fresco Logic, Inc.
+[  250.207013] omarchy-m2 kernel: hub 1-1:1.0: USB hub found
+[  250.207238] omarchy-m2 kernel: hub 1-1:1.0: 5 ports detected
+[  250.383021] omarchy-m2 kernel: thunderbolt 0-0:1.1: new retimer found, vendor=0x5ac device=0x2200
+[  250.484028] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: clx.c:776: CLX CFG: clx_en changed 0x0 --> 0x0
+[  250.484530] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: clx.c:776: CLX CFG: clx_en changed 0x0 --> 0x3
+[  250.745129] omarchy-m2 kernel: usb 1-1.1: new full-speed USB device number 3 using xhci-hcd
+[  250.814026] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=14, null port=0, hopid=8
+[  250.814485] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=1, target port=14, hopid=8
+[  250.816042] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=13, null port=0, hopid=9
+[  250.816458] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=2, target port=13, hopid=8
+[  250.816847] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: error -ENODEV: PCIe-C requires a successful m1n1 preinit handoff
+[  250.817290] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: deferred PCIe-C activation failed: -19
+[  250.831025] omarchy-m2 kernel: usb 1-1.1: New USB device found, idVendor=1e91, idProduct=de81, bcdDevice= 0.04
+[  250.831452] omarchy-m2 kernel: usb 1-1.1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[  250.831844] omarchy-m2 kernel: usb 1-1.1: Product: Thunderbolt 5 Hub
+[  250.832234] omarchy-m2 kernel: usb 1-1.1: Manufacturer: Other World Computing
+[  250.832609] omarchy-m2 kernel: usb 1-1.1: SerialNumber: 0052
+[  250.913039] omarchy-m2 kernel: usb 1-1.2: new high-speed USB device number 4 using xhci-hcd
+[  250.997097] omarchy-m2 kernel: usb 1-1.2: New USB device found, idVendor=06cb, idProduct=7100, bcdDevice= 1.c4
+[  250.997591] omarchy-m2 kernel: usb 1-1.2: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[  250.997903] omarchy-m2 kernel: usb 1-1.2: Product: VMM7100
+[  250.998225] omarchy-m2 kernel: usb 1-1.2: Manufacturer: Synaptics
+[  250.998533] omarchy-m2 kernel: usb 1-1.2: SerialNumber: 000000000000
+[  251.021313] omarchy-m2 kernel: usbhid 1-1.2:1.0: couldn't find an input interrupt endpoint
+[  251.021914] omarchy-m2 kernel: usbcore: registered new interface driver usbhid
+[  251.021969] omarchy-m2 kernel: usbhid: USB HID core driver
+[  251.436039] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=15, null port=0, hopid=10
+[  251.436662] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: iguration_space_tx.c:57: TX path: src port=16, null port=0, hopid=11
+[  251.437046] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: RTKit: syslog message: ration_space_null.c:140: RX path: null port=0, queue=3, target port=16, hopid=8
+[  251.437378] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: USB4 DPTX Discovery closed (CS13 writable, CS9 static); AE=0 VE=0
+[  251.439017] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=00000000 COMMON=15402134 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[  251.439376] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 1:19: DP OUT CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 VE=1 AE=1 HPD=1 DPRX=0
+[  251.439725] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=2 (DPTX should use this adapter, not ATC)
+[  251.440066] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: DP IN analog/AUX serializer: tunnel 0:5 <-> 1:19
+[  251.440395] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: ACIO RC ctrl 0x0: 000=00003010 004=00000011 018=00040000 01c=00000001 024=09600258 028=00000001 030=000007af 034=00000001 038=00000001 03c=de4a2b2d 040=00000065 044=00000001 048=00000001 060=00000001 064=00000001 068=00000001 070=00000001 074=00000001 078=00000003 0a8=01000000 0ac=04000001 0d0=00000062
+[  251.442019] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0: Apple VSE cap=53: 00=ca0005ff 01=00000011 02=00000000 03=00000000 04=00000000 05=00000000 06=00000000 07=00000000 08=00000000 09=00000000 0a=00000000 0b=00000000 0c=00000fff 0d=00000fff 0e=00000000 0f=00000000
+[  251.442357] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: DP IN analog block 0x4000 (port 5) dpin_aux=0 (0=hands-off)
+[  251.442705] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: DP IN analog: leaving PHY alone until DPRX timeout
+[  251.444017] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: host DP IN type=0e0101 cap=9 CS0=c0090400 CS1=00004008 CS2=241021c2 CS3=00000000 LOCAL=15402334 REMOTE=0547a135 STAT=00000000 COMMON=15402134 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[  251.444357] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[  251.446015] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:6: host DP IN type=0e0101 cap=9 CS0=00090400 CS1=00004008 CS2=00000000 CS3=00000000 LOCAL=15402334 REMOTE=00000000 STAT=00000000 COMMON=00000000 CS8=00000000 CS9=41000553 CS10=00000000 ADP_CS4=0b300000 VE=0 AE=0 HPD=0 DPRX=0 LCK=0
+[  251.446348] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:6: host DP IN CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[  251.446681] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN hop 8 enable=1 out=1 next=11 credits=1
+[  251.447051] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN hop 9 enable=1 out=1 next=10 credits=0
+[  251.448020] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 1:19: hub DP OUT type=0e0102 cap=57 CS0=c0090400 CS1=00004008 CS2=00000040 CS3=00000000 LOCAL=05c7a335 REMOTE=15402334 STAT=04000000 COMMON=05402334 CS8=00000000 CS9=00000000 CS10=00000000 ADP_CS4=40800000 VE=1 AE=1 HPD=1 DPRX=0 LCK=0
+[  251.448359] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 1:19: hub DP OUT CS11=00000000 CS12=00000000 CS13=00000000 CS14=00000000 CS15=00000000 CS16=00000000 disc=0
+[  251.449032] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP tunnel paths up, not waiting for DPRX
+[  251.656025] omarchy-m2 kernel: appledrm: DP IN HPD=1 typec2, dpin mux only (ACIO AUX, no DPTX PHY)
+[  251.656105] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 DP IN armed typec2; DPTX HPD in 200 ms (no PHY connect)
+[  251.864018] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_dptx_connect(port=0) target=0:4 typec=1 route=borrowed conn_type=20 connected=0
+[  251.864409] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: target=0x8021 typec2, PHY absent, one attempt
+[  251.864744] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTX validate target=0x8021 core=1 atc=2 die=0 or=0x0
+[  251.865065] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: validate=0
+[  251.865368] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTX connect target=0x8021 unk=0x100
+[  251.865661] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: connect=0
+[  251.865950] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: AppleDCPDPTX.cpp:355: [AFK]powering nub 0x854e10
+[  251.866267] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 18 (32 bytes)
+[  251.866573] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: GET_SUPPORTS_HPD 1 usb4=1
+[  251.866864] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 10 (32 bytes)
+[  251.867241] omarchy-m2 kernel: apple-dcp 315c00000.dcp: get_max_lane_count: USB4 DP IN, 4 lanes
+[  251.867528] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 0 (16 bytes)
+[  251.867805] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin0 to disconnected state
+[  251.868135] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[  251.868434] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[  251.868715] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[  251.868995] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0: 000=00000004 004=000001fb 008=00000004 00c=00000004 014=000001fb 018=00000010 01c=00000001 024=00000110 028=00000001 02c=00000004 030=00002002 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[  251.869275] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  251.869555] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: native DPIN0: active=1 base=0x0000000f01e50000, CONTROL=0x0c ACK=0x10
+[  251.869867] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: native DPIN0: active=1 handshake=0
+[  251.870169] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: DCP active=1 result=0
+[  251.870487] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: request_display=0 modes=0
+[  251.877015] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: DCPDP13Service.cpp:60: [AFK]version: 14
+[  251.877311] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: DCPDPService.cpp:76: [AFK]version: 14
+[  251.882014] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:28]: new service DCPDP13Service on channel 1
+[  251.886018] omarchy-m2 kernel: apple-dcp 315c00000.dcp: AFK[ep:28]: new service DCPDP13Service on channel 3
+[  251.886298] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe: HPD=0 cached_lanes=4 modes=0
+[  251.886598] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 protocol probe finished: 0; no automatic retry
+[  251.919024] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 21 (144 bytes)
+[  251.921020] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 7 (32 bytes)
+[  251.921333] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 13 (32 bytes)
+[  251.921636] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 7 (32 bytes)
+[  251.921928] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 15 (32 bytes)
+[  251.922252] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 5 (16 bytes)
+[  251.922542] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 12 (32 bytes)
+[  251.922826] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 9 (32 bytes)
+[  251.923127] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: SET_LINK_RATE 0xa
+[  251.923422] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 6 (16 bytes)
+[  251.923712] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin0 to disconnected state
+[  251.923992] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[  251.924290] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[  251.924565] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[  251.924831] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0: 000=00000004 004=000001fb 008=00000004 00c=00000004 014=000001fb 018=00000010 01c=00000001 024=00000110 028=00000001 02c=00000004 030=00002002 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[  251.925121] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  251.925412] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: DCP active=1 result=0
+[  251.925697] omarchy-m2 kernel: apple-dcp 315c00000.dcp: native DPIN0: link-config up rate=0xa result=0
+[  251.933012] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 13 (32 bytes)
+[  251.934014] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 12 (32 bytes)
+[  251.934308] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_active_lane_count: unexpected lane count:4 phy: 0
+[  251.934600] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4/DPTX: SET_ACTIVE_LANE_COUNT 4
+[  251.934877] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[  251.935179] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_drive_settings: 4:0:14:0:0:0:0
+[  251.935471] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[  251.935757] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[  251.936041] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_drive_settings: 4:0:0:0:0:0:0
+[  251.936331] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[  251.937013] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[  251.937292] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_drive_settings: 4:0:0:0:0:0:0
+[  251.937569] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[  251.939015] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 3 (64 bytes)
+[  251.939323] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_drive_settings: 4:0:0:0:0:0:0
+[  251.939599] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 2 (32 bytes)
+[  251.952015] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN CS changed CS0=c0090400 CS2=241021c2 CS9=41000553 CS13=00000000 COMMON=b7402134 VE=1 AE=1 HPD=1 DPRX=1 disc=0
+[  251.952348] omarchy-m2 kernel: thunderbolt-apple-nhi f01f00000.nhi: 0:5: DP IN DPRX_DONE=1 (ACIO AUX completed)
+[  251.952640] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin0 analog DPRX done 0x4000: 000=80000000 004=00400040 008=00000004 00c=80000000 010=00000040 014=00000004 018=00001017 01c=00000010 020=00000000 024=00000004 028=80000000 02c=00000010 030=00000004 034=80000000 038=01010101 03c=00000101 040=00000001 044=01010101 048=00000001 04c=00000004 050=00000000 054=00000000 058=00000000
+[  251.952926] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin0 analog DPRX done 0x4000: 05c=00000000 060=00000000 064=00000000 068=00000000 06c=00000000 070=00000000 074=00000000 078=00000000 07c=00000000
+[  251.953233] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin1 analog 0x8000: 000=80000000 004=00040004 008=00000004 00c=00001004 010=00040004 014=00000000 018=00000004 01c=00000000 020=00040004 024=00000000 028=00000004 02c=80010000 030=00000004 034=80000000 038=00000004 03c=80000000 040=00000004 044=80000000 048=00000004 04c=80000000 050=00000004 054=80000000 058=00000004
+[  251.953527] omarchy-m2 kernel: thunderbolt-apple-acio f01ac0000.cio: ACIO RC dpin1 analog 0x8000: 05c=80000000 060=00000004 064=00000000 068=00000000 06c=00000000 070=00000000 074=00000000 078=00000000 07c=00000000
+[  252.056027] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:135: IOMFB: IOAVVideoInterface published
+[  252.056354] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: eoInterfaceIOAV.cpp:714: IOMFBStatus VideoInterfaceIOAV::plug_gated(IOAVVideoInterface *, bool): display HPD asserted
+[  252.061029] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.061321] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.061611] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.061907] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.062208] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.062500] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.062817] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.063122] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.063409] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.063705] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.063977] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.064270] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.064557] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.064836] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.065134] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.065430] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.065721] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.066007] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.066283] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.066557] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.066853] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.067161] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.067448] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.067725] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.068011] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.068301] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.068577] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.068873] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.069156] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.069432] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.069705] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.069990] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.070295] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.070571] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.070842] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.071127] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.071400] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=ColorElements bytes=5049 accepted=1 nr_modes=0
+[  252.122088] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=TimingElements bytes=205757 accepted=1 nr_modes=22
+[  252.122411] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=DisplayAttributes bytes=1285 accepted=1 nr_modes=22
+[  252.122706] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DCP property key=Transport bytes=53 accepted=1 nr_modes=22
+[  252.122999] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oInterfaceIOAV.cpp:1701: Got peer ID 1
+[  252.123287] omarchy-m2 kernel: apple-dcp 315c00000.dcp: cb_hotplug() connected:1, valid_mode:0 nr_modes:22
+[  252.123579] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_hotplug() connected:1 valid_mode:0 nr_modes:22
+[  252.140027] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_dptx_connect(port=0) target=0:4 typec=1 route=borrowed conn_type=20 connected=1
+[  252.140357] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_poweron() starting
+[  252.140665] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: FramebufferDCP.cpp:5931: IOMFBParameter_adaptive_sync Req minRR = 0x0, mediaTargetRate = 0x0, Fractional Rate = 0
+[  252.140988] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 0, requested state: 1
+[  252.141298] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 0 -> 1
+[  252.141616] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 2
+[  252.141901] omarchy-m2 kernel: apple-dcp 315c00000.dcp: read_edt_data key=initial-vbi-advance-lines count=1 default0=0x2 ret=0
+[  252.142213] omarchy-m2 kernel: apple-dcp 315c00000.dcp: dcp_set_power_state_req returned, 9999 ms remaining
+[  252.142524] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode(color:88 timing:50) "2560x1440": 60 241500 2560 2608 2640 2720 1440 1443 1448 1481 0x48 0x0
+[  252.142801] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode() color mode depth:8 format:0 colorimetry:10 eotf:0 range:0 vrr:0
+[  252.143082] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7462: set_digital_out_mode: Modeset requested for colorID: 88, timingID: 50
+[  252.143357] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:18011: Dual pipe disabled offset 0
+[  252.143644] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 2 -> 1
+[  252.143937] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 0
+[  252.144220] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 1, requested state: 0
+[  252.342032] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7700: set_mode: timingID: 50 colorID: 88
+[  252.343028] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 7 (32 bytes)
+[  252.343335] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 13 (32 bytes)
+[  252.343632] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 7 (32 bytes)
+[  252.343918] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 14 (32 bytes)
+[  252.344229] omarchy-m2 kernel: apple-dcp 315c00000.dcp: DPTXPort: APCALL 4 (64 bytes)
+[  252.347031] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11092: IOMFB updateFrequencies: minimum-frequency property not found, using getClockFrequency(0) instead.
+[  252.347372] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:11109: IOMFB updateFrequencies EDT ERROR: getClockFrequency(0) (0) < videoClock 120749992! Giving up on frequencies.
+[  252.347685] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:7356: IOMFBStatus UnifiedPipeline::mode_set_gated(uint32_t, uint32_t): 2560x1440@59 Hz link: 1
+[  252.348013] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: nifiedPipeline.cpp:1356: set_device_enabled_gated: current state: 0, requested state: 1
+[  252.348310] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 0 -> 1
+[  252.348646] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: ck_Config_H13P.cpp:1771: program_frame_size: pixel_clock 241500000, vid0 120750000, 000078c0 0000021f
+[  252.348955] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10468: set_run_mode_safe: no need to defer: 1 -> 2
+[  252.349267] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:12351: IOMFB: Ext XPan M3 pixel_clock 241500000, htot 2720 vtot 1481
+[  252.349564] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:12353: IOMFB: Ext XPan M3 SFM lines 1481, piodma_duration_lines 89, TSQ 1381
+[  252.349853] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:12355: IOMFB: Ext XPan M3 SFM dur 400329, DisplayLead 27570
+[  252.350141] omarchy-m2 kernel: apple-dcp 315c00000.dcp: read_edt_data key=initial-vbi-advance-lines count=1 default0=0x2 ret=0
+[  252.350458] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: oTimingElement.cpp:1349: [AFK]SPLIT is 0
+[  252.350746] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10490: set_run_mode_safe: deferring: 2 -> 4
+[  252.351050] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:10395: virtual IOMFBStatus IOMFB::UPPipeDCP_H13P::ready_for_run_mode_change(IOMFB::AppleRegisterStream *): initiating deferred run mod
+[  252.351347] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 IMem : size 0x7b40
+[  252.351634] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: M3Hal_v1.cpp:197: IOMFB: load APT M3 DMem : size 0x6fd4
+[  252.351919] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: CAHandler.cpp:188: IOMFB load_ca_data: Unrecognized data version 0 (expected 1 or 2)
+[  252.352205] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: UPPipe.cpp:3767: IOMFB read_pmu_data_sync: pmu ram read error (e00002d8)
+[  252.352479] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: PPipeDCP_H13P.cpp:14085: IOMFB Ext RTBandwidth: program_M3_rt_config: Using Dashboard 28e3d1218
+[  252.352751] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:133: IOMFB: clearing M3 reset
+[  252.353031] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: UPTSQ_Hal_v1.cpp:349: IOMFB: timebase_offset = 4
+[  252.365025] omarchy-m2 kernel: apple-dcp 315c00000.dcp: RTKit: syslog message: UPTSQManager.cpp:105: IOMFB: switch to normal mode succeeded
+[  252.365359] omarchy-m2 kernel: apple-dcp 315c00000.dcp: set_digital_out_mode finished:8275
+[  252.365656] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 frame: flush entry valid=1 connected=1 busy=0
+[  252.365943] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 frame: flush surface=1 enabled=0x80000007 ctm=1
+[  252.366237] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 frame: start request connected=1
+[  252.366525] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 frame: start ack; submit id=2
+[  252.368015] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 frame: submit ack ret=0
+[  252.383110] omarchy-m2 kernel: apple-dcp 315c00000.dcp: USB4 frame: complete id=2
+[  252.383394] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x after-frame-dpin0: 000=00000004 004=000001fb 008=00000004 00c=00000004 014=000001fb 018=00000010 01c=00000001 024=00000110 028=00000001 02c=00000004 030=00002002 034=00000001 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[  252.383579] omarchy-m2 kernel: apple-display-crossbar f0304c000.mux: t602x after-frame-dpin0 clk: 000=00000004 800=00000000 020=00000000 820=00000000 024=00000110 81c=00000110
+[  252.383850] omarchy-m2 kernel: apple-dcp 315c00000.dcp: Right frame: usb4=1 crossbar snapshot result=0
+[  255.767026] omarchy-m2 kernel: macsmc 2a2400000.smc: RTKit: syslog message: aceElec.cpp:1151:         Elec: Elec Cause 0x1000
+[  283.901346] omarchy-m2 kernel: audit: type=1101 audit(1790064056.224:213): pid=12214 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:accounting grantors=pam_unix,pam_permit,pam_time acct="oliver" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  283.901597] omarchy-m2 kernel: audit: type=1110 audit(1790064056.224:214): pid=12214 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:setcred grantors=pam_faillock,pam_permit,pam_env,pam_faillock acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'
+[  283.902133] omarchy-m2 kernel: audit: type=1105 audit(1790064056.225:215): pid=12214 uid=1001 auid=1001 ses=1 subj=unconfined msg='op=PAM:session_open grantors=pam_systemd_home,pam_limits,pam_unix,pam_permit,pam_systemd acct="root" exe="/usr/bin/sudo" hostname=? addr=? terminal=? res=success'

@@ -1,0 +1,9 @@
+opened device `Apple display controller DRM driver` on driver `apple` (version 1.0.0 at 0)
+Encoders:
+id	crtc	type	possible crtcs	possible clones	
+51	50	TMDS	0x00000001	0x00000001
+70	0	TMDS	0x00000002	0x00000002
+91	0	TMDS	0x00000004	0x00000004
+94	0	TMDS	0x00000004	0x00000008
+97	0	TMDS	0x00000004	0x00000010
+

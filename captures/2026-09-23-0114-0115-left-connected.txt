@@ -1,0 +1,217 @@
+# asahi-j416s-display capture 2026-09-23T18:59:20+02:00
+
+## uname
+Linux omarchy-m2 7.1.12-2.5-1-ARCH #1 SMP PREEMPT_DYNAMIC Sun, 20 Sep 2026 02:52:44 +0000 aarch64 GNU/Linux
+
+## cmdline
+BOOT_IMAGE=/vmlinuz-linux-aurora root=UUID=725346d2-f127-47bc-b464-9dd46155e8d6 rw rootflags=subvol=@ cryptdevice=UUID=de26457c-f363-450f-916a-888a0b9b1fd6:root:allow-discards loglevel=3 quiet splash
+
+## hyprctl monitors
+Monitor eDP-1 (ID 0):
+	3456x2160@120.00000 at 0x0
+	description: 
+	make: 
+	model: 
+	physical size (mm): 346x216
+	serial: 
+	active workspace: 5 (5)
+	special workspace: 0 ()
+	reserved: 0 26 0 0
+	scale: 2
+	transform: 0
+	focused: yes
+	dpmsStatus: 1
+	vrr: false
+	solitary: 0
+	solitaryBlockedBy: windowed mode,missing candidate
+	activelyTearing: false
+	tearingBlockedBy: next frame is not torn,user settings,missing candidate
+	directScanoutTo: 0
+	directScanoutBlockedBy: user settings,missing candidate
+	disabled: false
+	currentFormat: XRGB8888
+	mirrorOf: none
+	availableModes: 3456x2160@120.00Hz 3456x2160@60.00Hz 3456x2160@59.94Hz 3456x2160@50.00Hz 3456x2160@48.00Hz 3456x2160@47.95Hz 
+	colorManagementPreset: srgb
+	sdrBrightness: 1
+	sdrSaturation: 1
+	sdrMinLuminance: 0.2
+	sdrMaxLuminance: 80
+	hardwareCursorsInUse: true
+
+
+
+## DRM connectors
+card2-eDP-1 status=connected enabled=enabled edid_bytes=0
+  modes: 3456x2160 3456x2160 3456x2160 3456x2160 3456x2160 3456x2160 
+card2-HDMI-A-1 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+card2-USB-1 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+card2-USB-2 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+card2-USB-3 status=disconnected enabled=disabled edid_bytes=0
+  modes: 
+
+## thunderbolt
+==== 0-0 ====
+  authorized=1
+  device=0xf
+  device_name=iOS
+  generation=4
+  unique_id=009751a0-f8da-0100-ffff-ffffffffffff
+  usb4_port1 link=usb4
+  vendor=0x1
+  vendor_name=Apple Inc.
+==== 0-0:1.1 ====
+  device=0x2200
+  vendor=0x5ac
+==== 0-1 ====
+  authorized=1
+  boot=0
+  device=0xde81
+  device_name=Thunderbolt 5 Hub
+  generation=4
+  nvm_authenticate=0x0
+  nvm_version=56.81
+  rx_lanes=2
+  rx_speed=20.0 Gb/s
+  tx_lanes=2
+  tx_speed=20.0 Gb/s
+  unique_id=e0d78780-00ce-1b08-ffff-ffffffffffff
+  usb4_port1 link=usb4
+  usb4_port3 link=none
+  usb4_port5 link=none
+  usb4_port7 link=none
+  vendor=0x5a
+  vendor_name=Other World Computing
+==== domain0 ====
+  deauthorization=1
+  iommu_dma_protection=1
+  security=user
+
+## typec
+-- port0 data_role=[device]/ power_role=[sink]/
+   port0.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port0.1 active=yes svid=8087 mode=7 vdo=0x00000000
+-- port1 data_role=[host] device/ power_role=source [sink]/
+   port1.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port1.1 active=yes svid=8087 mode=7 vdo=0x00000000
+   partner type=not_ufp usb_mode=usb2 usb4
+-- port2 data_role=host [device]/ power_role=source [sink]/
+   port2.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port2.1 active=yes svid=8087 mode=7 vdo=0x00000000
+-- port3 data_role=host [device]/ power_role=source [sink]/
+   port3.0 active=yes svid=ff01 mode=1 vdo=0x00000c02
+   port3.1 active=yes svid=8087 mode=7 vdo=0x00000000
+DT labels:
+  38 USB-C Left Back
+  3b USB-C Right
+  3f USB-C Left Front
+
+## USB
+1-1          1d5c:5801 speed=480    Fresco Logic, Inc. USB2.0 Hub
+1-1.1        1e91:de81 speed=12     Other World Computing Thunderbolt 5 Hub
+1-1.2        06cb:7100 speed=480    Synaptics VMM7100
+1-1.3        3434:0140 speed=12     Keychron Keychron Q4
+2-1          8087:5787 speed=10000  Intel Corporation USB3 HUB
+usb1         1d6b:0002 speed=480    Linux 7.1.12-2.5-1-ARCH xhci-hcd xHCI Host Controller
+usb2         1d6b:0003 speed=10000  Linux 7.1.12-2.5-1-ARCH xhci-hcd xHCI Host Controller
+
+## dmesg (DP/TB, no RTKit)
+[Wed Sep 23 18:57:20 2026] platform 315c00000.dcp: deferred probe pending: apple-dcp: /soc/dcp@315c00000/typec-routes/route@0: failed to get display crossbar
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: Switched dpphy to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: Switched dpin0 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: Switched dpin1 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: Switched dpphy to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: Switched dpin0 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: Switched dpin1 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar b0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-dcp 315c00000.dcp: typec0 USB4 DP IN using crossbar mux 1
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: Switched dpphy to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: Switched dpin0 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: Switched dpin1 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar f0304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: Switched dpphy to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: Switched dpin0 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: Switched dpin1 to disconnected state
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:24 2026] apple-dcp 315c00000.dcp: typec1 USB4 DP IN using crossbar mux 1
+[Wed Sep 23 18:57:24 2026] apple-dcp 315c00000.dcp: typec2 USB4 DP IN using crossbar mux 1
+[Wed Sep 23 18:57:24 2026] thunderbolt-apple-acio 701ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: Switched dpphy to dispext0,0 (t602x atc=0x100 mux=0x0)
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x dpphy: 000=00000001 004=000001fe 008=00000001 00c=00000001 014=000001fb 018=00000001 01c=00000100 024=00000011 028=00000100 02c=00000001 030=00000000 034=00000100 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:24 2026] apple-display-crossbar 130304c000.mux: t602x dpphy clk: 000=00000001 800=00000000 020=00000000 820=00000000 024=00000011 81c=00000011
+[Wed Sep 23 18:57:24 2026] apple-dcp 289c00000.dcp: typec0 USB4 DP IN using crossbar mux 1
+[Wed Sep 23 18:57:24 2026] apple-dcp 289c00000.dcp: typec1 USB4 DP IN using crossbar mux 1
+[Wed Sep 23 18:57:24 2026] thunderbolt-apple-acio b01ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[Wed Sep 23 18:57:24 2026] apple-dcp 289c00000.dcp: typec2 USB4 DP IN using crossbar mux 1
+[Wed Sep 23 18:57:24 2026] thunderbolt-apple-acio f01ac0000.cio: PCIe-C tunnel disabled: m1n1 handoff is not initialized
+[Wed Sep 23 18:57:26 2026] apple-dcp 289c00000.dcp: dcp_enable_dp2hdmi_hpd: DP2HDMI HPD connected:0
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: typec mux set typec0 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: typec mux set typec1 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: typec mux set typec2 alt=0000000000000000 svid=0000 mode=0 dp=0 usb4=0 tbt=0 usb4_xbar=yes
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: typec mux set typec0 alt=0000000000000000 svid=0000 mode=4 dp=0 usb4=1 tbt=0 usb4_xbar=yes
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: dcp_dptx_disconnect(port=0)
+[Wed Sep 23 18:57:26 2026] apple-display-crossbar 70304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[Wed Sep 23 18:57:26 2026] apple-display-crossbar 70304c000.mux: native DPIN0: route selected; gates deferred until clock setup
+[Wed Sep 23 18:57:26 2026] apple-display-crossbar 70304c000.mux: t602x dpin0: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00002002 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:26 2026] apple-display-crossbar 70304c000.mux: t602x dpin0 clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: allocated Type-C DPTX PHY 4 (USB4 DP IN, ACIO AUX)
+[Wed Sep 23 18:57:26 2026] apple-dcp 315c00000.dcp: USB4 dpin mux typec0; waiting for DP IN HPD
+[Wed Sep 23 18:57:26 2026] thunderbolt-apple-nhi 701f00000.nhi: device links to tunneled native ports are missing!
+[Wed Sep 23 18:57:27 2026] thunderbolt 0-1: new device found, vendor=0x5a device=0xde81
+[Wed Sep 23 18:57:27 2026] thunderbolt 0-1: Other World Computing Thunderbolt 5 Hub
+[Wed Sep 23 18:57:27 2026] thunderbolt 0-0:1.1: new retimer found, vendor=0x5ac device=0x2200
+[Wed Sep 23 18:57:27 2026] thunderbolt-apple-acio 701ac0000.cio: error -ENODEV: PCIe-C requires a successful m1n1 preinit handoff
+[Wed Sep 23 18:57:27 2026] thunderbolt-apple-acio 701ac0000.cio: deferred PCIe-C activation failed: -19
+[Wed Sep 23 18:57:27 2026] thunderbolt-apple-nhi 701f00000.nhi: 0:5: USB4 DPTX Discovery closed (CS13 writable, CS9 static); AE=0 VE=0
+[Wed Sep 23 18:57:27 2026] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=0 (DPTX should use this adapter, not ATC)
+[Wed Sep 23 18:57:27 2026] thunderbolt-apple-nhi 701f00000.nhi: DP IN analog/AUX serializer: tunnel 0:5 <-> 1:19
+[Wed Sep 23 18:57:27 2026] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP tunnel paths up, not waiting for DPRX
+[Wed Sep 23 18:57:28 2026] usb 1-1.2: New USB device found, idVendor=06cb, idProduct=7100, bcdDevice= 1.c4
+[Wed Sep 23 18:57:28 2026] usb 1-1.2: Product: VMM7100
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4 DP IN armed typec0; DPTX HPD in 200 ms (no PHY connect)
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: dcp_dptx_connect(port=0) target=0:4 typec=1 route=borrowed conn_type=20 connected=0
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: skip lpdptxphy instantiate (eDP stays on)
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: DCP verbose logs ret=0 retcode=0
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: analog DPIN bind port=0 (unit 0)
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: analog DPIN validate core=1 atc=0: 0
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: analog DPIN connect core=1 atc=0 HPD: 0
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: analog DPIN set_hpd: 0
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: USB4: before request_display nr_modes=0 valid_mode=0
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: DPTXPort: GET_SUPPORTS_HPD 1 usb4=1
+[Wed Sep 23 18:57:28 2026] apple-dcp 315c00000.dcp: get_max_lane_count: USB4 DP IN, 4 lanes
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: Switched dpin0 to disconnected state
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: t602x idle: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00000000 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: t602x idle clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: Switched dpin0 to dispext1,0 (t602x atc=0x1 mux=0x2002)
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: native DPIN0: route selected; gates deferred until clock setup
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: t602x dpin0: 000=00000000 004=000001ff 008=00000000 00c=00000000 014=000001ff 018=00000000 01c=00000000 024=00000111 028=00000000 02c=00000000 030=00002002 034=00000000 040=0005ad6b 044=02b5ad6b 048=00000000 04c=00000000 050=00000000 060=00000000 070=00000000
+[Wed Sep 23 18:57:28 2026] apple-display-crossbar 70304c000.mux: t602x dpin0 clk: 000=00000000 800=00000000 020=00000000 820=00000000 024=00000111 81c=00000111
+[Wed Sep 23 18:57:29 2026] apple-dcp 315c00000.dcp: USB4: resend request_display after native DPIN0 activate: -110
+[Wed Sep 23 18:57:29 2026] apple-dcp 315c00000.dcp: USB4: analog DPIN request_display core=1 atc=0: -110
+[Wed Sep 23 18:57:29 2026] apple-dcp 315c00000.dcp: USB4 protocol probe finished: 0; no automatic retry
+[Wed Sep 23 18:57:39 2026] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DPRX timeout, keeping DP tunnel
+[Wed Sep 23 18:57:39 2026] thunderbolt-apple-nhi 701f00000.nhi: 0:5 <-> 1:19 (DP): Apple: DP IN HPD=1 typec=0 (DPTX should use this adapter, not ATC)
