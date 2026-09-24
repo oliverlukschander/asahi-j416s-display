@@ -52,7 +52,60 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0139 prepared: diagnostic only)
+## Current state (as of 2026-09-24, MAJOR PIVOT: native macOS logs reframe the whole remaining problem)
+
+Oliver ran the new capture script (see below) natively on both his M4
+MacBook Pro and, crucially, on the actual M2 Pro/T602x machine booted
+into macOS with the identical hub+monitor setup. Both captures are in
+`captures/macos-2026-09-24/{m2,m4}-logs/log-live.txt`.
+
+**The M2 macOS capture (the directly relevant one -- same hardware as
+this whole kernel effort) shows the entire path from physical tunnel
+activation to a fully committed, DCP-acknowledged real video mode taking
+~575ms, automatically, with zero user interaction:**
+- `13:08:09.929` Thunderbolt DP tunnel paths activate.
+- `13:08:09.946` `validateConnection: die0::dispext1::core0 ->
+  die0::atc2::dpin0` -- **confirms macOS uses dcpext1 for this exact
+  scenario too**, and the atc/die addressing matches ours.
+- `13:08:10.013-10.025` (12ms): `WillChangeLinkConfiguration ->
+  SetActiveLaneCount(0) -> SetLinkRate(8.1Gbps) ->
+  DidChangeLinkConfiguration -> SetActiveLaneCount(4)` -- **the exact same
+  apcall shape as our own "mysterious ~29s teardown"**. This confirms
+  that shape is just normal link (re)training, not inherently a teardown
+  -- the only difference on our side is that when it fires, the rate set
+  is 0x0 (idle) instead of a real rate.
+- `13:08:10.258` `hotPlug_notify` fires; WindowServer receives it the
+  same instant and already has the full EDID (34 timing modes) by
+  `13:08:10.284`, correctly identifying "current mode (2560x1440)[50,97],
+  preferred mode (2560x1440)[50,97]".
+- `13:08:10.300` **`set_digital_out_mode: Modeset requested`** -- a real
+  mode is committed automatically, 42ms after the hotplug notification.
+- `13:08:10.503` **`plug gated: modeset received.`** -- DCP firmware
+  confirms receiving a real modeset.
+
+**Confirmed on the M4 (different chip, Mac16,6) too**: `hotPlug_notify`
+-> `set_digital_out_mode` in ~10ms (13:05:27.653 -> 13:05:27.663, on
+dispext0 there instead of dispext1). This is a universal WindowServer
+behavior across Apple Silicon generations, not something tied to one
+chip's firmware timing.
+
+**Grepped every one of our own Linux captures (0136-0138) for the
+equivalent event and it never appears once for the tunnel connector.**
+Hyprland leaves it at a placeholder 0x0 mode indefinitely, until DCP's
+own internal ~29s "unclaimed link" timeout gives up.
+
+**This reframes the entire remaining problem.** It is very likely NOT a
+kernel/DCP-firmware issue any more -- the actual hard part (crossbar
+select, linkcfg completion, reconnect-after-replug) is confirmed fixed
+and working (0136/0137/0138). What's missing is that **Hyprland is not
+automatically committing a real mode to this newly-hotplugged connector
+the way WindowServer does** -- a compositor/wlroots-side gap, not
+something more kernel patches will fix. 0139 (the crtc-active/mode
+diagnostic) is still worth installing to confirm this from the Linux
+side directly, but the investigation's center of gravity now shifts to
+Hyprland/wlroots's own output-hotplug handling.
+
+## Prior state (candidate 0139 prepared: diagnostic only)
 
 A third research pass (5 angles + synthesis + 3 adversarial verifiers,
 all `refuted: false`) investigated the one remaining lead from 0138: does
