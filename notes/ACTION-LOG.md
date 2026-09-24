@@ -52,7 +52,17 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0133 result: FSM found stuck)
+## Current state (as of 2026-09-24, candidate 0134 prepared)
+
+**Oliver's direction on the FSM finding: try the targeted write.** Asked
+before building anything that writes into the address range the two
+standing safety rules flag; he chose "try the targeted write" over
+holding off. Candidate 0134 (below) is that attempt: a write-1-to-clear
+acknowledge on `+0x18` alone, once, gated on the exact stuck condition
+0133 characterized -- not a new blind guess, and not a retry of anything
+already confirmed ineffective (`dpin_aux` pulsed a different offset,
+`+0x00`).
+
 
 **0133 result: the clearest, most specific finding this project has had.**
 Dumping the ACIO analog block on all 24 polls (500ms apart, full 12s
@@ -255,7 +265,7 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
 `captures/2026-09-24-0128-boot-kernel.log`,
 `captures/2026-09-24-0128-retry-boot-kernel.log`.
 
-## Recent candidates (0126-0133)
+## Recent candidates (0126-0134)
 
 - **0126** (drm/apple/dcp.c, one-line): stopped forcing the USB4 tunnel's
   ATC PHY into `PHY_MODE_DP` (both the reference PR and our own
@@ -326,6 +336,16 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   -- see "Current state" above for the full finding.
   `notes/2026-09-24-0133-dump-analog-block-every-poll.md`.
 
+- **0134** (drivers/thunderbolt/apple.c, one new function): the targeted
+  write 0133's finding pointed at, discussed with and approved by Oliver
+  before building. `apple_dp_ack_analog_fsm()`: the first time `+0x18`
+  (`APPLE_CIO_DPIN_ANALOG_FSM`) is observed stuck at `0x80000000`, read it
+  and write the same value straight back -- the exact write-1-to-clear
+  idiom this driver family already uses successfully on
+  `APPLE_DPIN_IRQ_STATUS` elsewhere in the same file. Once per tunnel-up,
+  only while `DPRX` hasn't asserted, touches no other offset. Not yet
+  installed/booted. `notes/2026-09-24-0134-ack-analog-fsm-write1clear.md`.
+
 Currently installed and booted: candidate 0133
 (`thunderbolt_apple.ko` SHA256 `c8ea01a483ad5ca6d025ec5f29ef83e51ba5e4357698c3e00b4f8f4129ac6493`,
 `thunderbolt.ko` unchanged from 0132
@@ -333,5 +353,15 @@ Currently installed and booted: candidate 0133
 `appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
 from 0130-0132, hashes in `scripts/manage-0133.py`).
 
-No candidate prepared yet -- awaiting Oliver's direction on whether to
-write to `APPLE_CIO_DPIN0_ANALOG+0x18` (see "Current state").
+Candidate 0134 built and verified, not yet installed
+(`thunderbolt_apple.ko` SHA256 `fa245b8411f4ab85db5143c2111a8cd423ac763aa471c289300ca4f56da46a08`,
+`thunderbolt.ko` unchanged from 0132/0133
+(`459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`),
+`appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
+from 0130-0133, hashes in `scripts/manage-0134.py`). To arm and test,
+after this commit is pushed:
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0134.py check
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0134.py install
+```
+then reboot, and capture `dmesg`/`journalctl -k` from this boot.

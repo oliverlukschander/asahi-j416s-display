@@ -1,0 +1,117 @@
+From cb06532d908351376d74b6939f4036450604e508 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 09:30:19 +0200
+Subject: [PATCH] thunderbolt: apple: try a write-1-to-clear ack on the stuck
+ analog FSM bit
+
+0133 found APPLE_CIO_DPIN_ANALOG_FSM (+0x18) transition exactly once,
+early, to 0x80000000 (bit 31 only), then freeze there for the rest of
+every dcpext1 attempt -- through DEVICE_NOT_RESPONDING/DEVICE_NOT_STARTED
+and the final give-up. Every other register in both dpin0 and dpin1's
+dumps stays static the whole time.
+
+Adds apple_dp_ack_analog_fsm(): the first time this bit is observed set,
+read the register and write the same value straight back -- the exact
+idiom this driver family already uses successfully for a different
+status-latch register (apple_dpin_up()'s IRQ status acknowledge). If
++0x18 is a write-1-to-clear latch of the same kind, this clears only
+whatever bits were actually set and touches nothing else; if it isn't,
+the read-back log line makes that obvious immediately. Runs at most once
+per tunnel-up, only while DPRX has not yet asserted, and does not touch
+offset +0x00 (the separately-confirmed-ineffective control/start pulse)
+or anything else in the block.
+
+Discussed with Oliver before writing anything here: this address range
+carries two standing safety-rule mentions, though neither actually
+tested this offset or this operation (one is a different register
+entirely that caused a hard reset; the other pulsed +0x00 and was found
+merely ineffective, not dangerous). Full reasoning in
+notes/2026-09-24-0134-*.md.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/apple.c | 47 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index db25b75..b7b0102 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -297,6 +297,7 @@ struct apple_nhi {
+ 	u32 dp_in_cs[14];
+ 	bool dp_aux_armed;
+ 	unsigned int dp_aux_polls;
++	bool dp_aux_fsm_acked;
+ };
+ 
+ #define nhi_to_anhi(nhi_) container_of((nhi_), struct apple_nhi, nhi)
+@@ -994,6 +995,48 @@ static int apple_dp_dptx_discover(struct tb_port *in)
+ 	return 0;
+ }
+ 
++/*
++ * Diagnostic (candidate 0134, see notes/2026-09-24-0134-*.md): 0133 found
++ * APPLE_CIO_DPIN_ANALOG_FSM (+0x18) transition exactly once, early, then
++ * freeze solid at 0x80000000 (bit 31 only) for the rest of the attempt --
++ * through DEVICE_NOT_RESPONDING and the final give-up. This driver family
++ * already uses read-current-value-then-write-it-straight-back as its
++ * write-1-to-clear idiom elsewhere (apple_dpin_up()'s IRQ status
++ * acknowledge, drivers/thunderbolt/apple.c). Try exactly that idiom here,
++ * once, the first time this bit is observed set: if +0x18 is a status
++ * latch of the same kind, this clears only the bits that were set and
++ * leaves everything else alone -- the least presumptuous possible write,
++ * not a guessed constant. Runs at most once per tunnel-up (dp_aux_fsm_acked
++ * latches after the first attempt, win or lose) and only if DPRX has not
++ * already asserted (nothing to unstick once AUX has already completed).
++ * Deliberately does NOT touch +0x00 (the already-confirmed-ineffective
++ * control/start pulse dpin_aux tests) or any other offset.
++ */
++static bool apple_dp_ack_analog_fsm(struct apple_nhi *anhi)
++{
++	struct apple_cio *acio = anhi->acio;
++	u32 block, fsm;
++
++	if (!acio || !acio->rc_base)
++		return false;
++	block = anhi->analog_base ?: APPLE_CIO_DPIN0_ANALOG;
++	if (block + APPLE_CIO_DPIN_ANALOG_FSM + 4 > resource_size(acio->rc_res))
++		return false;
++
++	fsm = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
++	if (!(fsm & BIT(31)))
++		return false;
++
++	dev_info(acio->dev,
++		 "Apple: FSM stuck at 0x%08x, attempting write-1-to-clear ack\n",
++		 fsm);
++	writel(fsm, acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
++	mb();
++	fsm = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
++	dev_info(acio->dev, "Apple: FSM after ack: 0x%08x\n", fsm);
++	return true;
++}
++
+ static void apple_dp_aux_work(struct work_struct *work)
+ {
+ 	struct apple_nhi *anhi =
+@@ -1053,6 +1096,9 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 		apple_dp_dump_analog(anhi->acio,
+ 				     dprx ? "dpin0 analog DPRX done" :
+ 					    "dpin0 analog poll");
++	if (!dprx && !anhi->dp_aux_fsm_acked &&
++	    apple_dp_ack_analog_fsm(anhi))
++		anhi->dp_aux_fsm_acked = true;
+ 	if (!dprx && anhi->dp_aux_polls < APPLE_DP_AUX_POLL_MAX) {
+ 		mod_delayed_work(system_wq, &anhi->dp_aux_work,
+ 				 msecs_to_jiffies(APPLE_DP_AUX_POLL_MS));
+@@ -1113,6 +1159,7 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	anhi->analog_base = apple_dp_in_analog_base(anhi, in);
+ 	anhi->analog_fsm = 0;
+ 	anhi->dp_aux_polls = 0;
++	anhi->dp_aux_fsm_acked = false;
+ 	anhi->dp_aux_armed = true;
+ 	WRITE_ONCE(apple_dpin_anhi, anhi);
+ 
+-- 
+2.55.0
+
