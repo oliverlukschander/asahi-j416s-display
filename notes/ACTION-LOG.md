@@ -52,6 +52,52 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0147 REVERTED: caused a regression, ACIO reset failed completely
+
+Installed and tested on hardware (lid-close/s2idle/lid-open, hub never
+touched). Result: worse than 0146 alone, not better. Reverted via
+`scripts/manage-0147.py restore` (file-level, verified against the
+pre-install backup). **Needs a reboot to actually take effect** -- the
+currently-running kernel still has the bad module loaded in memory.
+
+**What happened**: `dmesg` showed the ACIO reset handshake exhausting
+all 5 of 0146's retry attempts and failing completely --
+`ACIO block failed to start: -110` with no more retries left --
+whereas the 0146-only test (before 0147) succeeded on the very first
+attempt with zero retries needed. A new message appeared repeatedly
+during the retry window: `apple-cio-reset ...: CIO 0 still busy before
+reconfigure request` (from the reset-apple-cio driver itself),
+confirming the shared M3/PMGR busy bit stayed set far longer than
+either the 0146 test or 0147's own test plan anticipated.
+
+**Leading hypothesis, not yet confirmed**: the log also showed a
+second, pre-existing "typec mux set typec0 ... usb4=0" immediately
+followed by "usb4=1" firing microseconds after `PM: suspend exit` --
+independent of 0147's `cd321x_resume_reverify()`, whose own effect
+(via the 500ms-debounced `cd321x_update_work()`) can't land that fast.
+This looks like an already-existing resume-time cable-state toggle
+this project hadn't identified before touching this driver. If that
+mechanism and 0147's synthetic disconnect/reconnect both end up
+driving `apple_cio_tbt_switch_set()`/`apple_cio_start()` around the
+same window, they'd contend for the single, shared, mutex-serialized
+CIO-reset register across all four ports -- plausibly explaining why
+the M3 took longer to answer than either trigger alone would need.
+Not yet root-caused with certainty; needs identifying that other
+trigger's actual source before attempting this fix again.
+
+**Oliver also reported what might have been a Hyprland crash** (seen
+behind the lockscreen password field). No coredump found
+(`coredumpctl list` empty for the whole window) and no reboot happened
+(`uptime -s` unchanged) -- so if something did crash, it didn't leave
+the usual trace; possibly a rendering glitch from the confused/
+contended resume sequence rather than an actual process crash. Not
+independently confirmed either way.
+
+**0146 remains valid and installed on disk** (only 0147's module was
+reverted) -- the Thunderbolt/ACIO-survives-suspend fix itself is not
+implicated; this regression is specific to adding 0147's resume-time
+re-verify on top of it.
+
 ## 0147 prepared: auto-recover the display after standby, no replug needed
 
 Building on 0146 (Thunderbolt/ACIO now survives suspend, confirmed
