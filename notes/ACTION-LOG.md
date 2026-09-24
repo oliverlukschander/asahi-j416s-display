@@ -52,6 +52,65 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0146 prepared: retry the ACIO reset handshake on resume-time contention
+
+**A deeper, separate bug from 0145**: after a genuine s2idle
+suspend/resume, the Thunderbolt controller itself fails to restart --
+`thunderbolt-apple-acio 701ac0000.cio: ACIO block failed to start:
+-110` (-ETIMEDOUT) from `reset_control_deassert()` in
+`apple_cio_start()`. `boltctl`/`/sys/bus/thunderbolt/devices` confirm
+the hub never comes back at the Thunderbolt level at all (plain USB
+fallback still enumerates fine). Full evidence trail (live
+`journalctl`/`dmesg` timeline, confirmed via an independent deep-read
+of `apple_cio_start()`/`stop()` and the actual `reset-apple-cio.c`
+driver) in `notes/2026-09-24-0146-acio-reset-retry-suspend.md`.
+
+**This is a known upstream limitation, not something introduced by
+this project**: aurora-silicon/linux#8 itself says "Suspend with an
+active tunnel has not been validated." Neither `apple_cio_driver` nor
+the reset-apple-cio driver have ever had suspend/resume PM hooks.
+
+**Root cause**: `apple_cio_start()`/`stop()` are driven by the Type-C
+mux's own cable-state machine, not by system PM directly. During the
+live incident, the mux drove the cable off mid-first-resume (running
+`apple_cio_stop()`, which removes the sleep-protection flag on the
+ACIO power domains) right before a second, redundant s2idle cycle
+(`systemd-sleep` retrying after the kernel's first `/sys/power/state`
+write returned EINVAL -- unrelated, known systemd quirk) put those
+domains through an *unprotected* system sleep for the first time ever.
+Six seconds later the cable came back and the reset handshake (a
+request/ack with the M3/PMGR firmware, 100ms budget, no `.assert` op
+to fall back on) timed out.
+
+**Considered and rejected**: adding new suspend/resume PM hooks to
+`apple_cio_driver` that call `stop()`/`start()` directly (the "obvious"
+fix). `apple_cio_tbt_switch_set()` has its own explicit warning: an
+invalid direct cable-state transition can crash ACIO and trigger an
+**SoC watchdog reset**. A second, PM-triggered code path calling the
+same stop/start functions around the same window as the Type-C mux's
+own independent decision risks exactly that class of bug, for real
+hardware-reset stakes -- confirming it's actually safe needs live
+register tracing this project doesn't have, not a first attempt at the
+end of a long session.
+
+**What 0146 actually does**: only widen `apple_cio_start()`'s existing
+`reset_control_deassert()` call into a bounded retry (5 attempts,
+100ms apart) before giving up. No new code path, no new PM hook, no
+change to when/whether start() is called -- only how persistently it
+waits for the firmware to answer. Distinguishes "just needed more time
+during a system-wide resume storm" (fixed outright) from "genuinely
+wedged" (fails exactly as before, no worse than today).
+
+`thunderbolt_apple.ko` rebuilt clean. Hash:
+`d0ec1d8fd2aeea333f1a50f4e09a62ab5095b8e2c9e1c6ed64933b97425df527`.
+
+**Risk, per Oliver's explicit instruction**: this touches the
+Thunderbolt controller bring-up path under a suspend/resume scenario
+upstream has never validated, and could plausibly trigger the SoC
+watchdog reset described above. This entry and its design note are
+committed and pushed *before* installing, specifically so the record
+survives if the machine reboots unexpectedly instead of resuming.
+
 ## 0145 prepared: the actual "doesn't reactivate after standby" root cause
 
 Oliver moved the hub from the right-back to the left-back USB-C port
