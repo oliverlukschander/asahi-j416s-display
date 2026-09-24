@@ -52,7 +52,41 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0136 prepared: stale-config -22 fix)
+## Current state (as of 2026-09-24, candidate 0137 prepared: linkcfg_completion fix)
+
+**0136 installed and confirmed on hardware: the `-22` crossbar failure is
+gone.** `captures/2026-09-24-0136-boot-kernel.log`: `f0304c000.mux:
+Switched dpin0 to dispext0,0` (a real enable), no crossbar-up failure
+anywhere, `DPRX_DONE=1` reached again, and `SET_ACTIVE_LANE_COUNT 4`
+accepted. Still no picture -- `dcp_dptx_connect` still timed out waiting
+for link configuration.
+
+**0137 (prepared, not yet installed): found and fixed why, even with 0136
+in place, the link-config wait still times out.**
+`dptxport_call_set_active_lane_count()` (`dptxep.c`) only completed
+`linkcfg_completion` -- the exact completion `dcp_dptx_connect()` blocks
+on -- for a USB4 tunnel if `dcp_usb4_drm_allowed()` (`usb4_force_dptx`)
+was true. That flag has had **no way to ever be set true since commit
+0dc9f50** (2026-09-24, the same commit that introduced the whole tunnel
+mechanism 0127 onward has been testing) removed the old manual-training
+sysfs knob (`module_param_cb usb4_dptx_train`) that used to set it,
+without removing this now-dead gate. The hardware-validated reference
+(aurora-silicon/linux#8) completes `linkcfg_completion` here
+unconditionally, with no such gate. This means **every USB4-tunneled
+connect attempt on this project, on both ports, since 0127, has been
+structurally unable to complete the link-configuration wait** -- unrelated
+to the port/pipeline confound, the crossbar `-22`, or dcpext1's own
+firmware-silence problem; a fourth, independent, now-fixed defect.
+`drivers/gpu/drm/apple/dptxep.c`/`.h`, `dcp.c`/`dcp-internal.h` in
+`linux-aurora-pr` (branch `j416s-usb4-dpin`, commit `992ff65b5`, not
+pushed -- this branch has no `origin` tracking ref, matching every prior
+candidate). Full trace, reference diff, and build verification in
+`notes/2026-09-24-0137-complete-linkcfg-unconditionally.md`.
+`scripts/manage-0137.py`: same module set as 0135/0136 except a rebuilt
+`appledrm.ko`; `check` already run (no sudo); `install` needs sudo and a
+reboot to test, not yet run.
+
+## Prior state (candidate 0136 prepared: stale-config -22 fix)
 
 **0136: the `-22` crossbar-up failure hit by both 0127 and 0135 is a
 leftover test-environment misconfiguration, not a code bug -- fix

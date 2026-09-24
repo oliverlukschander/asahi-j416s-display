@@ -1,0 +1,143 @@
+From 992ff65b5c2fb340516e783eab69f12d64460556 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 11:34:55 +0200
+Subject: [PATCH] drm: apple: dptx: complete linkcfg_completion unconditionally
+ on lane count
+
+dcp_dptx_connect()'s wait_for_completion_timeout() on linkcfg_completion
+is now shared by both the alt-mode and USB4-tunnel connect paths (since
+0dc9f50's port from aurora-silicon/linux#8). For a USB4 tunnel,
+dptxport_call_set_active_lane_count() only completed it if
+dcp_usb4_drm_allowed() (usb4_force_dptx) was true -- a flag that used to
+be a live, writable knob (module_param_cb usb4_dptx_train) for a manual
+training workflow that 0dc9f50 removed wholesale when
+apple_dcp_tb_dp_tunnel() replaced it with automatic tunnel detection.
+usb4_force_dptx itself, and this gate, were left behind with no way left
+to ever set it true.
+
+Confirmed on real hardware (candidate 0136, right port, dcpext0 forced via
+usb4_route_prefer_fixed_diag): request_display succeeds, the crossbar
+selects cleanly (0136's own fix), DPRX_DONE=1 is reached, and
+SET_ACTIVE_LANE_COUNT 4 is accepted -- but dcp_dptx_connect() still times
+out 8s later, because linkcfg_completion is never completed (firmware
+does not send FORCE_HOTPLUG_DETECT, the only other completion site, for a
+tunnel). This has been happening on every candidate since 0127.
+
+The reference completes linkcfg_completion here unconditionally whenever
+lane_count > 0, with no such gate. usb4_lane_completion (also
+USB4-specific, always completed alongside the gated linkcfg_completion
+call) has no wait_for_completion() anywhere in this tree -- a fully dead
+completion. Match the reference: complete linkcfg_completion
+unconditionally, and remove the now-fully-dead usb4_force_dptx /
+dcp_usb4_drm_allowed() / usb4_lane_completion.
+
+Built and verified (make in src/appledrm/, vermagic 7.1.12-2.5-1-ARCH, no
+new warnings).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp-internal.h |  1 -
+ drivers/gpu/drm/apple/dcp.c          |  7 -------
+ drivers/gpu/drm/apple/dptxep.c       | 29 ++++++++++++++++++++--------
+ drivers/gpu/drm/apple/dptxep.h       |  1 -
+ 4 files changed, 21 insertions(+), 17 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index d38bbbbb0..b7061101c 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -57,7 +57,6 @@ struct apple_dcp_typec_route {
+ 
+ bool dcp_is_typec_output(struct apple_dcp *dcp);
+ bool dcp_is_usb4_output(struct apple_dcp *dcp);
+-bool dcp_usb4_drm_allowed(void);
+ bool dcp_usb4_protocol_probe_enabled(void);
+ extern bool usb4_native_dpin;
+ bool dcp_usb4_native_route(unsigned int typec_index);
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 55f5d83c6..071c301e4 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -64,8 +64,6 @@ static bool show_notch;
+ module_param(show_notch, bool, 0644);
+ MODULE_PARM_DESC(show_notch, "Use the full display height and shows the notch");
+ 
+-static bool usb4_force_dptx;
+-
+ /* Opt-in, one attempt per module lifetime; never a live parameter write. */
+ static bool usb4_protocol_probe;
+ module_param(usb4_protocol_probe, bool, 0444);
+@@ -100,11 +98,6 @@ bool dcp_usb4_protocol_probe_enabled(void)
+ 	return usb4_protocol_probe;
+ }
+ 
+-bool dcp_usb4_drm_allowed(void)
+-{
+-	return usb4_force_dptx;
+-}
+-
+ bool hdmi_audio;
+ module_param(hdmi_audio, bool, 0644);
+ MODULE_PARM_DESC(hdmi_audio, "Enable unstable HDMI audio support");
+diff --git a/drivers/gpu/drm/apple/dptxep.c b/drivers/gpu/drm/apple/dptxep.c
+index 93c47d3c0..dd56b4a32 100644
+--- a/drivers/gpu/drm/apple/dptxep.c
++++ b/drivers/gpu/drm/apple/dptxep.c
+@@ -441,12 +441,27 @@ static int dptxport_call_set_active_lane_count(struct apple_epic_service *servic
+ 	if (lane_count > 0) {
+ 		dev_info(dcp->dev, "USB4/DPTX: SET_ACTIVE_LANE_COUNT %llu\n",
+ 			 lane_count);
+-		if (dcp_is_usb4_output(dcp)) {
+-			complete(&dptx->usb4_lane_completion);
+-			if (dcp_usb4_drm_allowed())
+-				complete(&dptx->linkcfg_completion);
+-		} else
+-			complete(&dptx->linkcfg_completion);
++		/*
++		 * dcp_usb4_drm_allowed() (usb4_force_dptx) used to gate this
++		 * for the old manual-training sysfs knob (module_param_cb
++		 * usb4_dptx_train), removed wholesale in 0dc9f50 when
++		 * apple_dcp_tb_dp_tunnel() replaced it with automatic tunnel
++		 * detection -- but usb4_force_dptx itself, and this gate,
++		 * were left behind with no way left to ever set it true.
++		 * dcp_dptx_connect()'s single wait_for_completion_timeout()
++		 * on linkcfg_completion is now shared by both the alt-mode
++		 * and USB4-tunnel paths (also part of 0dc9f50's unification),
++		 * so gating it here meant every tunneled connect timed out
++		 * after a fully successful DPRX/AUX handshake and lane
++		 * negotiation, on every candidate since 0127 -- firmware
++		 * does not send FORCE_HOTPLUG_DETECT (the only other
++		 * completion site) for a tunnel. The reference
++		 * (aurora-silicon/linux#8) completes linkcfg_completion here
++		 * unconditionally; usb4_lane_completion has no consumer
++		 * anywhere in this tree (grep confirms), so drop both the
++		 * dead gate and the dead completion and match the reference.
++		 */
++		complete(&dptx->linkcfg_completion);
+ 	}
+ 
+ 	return ret;
+@@ -842,8 +857,6 @@ int dptxep_init(struct apple_dcp *dcp)
+ 	init_completion(&dcp->dptxport[1].enable_completion);
+ 	init_completion(&dcp->dptxport[0].linkcfg_completion);
+ 	init_completion(&dcp->dptxport[1].linkcfg_completion);
+-	init_completion(&dcp->dptxport[0].usb4_lane_completion);
+-	init_completion(&dcp->dptxport[1].usb4_lane_completion);
+ 
+ 	dcp->dptxep = afk_init(dcp, DPTX_ENDPOINT, dptxep_ops);
+ 	if (IS_ERR(dcp->dptxep))
+diff --git a/drivers/gpu/drm/apple/dptxep.h b/drivers/gpu/drm/apple/dptxep.h
+index b378f6812..ac20a353a 100644
+--- a/drivers/gpu/drm/apple/dptxep.h
++++ b/drivers/gpu/drm/apple/dptxep.h
+@@ -53,7 +53,6 @@ struct dptx_port {
+ 	bool usb4_inactive_sink;
+ 	struct completion enable_completion;
+ 	struct completion linkcfg_completion;
+-	struct completion usb4_lane_completion;
+ 	u32 unit;
+ 	struct apple_epic_service *service;
+ 	union phy_configure_opts phy_ops;
+-- 
+2.55.0
+
