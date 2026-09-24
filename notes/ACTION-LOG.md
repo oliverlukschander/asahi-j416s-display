@@ -52,7 +52,7 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0130 prepared)
+## Current state (as of 2026-09-24, candidate 0130 result confirmed)
 
 **0129 result: the timeout hypothesis was partially right, but a deeper
 issue remains.** With `set_hpd` widened to 8000ms, it (and everything
@@ -73,12 +73,24 @@ unexercised on the correct pipeline. `DPRX` stayed 0 for the whole boot
 (`captures/2026-09-24-0129-boot-kernel.log`). **Oliver confirmed by eye:
 no picture, no flicker, nothing at all** -- consistent with the logs.
 
-**Candidate 0130 prepared, awaiting Oliver's install+reboot.** Widens
-`DPTX_CONNECT_TIMEOUT` (`dcp.c:1379`, was 2000ms) to 8000ms the same way,
-as a single-variable follow-up: does the link-training burst also just
-run late, or does `WILL_CHANGE_LINK_CONFIG`/`SET_LINK_RATE` genuinely
-never get sent by firmware on this pipeline/port regardless of patience?
-Full reasoning in
+**0130 result: the "it's just cascading timeouts" hypothesis is now
+closed.** Both connect attempts this boot ran the full widened 8000ms
+`linkcfg_completion` wait (confirmed from timestamps: attempt #1's
+timeout fires ~9s after `request_display` succeeded, attempt #2's fires
+at exactly 8s after its own `DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED`
+-- both far past the old 2000ms wall). Nothing changed: still zero
+`SET_LINK_RATE`/`WILL_CHANGE_LINK_CONFIG`/any other apcall in the 5-second
+window after `request_display`, still `DEVICE_NOT_RESPONDING`/
+`DEVICE_NOT_STARTED` at ~5s on both attempts, still `DPRX` at 0 for the
+entire boot. **Oliver confirmed by eye: no picture on the external
+display.** Widening host-side timeouts got real, confirmed mileage out of
+`set_hpd` (0129) but has now run out of road at `linkcfg_completion`
+(0130) -- DCP's firmware is not merely slow here, it is not going to train
+this link at all on this pipeline/port, however long the host waits.
+Do not widen another timeout in this chain without new evidence; the
+open question is now *why* DCP reaches
+`DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED`, not how long anything
+waits for it. `captures/2026-09-24-0130-boot-kernel.log`.
 `notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md`.
 
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
