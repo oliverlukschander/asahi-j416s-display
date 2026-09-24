@@ -52,7 +52,40 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0140 tested: did NOT fix it -- 0141 adds ground-truth diagnostics)
+## Current state (as of 2026-09-24, candidate 0142 prepared: found the SECOND stale-config batch that made 0140 a no-op)
+
+**0141's probe-time diagnostic explains exactly why 0140 had zero
+effect.** `captures/2026-09-24-0141-boot-kernel.log`: for every Type-C
+port, `dcp-index=1 (dcpext0) native_route=1` -- `dcp_usb4_native_route()`
+is still returning true, despite 0140/0141 dropping
+`usb4_protocol_probe=1`/`usb4_native_dpin=1` from our own candidate's
+conf. Final `possible_crtcs mask=0x4` (dcpext1's bit only) confirms
+dcpext0's bit is still excluded. Direct check confirmed it:
+`/sys/module/appledrm/parameters/{usb4_native_dpin,usb4_protocol_probe}`
+both read `Y` live.
+
+**Root cause: a SECOND batch of stale configs, same shape as 0136.**
+Eight files -- `j416s-{0127..0134}-dpin0-mode-guess.conf`, all
+byte-identical -- still set `usb4_protocol_probe=1 usb4_native_dpin=1`.
+0136's cleanup only removed the OLDER 0113-0126 batch (pre-0127 "native
+DPIN0" experiment); it never touched this first batch of *tunnel-routing*
+candidates, whose own scripts (written before the "unlink the immediate
+predecessor's conf" pattern became reliable) never cleaned up after
+themselves either. Confirmed baked into the currently-installed
+initramfs alongside our own candidate's conf. This is exactly the same
+class of bug as 0136 -- leftover test-environment state from an earlier
+phase of this same investigation silently overriding the current,
+correct configuration -- just a batch 0136's own cleanup didn't cover.
+
+**0142 (prepared, not yet installed): removes these 8 files** (backed
+up, sha256-verified, same pattern as 0136), keeps 0141's module set and
+0140/0141's own options unchanged. `verify_image()` now also asserts no
+`.conf` in the rebuilt initramfs contains either flag, to catch a third
+leftover batch immediately rather than repeat this twice more. Full
+detail in `notes/2026-09-24-0142-remove-second-stale-config-batch.md`.
+`check` already passes (no sudo). No kernel rebuild needed.
+
+## Prior state (candidate 0140 tested: did NOT fix it -- 0141 adds ground-truth diagnostics)
 
 **0140 was installed and tested on real hardware. It did not work --
 Oliver rebooted, connected the monitor, and it stayed dark.** Direct
