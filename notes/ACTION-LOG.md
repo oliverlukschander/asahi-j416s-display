@@ -52,7 +52,49 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0134 prepared)
+## Current state (as of 2026-09-24, candidate 0134 result + major context finding)
+
+**0134 result: the write-1-to-clear hypothesis is cleanly closed.** Log
+showed exactly the designed sequence: `"Apple: FSM stuck at 0x80000000,
+attempting write-1-to-clear ack"` then `"Apple: FSM after ack:
+0x80000000"` -- identical before and after, no effect at all. Failure
+shape otherwise unchanged (`DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED`
+at ~5s, `DPRX` never asserts, final give-up at ~12s). **Oliver confirmed:
+still no picture.** `captures/2026-09-24-0134-boot-kernel.log`. Do not
+retry a write to this offset without new evidence.
+
+**Major context finding (web research, not previously done): DisplayPort
+tunneling over USB4/Thunderbolt is not yet solved upstream for *any*
+Apple Silicon chip.** Sven Peter -- the actual upstream Asahi Linux
+Thunderbolt maintainer, currently landing the real "Initial USB4/
+Thunderbolt support" series for M1/M2/M3 (t8103/t600x/t8112/t602x, i.e.
+this exact machine's SoC family) -- states explicitly in that series
+that PCIe and DisplayPort tunneling are deliberately not implemented yet
+("require additional work and reverse engineering that is not done
+yet"). The *only* place DP tunneling has ever been demonstrated working
+on real Apple Silicon hardware is aurora-silicon/linux#8, an unofficial,
+third-party PR, for **t8103 (M1) specifically** -- a different, better
+-understood, one-generation-older SoC than this machine's t602x (M2
+Pro). Ruled out along the way: `CONFIG_RESET_APPLE_CIO` is enabled in
+the running kernel (confirmed directly from `/proc/config.gz`); this
+project's own `drivers/thunderbolt/apple.c` already correctly requests
+and deasserts the ACIO's reset controller
+(`devm_reset_control_get_exclusive`/`reset_control_deassert`); the
+ACIO's own Cortex-M3 coprocessor is confirmed alive and running firmware
+(RTKit syslog messages flow correctly, the same mechanism DCP itself
+uses); the "Gen2/3 link error" firmware messages seen at boot are benign
+noise, present identically on both the one success (0127) and every
+failure. None of this points to a missing foundational piece this
+project overlooked -- it points at DP tunneling on t602x specifically
+being genuinely unsolved territory, one step ahead of what even the
+hardware's most qualified upstream developer has published working code
+for. This does not mean it is unsolvable, but it changes the odds on
+continuing to guess at undocumented registers without a new, strong
+hypothesis. No candidate proposed yet; discussing next steps with
+Oliver (continue targeted guessing vs. engage the actual upstream
+community with this project's own findings vs. wait for Sven Peter's
+work to reach DP tunneling).
+
 
 **Oliver's direction on the FSM finding: try the targeted write.** Asked
 before building anything that writes into the address range the two
@@ -342,26 +384,19 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   (`APPLE_CIO_DPIN_ANALOG_FSM`) is observed stuck at `0x80000000`, read it
   and write the same value straight back -- the exact write-1-to-clear
   idiom this driver family already uses successfully on
-  `APPLE_DPIN_IRQ_STATUS` elsewhere in the same file. Once per tunnel-up,
-  only while `DPRX` hasn't asserted, touches no other offset. Not yet
-  installed/booted. `notes/2026-09-24-0134-ack-analog-fsm-write1clear.md`.
+  `APPLE_DPIN_IRQ_STATUS` elsewhere in the same file. Installed and
+  booted same day: fired exactly as designed, zero effect (`0x80000000`
+  before and after), failure shape unchanged -- Oliver confirmed, still
+  no picture. Closes this specific hypothesis; see "Current state" above
+  for the bigger-picture finding that followed.
+  `notes/2026-09-24-0134-ack-analog-fsm-write1clear.md`.
 
-Currently installed and booted: candidate 0133
-(`thunderbolt_apple.ko` SHA256 `c8ea01a483ad5ca6d025ec5f29ef83e51ba5e4357698c3e00b4f8f4129ac6493`,
-`thunderbolt.ko` unchanged from 0132
-(`459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`),
-`appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
-from 0130-0132, hashes in `scripts/manage-0133.py`).
-
-Candidate 0134 built and verified, not yet installed
+Currently installed and booted: candidate 0134
 (`thunderbolt_apple.ko` SHA256 `fa245b8411f4ab85db5143c2111a8cd423ac763aa471c289300ca4f56da46a08`,
 `thunderbolt.ko` unchanged from 0132/0133
 (`459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`),
 `appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
-from 0130-0133, hashes in `scripts/manage-0134.py`). To arm and test,
-after this commit is pushed:
-```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0134.py check
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0134.py install
-```
-then reboot, and capture `dmesg`/`journalctl -k` from this boot.
+from 0130-0133, hashes in `scripts/manage-0134.py`).
+
+No candidate prepared -- see "Current state" above for why, and the
+options being discussed with Oliver.
