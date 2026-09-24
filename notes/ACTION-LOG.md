@@ -52,7 +52,35 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0129 prepared)
+## Current state (as of 2026-09-24, candidate 0129 booted and captured)
+
+**0129 result: the timeout hypothesis was partially right, but a deeper
+issue remains.** With `set_hpd` widened to 8000ms, it (and everything
+before it) now succeeds cleanly in both connect attempts this boot --
+zero AFK-layer timeouts anywhere in the capture, `release_display` itself
+now returns `result=0` instead of `-110`. This confirms the 1-second host
+timeout genuinely was cutting off a real, slower-but-valid reply from DCP
+for this one call. But the failure point simply moved later, to exactly
+0127's own failure signature: `dcp_dptx_connect: timed out waiting for
+port 0 link configuration` (the separate, pre-existing 2000ms
+`DPTX_CONNECT_TIMEOUT` wait for `linkcfg_completion`). DCP's firmware
+still independently sends `DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED`
+around 5 seconds in, on **both** connect attempts this boot, exactly as
+in every prior dcpext1 failure -- and, unlike 0127, the firmware-driven
+link-training burst (`SET_LINK_RATE`, `WILL_CHANGE_LINK_CONFIG`, etc.)
+never fires at all this time, so `dcp_tunnel_crossbar_up()` is still
+unexercised on the correct pipeline. `DPRX` stayed 0 for the whole boot
+(`captures/2026-09-24-0129-boot-kernel.log`). Awaiting Oliver's own
+visual confirmation either way; nothing in the logs suggests a picture
+would have appeared this run.
+
+Next candidate under consideration (not yet built): widen
+`DPTX_CONNECT_TIMEOUT` (dcp.c:1379, currently 2000ms) the same way, as a
+single-variable follow-up to see whether the link-training burst is also
+just running late, or whether `WILL_CHANGE_LINK_CONFIG`/`SET_LINK_RATE`
+never get sent by firmware on this pipeline/port at all regardless of
+patience -- which would point at something firmware-side rather than a
+host timeout.
 
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
 `DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
@@ -125,21 +153,13 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   timeout to 8000ms as a diagnostic: `afk_service_call_timeout()` silently
   discards a late reply with no log trace on the current 1000ms timeout,
   so today's captures cannot actually distinguish "DCP never replies" from
-  "DCP replies late and the host already stopped listening." Not yet
-  installed/booted. `notes/2026-09-24-0129-widen-set-hpd-timeout-diagnostic.md`.
+  "DCP replies late and the host already stopped listening." Installed
+  and booted same day: confirmed `set_hpd` now succeeds (no AFK timeout
+  anywhere in the capture), but the failure point just moved to 0127's own
+  `linkcfg_completion` timeout instead -- see "Current state" above.
+  `notes/2026-09-24-0129-widen-set-hpd-timeout-diagnostic.md`.
 
-Currently installed and booted: candidate 0128
-(`appledrm.ko` SHA256 `0102875210f5fd9aa0a8233e20abdde4894a2588947234e2cc8f2337577597ac`,
-`thunderbolt_apple.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
-unchanged from 0127, hashes in `scripts/manage-0128.py`).
-
-Candidate 0129 built and verified, not yet installed
+Currently installed and booted: candidate 0129
 (`appledrm.ko` SHA256 `131f3d85cad626e5387df05b55016f80dac60196cb5d555c4dc73503ab96a6a9`,
-other four modules byte-identical to 0128, hashes in
-`scripts/manage-0129.py`). To arm and test, after this commit is pushed:
-```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0129.py check
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0129.py install
-```
-then reboot, reconnect if needed (hub may already be connected), and
-capture `dmesg`/`journalctl -k` from this boot.
+`thunderbolt_apple.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
+unchanged from 0127/0128, hashes in `scripts/manage-0129.py`).
