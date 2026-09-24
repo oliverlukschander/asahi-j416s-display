@@ -52,7 +52,35 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0135 result: port confound resolved)
+## Current state (as of 2026-09-24, candidate 0136 prepared: stale-config -22 fix)
+
+**0136: the `-22` crossbar-up failure hit by both 0127 and 0135 is a
+leftover test-environment misconfiguration, not a code bug -- fix
+prepared, not yet installed.** Ten stale `modprobe.d` conf files from the
+discontinued pre-0127 "native DPIN0" experiment
+(2026-09-23, candidates 0113/0115/0116/0118/0119/0121/0122/0123/0124/0126)
+were never removed and are still baked into the initramfs used for every
+boot since 0127 (confirmed by extracting the actual installed image).
+One of them sets `options mux_apple_display_crossbar
+usb4_defer_bringup=1`, which makes `apple_dpxbar_set_t602x()` refuse to
+select any dispext state other than 2 (dcpext1's own state) on a Type-C
+port's dpin0/dpin1 crossbar leg -- exactly matching the `-22` seen when
+0127 (left port) and 0135 (right port) both forced dcpext0 (state 0) onto
+that leg. `scripts/manage-0136.py` backs up and removes the ten stale
+files, rebuilds the initramfs, and verifies the result (0135's own
+`usb4_route_prefer_fixed_diag=1` still armed, `usb4_defer_bringup` string
+gone). `check` already run (no sudo, confirms preconditions); `install`
+needs sudo, not yet run. See
+`notes/2026-09-24-0136-remove-stale-defer-bringup-configs.md` for the full
+trace (mux_control_try_select -> apple_dpxbar_set_t602x's deferred-state
+gate -> module param -> stale conf files -> confirmed present in the
+actual installed initramfs).
+
+This does not by itself guarantee a picture -- it removes one specific,
+now-understood obstacle from the dcpext0-forced tunnel path. What happens
+once the crossbar select actually succeeds is untested.
+
+## Prior state (candidate 0135 result: port confound resolved)
 
 **0135 result: the port/pipeline confound is resolved, decisively. The
 right port's ACIO hardware is confirmed fine -- the defect is specific to
