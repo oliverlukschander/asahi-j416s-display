@@ -83,10 +83,22 @@ spec-confirmed constant, and DPIN1 was never independently
 hardware-tested.
 
 All four affected modules rebuilt clean from scratch: zero errors,
-zero warnings. `python3 scripts/manage-0144.py check` passes. Not yet
-installed -- needs its own hardware confirmation (boot regression test,
-plus multiple replugs within one boot to confirm the PHY fix actually
-stops the `-EALREADY` failures).
+zero warnings.
+
+**Confirmed on hardware (2026-09-24 16:40)**: fresh boot, loaded module
+hashes match, picture works on first connect (`2560x1440@59.95100`).
+Three unplug/replug cycles within the same boot, each one reaching
+`USB4 tunnel clock preflight: +7000=0000e001 ...` with the identical
+successful gate state -- conclusive proof the fix works, since that
+log line sits *after* the `tunnel_attempted` check in the code, so a
+still-present bug would print nothing at all on the 2nd/3rd replug
+(silent `-EALREADY`) rather than the same clean preflight every time.
+Zero `-EALREADY`/`busy` messages anywhere. On top of that, the picture
+itself came back after the replugs this time (`set_digital_out_mode
+finished`, `hyprctl monitors` showing `2560x1440` again) -- so whatever
+makes the separate Aquamarine bug reproduce isn't 100% deterministic;
+this fix is a genuine, unconditional improvement regardless. Ready for
+the PR.
 
 ## RESOLVED (2026-09-24): the USB4/Thunderbolt DP tunnel works
 
