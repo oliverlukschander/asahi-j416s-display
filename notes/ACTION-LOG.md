@@ -52,7 +52,52 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, live replug test: a real atomic commit IS reaching the kernel, and getting rejected)
+## Current state (as of 2026-09-24, candidate 0140 prepared: found and fixed the actual EINVAL cause)
+
+**0139 installed and its diagnostics pinpointed the exact mechanism.**
+`captures/2026-09-24-0139-boot-kernel.log`: `apple_plane_atomic_check()`'s
+new instrumentation fired 896 times, every single one for the internal
+eDP panel's plane/crtc -- **never once for the tunnel connector's own
+plane**, across the whole boot including the plug-in event. `dcp_hotplug()`'s
+new diagnostic showed, for both tunnel hotplug events:
+`crtc=0000000000000000 active=-1 mode=-1x-1` -- the connector's DRM state
+has no CRTC attached at all. Combined with the pre-install live replug
+test (Aquamarine retrying a cascade of resolutions, every one rejected
+with EINVAL): **Hyprland's atomic commits for this connector are being
+rejected before ever reaching per-plane validation -- at the generic DRM
+core's encoder/CRTC pairing check.**
+
+**Root cause, found by reading `apple_probe_typec_ports()`
+(`apple_drv.c`): the right port's connector's encoder `possible_crtcs`
+mask was computed at probe time to deliberately EXCLUDE dcpext0's CRTC
+bit**, via `dcp_usb4_native_route(idx) && candidate->index != 2 ->
+continue`. `dcp_usb4_native_route()` returns true whenever both
+`usb4_native_dpin` and `usb4_protocol_probe` are set -- **and every
+candidate's module options since 0129 have set both to 1**, a leftover
+from the pre-0127 "native DPIN0" single-purpose experiment (which really
+did only ever use dcpext1), carried forward unexamined ever since. This
+directly conflicts with `usb4_route_prefer_fixed_diag=1` (kept since
+0135), which forces the actual software tunnel route onto **dcpext0** --
+the only pipeline that has ever reached a real link (DPRX_DONE=1, 4
+lanes, no timeout, confirmed repeatedly). dcpext0's CRTC was never in
+`possible_crtcs`, so every atomic commit attaching this connector to it
+fails the generic pairing check -- regardless of mode/plane size, which
+is exactly why every resolution Aquamarine tried failed identically.
+This is the same shape of bug as 0136: leftover test-environment state
+from a discontinued experiment silently sabotaging the current, correct
+approach.
+
+**0140 (prepared, not yet installed): config-only, no kernel rebuild.**
+Drops `usb4_protocol_probe=1`/`usb4_native_dpin=1` from the module
+options; keeps `usb4_route_prefer_fixed_diag=1` unchanged. Every other
+call site of both flags (grepped exhaustively) is a bare diagnostic
+print with no other effect -- confirmed safe to drop. Same
+`appledrm.ko`/`thunderbolt.ko` as 0139 (its diagnostics stay active).
+Full trace in
+`notes/2026-09-24-0140-drop-native-dpin-flags-restricting-possible-crtcs.md`.
+`check` already passes (no sudo).
+
+## Prior state (live replug test: a real atomic commit IS reaching the kernel, and getting rejected)
 
 **The "Hyprland never even tries" framing is now further refined and
 partially overturned by a live, zero-reboot test.** With Oliver's help,
