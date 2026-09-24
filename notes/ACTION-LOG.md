@@ -89,10 +89,56 @@ made the working configuration (prefer dcpext0 for a Type-C tunnel route)
 the unconditional, permanent default. Net -556/+43 lines across 10
 files. **The driver now needs zero special module options on this
 hardware.** Full detail in
-`notes/2026-09-24-0143-generalize-and-clean-up.md`. Prepared, not yet
-installed -- needs its own hardware confirmation since it touches real
-code paths, even though every change was verified by reading the code
-rather than guessed.
+`notes/2026-09-24-0143-generalize-and-clean-up.md`. Installed
+(`scripts/manage-0143.py install`, 2026-09-24 ~16:00) -- awaiting a
+reboot and hardware confirmation before treating it as the final state.
+
+## Separate, unresolved: Aquamarine (Hyprland's DRM backend) doesn't
+## reliably commit a mode on a live runtime hotplug
+
+Not a bug in this driver. After 0142/0143 confirmed the picture works,
+Oliver reported the external monitor not recovering after standby.
+Investigation (2026-09-24, same session) found: on a live hotplug
+(physical unplug/replug while the compositor is already running -- as
+opposed to a fresh boot with the monitor already connected), the kernel
+driver does everything correctly -- a real AUX/DPCD link comes up
+(`DPRX_DONE=1`), a full 22-mode EDID list is reported, and every
+Aquamarine `TEST_ONLY` atomic commit against every mode succeeds
+(`apple_plane_atomic_check: ... OK`) -- but Aquamarine never follows up
+with a real (non-test) commit. `hyprctl monitors` shows the output stuck
+at `0x0` forever, with the correct mode list still visible. ~30s later
+the DCP firmware autonomously tears the unclaimed link back down
+(`SET_LINK_RATE 0x0`), matching the previously-known "~29s autonomous
+teardown of an unclaimed link" behavior -- except this time nothing ever
+claims it, because it's a live hotplug, not a boot-time enumeration.
+
+Confirmed via direct testing that no Hyprland IPC command can recover
+this once stuck (plain reload, reload with an explicit pinned mode,
+disable/re-enable via `hl.monitor`, DRM sysfs `status` force-reprobe,
+forcing compositor focus onto the output -- none produce any kernel
+activity at all). Only a genuine physical replug reaches the kernel, and
+even that only gets back to the same stuck state.
+
+Root-caused via reading Aquamarine v0.15.1's actual source (not
+guessed): traced to the async-commit-queue rewrite in aquamarine PR #363
+("core/drm: introduce async commits", the `pauseCommitQueue`/
+`cancelAsyncOutput`/`pendingAsyncCommit` machinery in
+`src/backend/drm/DRM.cpp`), corroborated by several open/recently-fixed
+upstream reports in the same code region since that rewrite
+(hyprwm/aquamarine#386, #240, #394, #403, #407; hyprwm/Hyprland#16243 is
+almost the same hardware description). The exact triggering line was
+not pinned down: live-testing an instrumented build (added trace
+logging only, no logic changes) crashed the Hyprland session three
+times on this machine (SIGILL/SIGSEGV/SIGBUS across several attempts,
+both a Debug and a Release build), for reasons not fully understood --
+the crashes stopped as soon as the pristine, unmodified `aquamarine`
+package (reinstalled via `pacman -S aquamarine`, checksum-verified, `0
+altered files`) was back in place. Not worth further live risk on
+Oliver's daily-driver machine; the evidence gathered is enough for an
+upstream bug report, not a confident code fix from this project.
+
+**Not blocking**: this only affects recovery from a live hotplug/standby
+event. A fresh boot with the monitor connected works every time.
 
 **Still open, not addressed by 0143 (separate from the picture working
 at all)**: the ~29s autonomous link teardown DCP firmware performs on an
