@@ -52,7 +52,56 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0137 installed: two new mysteries)
+## Current state (as of 2026-09-24, candidate 0138 prepared: reconnect-after-replug fix)
+
+The second research workflow (5 angles + synthesis + 3 adversarial
+verifiers, all `refuted: false`) resolved both mysteries from 0137:
+
+- **Problem #1 (autonomous ~29s teardown): traced as far as this source
+  tree allows.** `dptxport_call()` is reachable only from
+  firmware-initiated AFK/EPIC messages -- no kernel-side timer,
+  workqueue, or delayed_work anywhere in the tree has a matching ~20-40s
+  period (the one candidate, `usb4_hpd_wq`, is confirmed dead code). The
+  driver's WILL_CHANGE/DID_CHANGE_LINK_CONFIG handling is byte-for-byte
+  equivalent to the hardware-validated reference. Conclusion: this is
+  very likely firmware-internal, not fixable from this tree. Not fixed
+  this candidate. A real, separate, un-applied lead: `iomfb.c:296-297`'s
+  retrain-nudge for a connected-but-unmodeset output is explicitly
+  skipped for USB4/tunnel outputs specifically.
+- **Problem #2 (replug doesn't re-arm the connect flow): root-caused and
+  fixed, high confidence.** A physical unplug marks the departing switch
+  unplugged *before* the generic Thunderbolt tunnel-teardown path runs,
+  so `tb_dp_port_enable()` on the departing DP OUT port deterministically
+  short-circuits to `-ENODEV` (zero I/O, `tb.h`'s
+  `is_unplugged` check) -- which trips `tb_dp_activate()`'s early return
+  *before* `ops->dp_tunnel_deactivate()` (apple.c's only way to clear its
+  own reconnect latch) ever runs. This is **generic
+  `drivers/thunderbolt/` core code**, not Apple-specific -- the reference
+  avoids it entirely with a dedicated, always-fires notification hook
+  this tree folded into the register-programming path instead. Confirmed
+  by a direct, hop-by-hop trace (not log-absence inference) and
+  independently re-traced by all three verifiers.
+
+**0138 (prepared, not yet installed): fixes problem #2.**
+`drivers/thunderbolt/tunnel.c`'s `tb_dp_activate()`: both `if (ret) return
+ret;` guards changed to `if (ret && active) return ret;` -- the
+deactivate-path caller already discards the return value entirely (so
+this is a no-op there), and the activate path is byte-for-byte
+unchanged. Full trace and reasoning in
+`notes/2026-09-24-0138-dp-tunnel-deactivate-departing-port.md`. Same
+module set as 0137 except a rebuilt `thunderbolt.ko` (only `tunnel.o`
+recompiled; `thunderbolt_apple.ko` unchanged). `check` correctly refused
+while the external connector still shows a stale `connected` status (not
+a real picture) -- needs the monitor cable physically unplugged first,
+same safety check every candidate has always had.
+
+Problem #1 remains open and is very likely not fixable from this source
+tree. This candidate's own boot-time connect may still hit the same ~29s
+teardown -- what it should change is whether a *replug afterward*
+actually reforms a working connection, which is the specific thing to
+test next.
+
+## Prior state (candidate 0137 installed: two new mysteries)
 
 **0137 installed and confirmed on hardware: both the crossbar fix (0136)
 and the linkcfg_completion fix (0137) work.** Right port, dcpext0 forced.

@@ -1,0 +1,86 @@
+From ae0ee59e010a16b88778cfa011d3b1f5c9102d42 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 12:18:45 +0200
+Subject: [PATCH] thunderbolt: don't let a departing dpout port skip
+ dp_tunnel_deactivate
+
+tb_dp_activate(tunnel, false) returns early on tb_dp_port_enable()
+failure for either port. When a physical unplug tears down a DP tunnel,
+tb_handle_hotplug() calls tb_sw_set_unplugged() on the departing switch
+before tb_free_invalid_tunnels() -> tb_tunnel_deactivate() runs, so
+tb_dp_port_enable(dst_port, false) hits tb_port_read/write's
+"if (port->sw->is_unplugged) return -ENODEV" short-circuit -- a
+deterministic, zero-I/O failure, not a hardware timing issue. That trips
+"if (ret) return ret;" before ops->dp_tunnel_deactivate() ever runs.
+
+On this hardware, ops->dp_tunnel_deactivate is apple_nhi_dp_tunnel_deactivate()
+(drivers/thunderbolt/apple.c), which is the only place that clears
+apple_dpin_ctx's "alive" latch. With it skipped, "handed" never clears
+either, so a fresh dp_tunnel_post_activate() on a later replug hits
+apple_dpin_work_fn()'s "if (c->handed) return;" guard and never re-enters
+apple_dcp_tb_dp_tunnel() -- the physical tunnel reforms but DCP's own
+connect flow is never re-armed. Confirmed: a live unplug/replug during
+this session's testing produced a fresh Thunderbolt tunnel (new device
+enumeration, "DP tunnel paths up") but zero new dcp_dptx_connect/
+request_display/"display routed" log lines.
+
+tb_tunnel_deactivate() (this file's only caller of tunnel->activate on
+the deactivate path) already discards the return value entirely, so
+nothing observes tb_dp_activate()'s return code when active=false.
+Change both "if (ret) return ret;" checks to "if (ret && active)": the
+activate (active=true) path is byte-for-byte unchanged, and on
+deactivate this guarantees ops->dp_tunnel_deactivate() always runs
+regardless of whether the departing port's register I/O could still
+succeed.
+
+The reference (aurora-silicon/linux#8) doesn't have this gap: it notifies
+through a dedicated, unconditional tb_dp_tunnel_notify() called before
+any register I/O, not folded into the generic activate/deactivate
+register-programming path this tree uses.
+
+Built and verified (make in src/thunderbolt/, vermagic
+7.1.12-2.5-1-ARCH, no new warnings; thunderbolt_apple.ko unchanged).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/tunnel.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index a7af81c88..a0df27fe6 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -1316,7 +1316,20 @@ static int tb_dp_activate(struct tb_tunnel *tunnel, bool active)
+ 	}
+ 
+ 	ret = tb_dp_port_enable(tunnel->src_port, active);
+-	if (ret)
++	/*
++	 * On deactivate, a departing dst_port already marked unplugged
++	 * makes tb_port_read/write short-circuit to -ENODEV with zero I/O
++	 * (tb.h) -- deterministically, not just on hardware timing. Do not
++	 * let that skip ops->dp_tunnel_deactivate() below: this tunnel.c is
++	 * generic core code, but ops->dp_tunnel_deactivate is what apple.c
++	 * relies on to clear its own apple_dpin_ctx latch (candidate 0138,
++	 * see notes/2026-09-24-0138-*.md) -- without it, a physical
++	 * unplug/replug can never re-arm a fresh connect. The caller
++	 * (tb_tunnel_deactivate()) already discards this function's return
++	 * value on the deactivate path, so relaxing it here changes nothing
++	 * any caller observes; the activate (active=true) path is untouched.
++	 */
++	if (ret && active)
+ 		return ret;
+ 
+ 	if (tb_port_is_dpout(tunnel->dst_port)) {
+@@ -1347,7 +1360,7 @@ static int tb_dp_activate(struct tb_tunnel *tunnel, bool active)
+ 			if (tb_port_write(out, &v, TB_CFG_PORT, out->cap_adap + ADP_DP_CS_3, 1))
+ 				tb_port_warn(out, "Apple: cannot restore DP link training\n");
+ 		}
+-		if (ret)
++		if (ret && active)
+ 			return ret;
+ 	}
+ 
+-- 
+2.55.0
+
