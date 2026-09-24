@@ -52,240 +52,72 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-23, end of candidate 0125)
+## Current state (as of 2026-09-24, end of candidate 0128)
 
-**Confirmed working, end-to-end, reproducibly:** DCP's AFK/EPIC protocol
-handling for the USB4-tunneled connect sequence (`validate` → `connect` →
-`set_hpd` → `request_display` → `ACTIVATE`, our native DPIN0 wake) — zero
-errors, exactly the calls expected, on two independent clean boots. Crossbar
-routing, the native DPIN0 handshake mechanism itself, and the Thunderbolt
-DP IN role bit are all correctly implemented.
+**Architecture confirmed correct and sufficient.** Candidate 0127 achieved
+`DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
+USB4 tunnel -- the first and only time this has happened in this project's
+full history. This was on a route that turned out to be the wrong DCP
+pipeline (see below), so it is not yet a working picture, but it is direct,
+unambiguous proof that the crossbar routing, the real tunnel-trigger
+mechanism (`apple_dcp_tb_dp_tunnel()`, ported from aurora-silicon/linux#8),
+the ATC PHY staying in USB4 mode, and the native DPIN0 wake are all
+correct and physically sufficient on this exact hub/adapter/monitor chain.
 
-**Confirmed not working:** the actual DisplayPort AUX/DPRX electrical
-negotiation between the USB4 tunnel's DP adapter hardware and the downstream
-Synaptics VMM7100/BenQ chain. `DPRX` never asserts; DCP goes silent after
-`ACTIVATE` rather than proceeding to `WILL_CHANGE_LINK_CONFIG`/
-`SET_LINK_RATE`. The one existing software lever for this (`dpin_aux`) is
-confirmed, twice, genuinely ineffective on this hardware. Cross-checked
-against aurora-silicon/linux#8 (the M1/t8103 reference): that implementation
-has no equivalent AUX-poke mechanism at all — DPRX completes as a natural
-side effect of DCP's own link training once told a display is attached, and
-never needed forcing. That reframes `dpin_aux` as never having been the
-right lever, not just an ineffective one.
+**Two data points on DPRX, one success and two failures, cause not yet
+isolated:**
+- 0127 (dcpext0/HDMI-capable pipeline, due to a route-scoring bug):
+  `DPRX_DONE=1`, then DCP still deactivated without a picture.
+- 0128 x2 (dcpext1/USB-C-only pipeline, the scoring bug fixed): `DPRX`
+  stayed 0 both times, identical failure pattern down to the millisecond:
+  validate/connect/request_display succeed, DCP calls
+  GET_SUPPORTS_HPD/GET_MAX_LANE_COUNT/ACTIVATE, then the driver's own
+  outbound `set_hpd` and `release_display` calls each time out at their
+  1000ms default, a retried `validate` also times out, and only ~4-5
+  seconds after `request_display` succeeded does DCP send
+  `DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED` apcalls and `DEACTIVATE`.
 
-**Two live open directions, neither attempted yet:**
-1. Further DCP firmware-internal reverse engineering of whatever gates the
-   AUX read during that silent window — not reachable from any Linux-side
-   instrumentation, since DCP never reports back on it at all.
-2. A genuine compatibility limit specific to the OWC hub / Synaptics VMM7100
-   adapter chain for a *tunneled* (vs. direct) DP route — direct HDMI and
-   direct USB-C to the same monitor both work. Weighed against this: the
-   identical cable/hub/adapter chain works instantly under macOS on an M4
-   Mac, so the hardware itself is capable of it.
+The two 0128 runs used the same pipeline (dcpext1) but a different
+physical port than 0127's success (left port for 0127, right port for
+both 0128 runs, since Oliver had relocated) -- **explicitly ruled out by
+Oliver as the relevant variable, do not re-investigate port choice.** What
+actually differs between the one success and the two failures is not yet
+established. Concretely unexamined so far: whether DCP's own multi-second
+unresponsiveness after `request_display` in the failing runs reflects a
+real internal AUX retry that our host-side calls' 1-second timeouts
+(`dptxport_set_hpd()`'s default, `afk_service_call()`'s default) are too
+short to survive, versus a genuinely failed AUX negotiation that no
+timeout value would fix.
 
-No hardware action is currently pending.
+No hardware action is currently pending. Full boot captures for all of
+this: `captures/2026-09-24-0127-boot-kernel.log`,
+`captures/2026-09-24-0128-boot-kernel.log`,
+`captures/2026-09-24-0128-retry-boot-kernel.log`.
 
-## 2026-09-23 -0126: stop switching the USB4 tunnel PHY to DP mode
+## Recent candidates (0126-0128)
 
-Found while scoping a full aurora-silicon/linux#8 port (two parallel Opus
-5.5 agents did a full function-by-function comparison; see
-notes/2026-09-23-0126-stop-phy-mode-dp-switch.md for the trigger chain).
-`dcp_dptx_connect()`'s analog-DPIN branch has unconditionally switched the
-tunnel's ATC PHY to `PHY_MODE_DP` at connect time since candidate 0118 --
-present in every candidate since. Both the reference PR and our own
-tunnel-clock code require the PHY to stay in USB4/TBT mode for a genuine
-tunnel. Also traced that DPRX is checked by a generic, non-Apple-specific
-mechanism already in our own tunnel.c (`tb_dp_dprx_start`/`tb_dp_wait_dprx`,
-polling the real hardware bit `DP_COMMON_CAP_DPRX_DONE`) -- downstream of
-DCP's protocol, so forcing the tunnel PHY out of USB4 mode before that can
-complete is a plausible direct cause. One-line, low-risk removal, tested
-before committing to the much larger PR#8 architectural port (still
-scoped and ready to build if this alone isn't sufficient -- see
-`/tmp/dcp-fw2/agent-portA-dcp-side.md`/`agent-portB-tb-side.md`, scratch
-analysis, not committed to this repo).
+- **0126** (drm/apple/dcp.c, one-line): stopped forcing the USB4 tunnel's
+  ATC PHY into `PHY_MODE_DP` (both the reference PR and our own
+  tunnel-clock code require it stay in USB4/TBT mode). Correct fix, kept,
+  but alone produced a byte-for-byte identical trace to every prior
+  candidate -- confirmed insufficient on its own.
+  `notes/2026-09-23-0126-stop-phy-mode-dp-switch.md`.
+- **0127** (full architectural port, 4 modules): replaced the
+  fake-Type-C-alt-mode tunnel trigger every prior candidate relied on with
+  the real mechanism from aurora-silicon/linux#8's hardware-validated
+  t8103 implementation -- a new `apple_dcp_tb_dp_tunnel()` DCP-side entry
+  point, and a new Thunderbolt-side `apple_dpin_ctx` mechanism wired into
+  this project's own pre-existing, already-safe
+  `dp_tunnel_pre/post_activate/deactivate` hooks (zero changes to shared
+  `tb.c`/`tunnel.c`). Result: `DPRX_DONE=1` (see "Current state").
+  `notes/2026-09-24-0127-port-thunderbolt-dp-tunnel-routing.md`.
+- **0128** (drm/apple/dcp.c, one-line): restored a fixed-output
+  route-scoring penalty the 0127 port had dropped, so the tunnel prefers
+  dcpext1 (no fixed output) over dcpext0 (HDMI-capable) -- confirmed
+  fixed (connect calls now correctly target `315c00000.dcp`), but `DPRX`
+  did not reassert in the two runs since. `notes/2026-09-24-0128-prefer-dcpext1-for-tunnel.md`.
 
-Only dcp.o recompiled. New appledrm.ko SHA256:
-a3ea4d4eed1d763fc696f89098d373bbd27b5331382eb6bdf1fe59c2aacac209. Other
-four modules unchanged (verified). Stale-symlink sweep clean,
-test-dpin-handshake.c 13/13 pass. Patch:
-patches/0126-drm-apple-dcp-stop-switching-usb4-tunnel-phy-to-dp-mode.patch.
-scripts/manage-0126.py derived from manage-0124.py (candidate number + hash
-only).
-
-After committing/pushing execute exactly:
-
-```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0126.py install
-```
-
-## 2026-09-23 -0126 result: clean negative, byte-for-byte identical to 0124
-
-Rebooted into 0126 with hub connected. Captured
-captures/2026-09-23-0126-boot-kernel.log. User confirmed: no picture.
-
-Trace is byte-for-byte identical to 0124's (and its clean-reboot
-re-verification): same call counts (validate/connect/request_display each
-#1, zero errors), same APCALL sequence (18, 10, 0), same "USB4: reselect
-dpin after nub: 0", same DPRX=0 the whole way through, same 12s-later "DPRX
-timeout, keeping DP tunnel" with identical register values. Removing the
-PHY_MODE_DP switch alone did not change observable behavior at all.
-
-Conclusion: this fix was a real correctness improvement (the tunnel PHY no
-longer gets forced out of USB4/TBT mode) but not, on its own, sufficient to
-unstick DPRX. Keeping it -- there is no reason to revert a fix that matches
-both the reference implementation and our own tunnel-clock code's stated
-requirement, even though it didn't resolve the symptom alone. Consistent
-with the working theory: DCP's software protocol is fully clean (0124), and
-the remaining gap is either something only the full PR#8 mechanism actually
-exercises (real tunnel-established trigger, HPD_PROPAGATE pulse, NO_AUTO_LT
-on the dock's DP OUT, proper crossbar-deferred-to-DidChangeLinkConfig
-sequencing) or something deeper in DCP firmware/hardware not reachable from
-Linux-side changes at all. Next: proceed with the full architectural port
-scoped earlier (see /tmp/dcp-fw2/agent-portA-dcp-side.md and
-agent-portB-tb-side.md for the complete function-by-function plan).
-
-## 2026-09-24 -0127: full port of Thunderbolt DP tunnel routing from PR#8
-
-0126's quick PHY-mode fix was a clean negative (byte-for-byte identical to
-0124). Proceeded to the full architectural port scoped earlier: every
-candidate through 0126 relied on faking a USB4 tunnel route through the
-Type-C alt-mode mux-state machinery, never a genuine "a Thunderbolt DP
-tunnel came up" trigger. Ported the real mechanism from
-aurora-silicon/linux#8 (hardware-validated on t8103), adapted to
-T602X/j416s. Full reasoning, architecture, and known-uncertainty notes in
-notes/2026-09-24-0127-port-thunderbolt-dp-tunnel-routing.md.
-
-Spans four modules for the first time this project: dcp.c/dptxep.c (new
-apple_dcp_tb_dp_tunnel() entry point + dcp_tunnel_* helpers, ~400 lines of
-superseded scaffolding removed), drivers/thunderbolt/apple.c (new
-apple_dpin_ctx mechanism wired into this project's own already-safe
-dp_tunnel_pre/post_activate/deactivate hooks -- zero changes to shared
-tb.c/tunnel.c, thunderbolt.ko stays byte-identical), atc.c (renamed
-tunnel-rate export, kept our T602X implementation), and
-apple-display-crossbar.c (generalized the existing dpin0 bring-up helper
-to any index). Confirmed before writing code: the device-tree graph link
-the mechanism needs already exists on this hardware (walked the live
-phandle), no DT change needed.
-
-Only dcp.o/dptxep.o recompiled. New appledrm.ko SHA256:
-28c219f2549dfba6a6182b5224588890fd1dc65baa9eb2072d0e31634a095395.
-thunderbolt_apple.ko SHA256:
-16b18fb9494d4f9b865748276bfb4c2c1df28c65da2598e93d46ed3e18eeb4ad.
-mux-apple-display-crossbar.ko SHA256:
-813682df2cfa01b0ee83daac9824a37a3290bf234b389035e483da6c5044c3df.
-phy-apple-atc.ko SHA256:
-31b68d51a454885081406089c99bae00617231c49cb99680586494d3c8a4a49f.
-thunderbolt.ko unchanged (verified byte-identical). Module options also
-changed: removed usb4_defer_bringup=1 (wrong semantics under the new
-crossbar model, see design note) and usb4_tunnel_clock=1 from appledrm's
-line (the module param it gated no longer exists). Stale-symlink sweep
-clean, test-dpin-handshake.c 13/13 pass. Patch:
-patches/0127-port-thunderbolt-dp-tunnel-routing-from-pr8.patch.
-scripts/manage-0127.py hand-updated (first candidate changing more than
-one module's hash at once, so not purely mechanical this time).
-
-After committing/pushing execute exactly:
-
-```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0127.py install
-```
-
-## 2026-09-24 -0127 result: DPRX_DONE=1 achieved for the first time ever, wrong DCP pipeline found
-
-Rebooted into 0127 with hub connected. Captured
-captures/2026-09-24-0127-boot-kernel.log. **`apple_dcp_tb_dp_tunnel()`
-fired correctly** ("display routed to Thunderbolt DP tunnel dpin0"), the
-full connect sequence succeeded, DCP reached ACTIVATE, and then:
-`DP IN CS changed ... DPRX=1`, `DP IN DPRX_DONE=1 (ACIO AUX completed)` --
-the exact hardware signal this whole project has chased since it started,
-achieved for the first time. DCP then sent SET_TILED_DISPLAY_HINTS and
-several more apcalls but ultimately deactivated; the driver's own retry
-ran the whole sequence again with the same result. User confirmed: still
-dark.
-
-Root cause found immediately from the same capture: every connect call
-this boot targeted `apple-dcp 289c00000.dcp` (dcpext0, HDMI-capable, has a
-fixed `phy@1303000000` dependency per the boot's own devicetree dump) --
-not `315c00000.dcp` (dcpext1, USB-C only), the device every single prior
-candidate's own working AFK exchanges always used. The route-scoring
-simplification in 0127 dropped a fixed-output penalty
-(`dcp_typec_route_score_usb4()`, removed) that used to keep the tunnel off
-dcpext0. DPRX completing on dcpext0 anyway makes sense (AUX/DPRX is a
-tunnel-layer physical signal, not DCP-instance-specific); dcpext0's
-plane/CRTC/scanout wiring being wrong for a Type-C source plausibly
-explains why it still gave up. Full reasoning in
-notes/2026-09-24-0128-prefer-dcpext1-for-tunnel.md.
-
-## 2026-09-24 -0128: restore the fixed-output route-scoring penalty
-
-Kernel commit 68d4d8f: restored the same bias inline in
-`apple_dcp_tb_dp_tunnel()`'s own scoring loop (`if
-(candidate->dcp->fixed_phy) score += 100;`). Only dcp.o (and dptxep.o,
-rebuilt incidentally, unchanged content) recompiled. New appledrm.ko
-SHA256: 0102875210f5fd9aa0a8233e20abdde4894a2588947234e2cc8f2337577597ac.
-Other three modules (thunderbolt_apple, mux, atc) unchanged from 0127.
-Stale-symlink sweep clean, test-dpin-handshake.c 13/13 pass. Patch:
-patches/0128-prefer-non-fixed-output-pipeline-for-tunnel-route.patch.
-scripts/manage-0128.py derived from manage-0127.py (candidate number +
-appledrm hash only, mechanical).
-
-After committing/pushing execute exactly:
-
-```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0128.py install
-```
-
-## 2026-09-24 -0128 result: correct DCP now targeted, but DPRX=0 this run
-
-Rebooted into 0128, hub on the *right* port this time (user relocated;
-same hub/monitor). Captured captures/2026-09-24-0128-boot-kernel.log.
-Confirmed the fix worked: connect calls now target `apple-dcp
-315c00000.dcp` (dcpext1) as intended, target=0x8021 core=1 atc=2 --
-exactly the reference PR's own validated encoding for dpin0 on ATC 2.
-
-This run did not reproduce 0127's DPRX_DONE=1. Sequence: validate/connect/
-request_display (call #1) all succeed, DCP calls GET_SUPPORTS_HPD/
-GET_MAX_LANE_COUNT/ACTIVATE normally -- then our own outbound `set_hpd`
-(group 8 cmd 8) times out after 1000ms, then `release_display` also times
-out, then a retried `validate` (call #2) also times out. Only ~4-5 seconds
-later does DCP finally send us APCALL 22 (DEVICE_NOT_RESPONDING) and 24
-(DEVICE_NOT_STARTED), "firmware reports link fault", then DEACTIVATE.
-DPRX stayed 0 throughout; 12s later the usual "DPRX timeout, keeping DP
-tunnel". USB4 protocol probe finished: -110; no automatic retry
-(DPTX_RECONNECT_RETRIES=1, already exhausted).
-
-Read as: DCP's firmware itself was internally busy (almost certainly its
-own AUX/DPCD retry attempts) for several seconds after request_display,
-unresponsive to any of our host-issued AFK calls during that window --
-our calls' 1-second timeouts are simply shorter than DCP's own internal
-retry period, not evidence of an AFK workqueue deadlock on our side (the
-inbound ACTIVATE apcall, which also runs the native DPIN0 handshake
-synchronously, completed fine and did not block request_display's own
-reply moments earlier in the same boot). This looks like the AUX/DPRX
-handshake genuinely not completing this specific attempt, not a new
-regression from the dcpext1 fix -- the architecture is proven capable of
-DPRX=1 (0127), and this is either normal flakiness on this hub/adapter
-chain or a variable (physical port, cable reseat) not yet isolated.
-
-No code change indicated yet. Asked Oliver for a same-setup reboot retry
-(zero-risk, no config change) to see if this reproduces or if it was a
-one-off, before deciding on any further candidate.
-
-## Last actions
-
-- **0124** (instrumentation, no behavior change): closed several silent
-  failure paths in `afk.c`/`dptxep.c` (DCP's real per-call retcode was
-  captured and discarded; a failed apcall got no reply sent back to DCP at
-  all; `request_display`/`release_display` had no logging; apcall payloads
-  were never logged). Built, installed, tested on two independent clean
-  boots — byte-identical result both times (see "current state" above).
-  `notes/2026-09-23-0124-instrumentation.md`.
-- **0125** (live parameter test, no kernel change): re-tested `dpin_aux=1`
-  against the already-active tunnel (its setter fires immediately, no
-  reboot needed). Reproduced the 0054-0056 "doesn't stick" result exactly.
-  Reverted to 0 immediately after. `notes/2026-09-23-0125-dpin-aux-retest.md`.
-- Cross-checked aurora-silicon/linux#8 in detail for any AUX/DPRX-specific
-  mechanism we might be missing — found none; folded into "current state"
-  above.
-- Condensed this file from ~5750 lines to the current form; full verbatim
-  history preserved in `notes/ACTION-LOG-ARCHIVE-2026-09-21-to-0125.md`.
+Currently installed: candidate 0128
+(`appledrm.ko` SHA256 `0102875210f5fd9aa0a8233e20abdde4894a2588947234e2cc8f2337577597ac`,
+`thunderbolt_apple.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
+unchanged from 0127, hashes in `scripts/manage-0128.py`).
