@@ -52,7 +52,39 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0133 prepared)
+## Current state (as of 2026-09-24, candidate 0133 result: FSM found stuck)
+
+**0133 result: the clearest, most specific finding this project has had.**
+Dumping the ACIO analog block on all 24 polls (500ms apart, full 12s
+budget) instead of once at the end shows: `APPLE_CIO_DPIN_ANALOG_FSM`
+(offset `+0x18`, literally named "FSM" in this driver's own code) reads
+`0x00001017` on poll #1 (~1s after tunnel-up) and `0x80000000` on every
+single poll after that (#2 through #24) -- one clean transition, then
+**frozen solid for 11+ seconds**, spanning right through
+`DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED` (~5s) and the final give-up
+(~12s). Every other word in both the dpin0 and dpin1 dumps (offsets
+0x00-0x58 and 0x5c-0x7c) is bit-for-bit identical across all 24 polls,
+*except* dpin1 (the unused adapter) also shows one matching transition at
+the same poll boundary (`+0x0c`: `00040004`->`80010000`, `+0x1c`:
+`00000000`->`80000000`) -- consistent with a real, shared hardware event
+rippling across the ACIO block at tunnel-up, not measurement noise.
+`captures/2026-09-24-0133-boot-kernel.log`.
+
+This is not "the AUX engine never tries" (0131/0132's working theory) --
+it's "the AUX engine's own FSM takes one real step and then gets stuck,"
+a meaningfully different and more specific claim. `dpin_aux`'s standing
+safety rule ("does not stick") tested pulsing a *different* register
+(`+0x00` bit 0, the control/start pulse, via `apple_dp_start_analog()`)
+-- never this status/FSM register specifically, and never with this kind
+of moment-to-moment visibility. Whether a targeted read-modify-write on
+`+0x18` (e.g. acknowledging what may be a write-1-to-clear latch, a
+pattern this same driver family already uses elsewhere -- the DPIN IRQ
+status register) would unstick it is a real, evidence-based hypothesis,
+not a blind guess -- but it means writing into the exact address range
+two standing safety rules already flag, on a register neither has
+actually tested. Checking with Oliver before building anything that
+writes there.
+
 
 **0132 result: the full aurora-silicon/linux#8 Apple-host register
 comparison is now exhausted, without a picture.** `NO_AUTO_LT` applied
@@ -177,14 +209,11 @@ mechanistic explanation for registers that never move. Full comparison
 and reasoning in
 `notes/2026-09-24-0131-pulse-hpd-propagation-apple-host-dpin.md`.
 
-**Candidate 0133 prepared, awaiting Oliver's install+reboot.** Pure
-diagnostic, zero behavior change: dumps the ACIO analog block
-(`apple_dp_dump_analog()`, includes the still-undecoded FSM register at
-offset `+0x18`) on every 500ms poll for the full 12s budget instead of
-only once at the very end. This project has never actually observed
-whether that block's internal state changes *during* DCP's own ~5s
-attempt -- only a single post-mortem snapshot after it already gave up.
-Full reasoning in `notes/2026-09-24-0133-dump-analog-block-every-poll.md`.
+**No next candidate built yet.** See "Current state" above -- the FSM-stuck
+finding points at a specific register, but writing to it means entering
+the exact address range two standing safety rules already flag, on an
+offset neither one actually tested. Checking with Oliver on the
+risk/reward before building it.
 
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
 `DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
@@ -289,29 +318,20 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   still dark. Closes out the full aurora-silicon/linux#8 Apple-host
   register comparison. `notes/2026-09-24-0132-no-auto-lt-and-video-credits-apple-host.md`.
 - **0133** (drivers/thunderbolt/apple.c, one function): pure diagnostic,
-  zero behavior change. Dumps the ACIO analog block on every 500ms poll
-  instead of only the last one, so the next capture shows whether that
-  block's internal state (including the still-undecoded FSM register at
-  `+0x18`) ever moves during DCP's own ~5s attempt, or stays static the
-  whole time -- evidence this project has never actually gathered. Not
-  yet installed/booted.
+  zero behavior change. Dumped the ACIO analog block on every 500ms poll
+  instead of only the last one. Installed and booted same day: found
+  `APPLE_CIO_DPIN_ANALOG_FSM` (`+0x18`) transition once, early
+  (`0x00001017` -> `0x80000000`), then freeze solid for the remaining 11+
+  seconds straight through `DEVICE_NOT_RESPONDING` and the final give-up
+  -- see "Current state" above for the full finding.
   `notes/2026-09-24-0133-dump-analog-block-every-poll.md`.
 
-Currently installed and booted: candidate 0132
-(`thunderbolt.ko` SHA256 `459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`,
-`thunderbolt_apple.ko` SHA256 `91caddc7f37594c6d326b01562656f12d99c8e0b67adc2bde84d3df75645368b`,
-`appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
-from 0130/0131, hashes in `scripts/manage-0132.py`).
-
-Candidate 0133 built and verified, not yet installed
+Currently installed and booted: candidate 0133
 (`thunderbolt_apple.ko` SHA256 `c8ea01a483ad5ca6d025ec5f29ef83e51ba5e4357698c3e00b4f8f4129ac6493`,
 `thunderbolt.ko` unchanged from 0132
 (`459250fe65adc5066f64f9b9b91c8f8b291e6e96b648de4d95bb0222afe4a5b9`),
 `appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
-from 0130-0132, hashes in `scripts/manage-0133.py`). To arm and test,
-after this commit is pushed:
-```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0133.py check
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0133.py install
-```
-then reboot, and capture `dmesg`/`journalctl -k` from this boot.
+from 0130-0132, hashes in `scripts/manage-0133.py`).
+
+No candidate prepared yet -- awaiting Oliver's direction on whether to
+write to `APPLE_CIO_DPIN0_ANALOG+0x18` (see "Current state").
