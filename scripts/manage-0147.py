@@ -23,7 +23,16 @@ independent second trigger for apple_cio_start()/stop() around the
 same window as the Type-C mux's own decisions risks the SoC
 watchdog-reset scenario apple_cio_tbt_switch_set() documents. This
 fix stays within the single, already-serialized switch-driven path.
-Full detail in notes/2026-09-24-0147-typec-resume-reverify.md.
+
+First attempt (calling resume_reverify() directly from tipd_resume())
+regressed on hardware: it fired too early, while ACIO/thunderbolt's
+own resume/M3-PMGR handshake was still settling, and exhausted 0146's
+retry budget outright. Corrected version triggers from a
+PM_POST_SUSPEND notifier instead (register_pm_notifier(), delivered
+strictly after every device's own .resume() has completed), removing
+the race without any arbitrary delay. cd321x_resume_reverify() itself
+is unchanged -- only when it's invoked changed. Full detail in
+notes/2026-09-24-0147-typec-resume-reverify.md.
 
 Only tps6598x-core.ko changes (built from drivers/usb/typec/tipd/core.c
 -- the I2C/SPMI bus-glue modules are untouched since only core.c was
@@ -44,7 +53,7 @@ MODULES = Path('/usr/lib/modules') / VERSION
 IMAGE = Path('/boot/initramfs-linux-aurora.img')
 BACKUP = Path('/var/tmp/j416s-0147-before')
 CANDIDATE = (ROOT / 'src/typec/tps6598x-core.ko',
-             '25a843beba6585d18c6a8af6f3a73ea862ec1d99ddb1f91a5606bf05302f5669')
+             'c0a9cfe7257141052479cd3365780cb0520df32a8672d95c62aa7bc659bf0b48')
 TARGETS = {
     'tps6598x-core-kernel.ko': MODULES / 'kernel/drivers/usb/typec/tipd/tps6598x-core.ko',
     'tps6598x-core-updates.ko': MODULES / 'updates/tps6598x-core.ko',

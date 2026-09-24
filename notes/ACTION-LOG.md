@@ -52,7 +52,66 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## 0147 REVERTED: caused a regression, ACIO reset failed completely
+## 0147 v2 prepared: trigger from PM_POST_SUSPEND instead of tipd_resume()
+
+Root-caused the v1 regression below. It was never a mystery second
+trigger: `cd321x_typec_update_mode()` (the function that reaches
+`apple_cio_tbt_switch_set()`) has exactly one call site in the whole
+file, inside the same debounced `cd321x_update_work()` both a real
+replug and v1's `cd321x_resume_reverify()` already went through —
+confirmed by grep, nothing else calls it.
+
+The actual problem: `PM: suspend exit` prints at the very tail of the
+*entire* suspend/resume transaction (from `suspend_finish()`, strictly
+after every device's own `.resume()` has run). `tipd_resume()` is just
+one individual device's `.resume()` — nothing guarantees it runs
+anywhere near that tail point, and v1 called `cd321x_resume_reverify()`
+directly from inside it. That fires the reconnect, and thus
+`apple_cio_start()`'s M3/PMGR reset-deassert handshake, while
+ACIO/thunderbolt's own resume work can still be in progress elsewhere
+in the system — unlike a real replug, which a human always does
+seconds after everything has visibly settled. The "microseconds after
+`PM: suspend exit`" timing observed in v1's test wasn't a separate
+trigger firing early; it was v1's own reconnect coincidentally landing
+close to that late-printed line while still overlapping the tail of
+the system's broader resume.
+
+**Fix**: moved the trigger to a `PM_POST_SUSPEND` notifier
+(`register_pm_notifier()`/`unregister_pm_notifier()`, registered in
+`tipd_init()`/`tipd_remove()`, gated on `tps->data->resume_reverify`
+same as before — only the two Apple-specific vtables). That callback
+is delivered strictly after `dpm_resume_end()`, i.e. after every
+device including ACIO/thunderbolt has completed its own ordinary
+resume — removing the race with no arbitrary delay added.
+`cd321x_resume_reverify()` itself is byte-for-byte unchanged; only
+*when* it's invoked changed. Full writeup:
+`notes/2026-09-24-0147-typec-resume-reverify.md`.
+
+Files: `drivers/usb/typec/tipd/tps6598x.h` (added
+`struct notifier_block pm_nb;` to `struct tps6598x`),
+`drivers/usb/typec/tipd/core.c` (`tipd_resume()` no longer calls
+`resume_reverify()` directly; new `tipd_pm_notify()`, registered at
+the end of `tipd_init()`, unregistered in `tipd_remove()`).
+
+**Build verification**: clean rebuild from scratch in `src/typec/`,
+zero errors/warnings (aside from the pre-existing, unrelated `pahole`
+version-mismatch notice seen on every module in this project).
+Hash: `c0a9cfe7257141052479cd3365780cb0520df32a8672d95c62aa7bc659bf0b48`
+(`scripts/manage-0147.py`'s `CANDIDATE` updated to match.)
+
+**Not yet installed.** Before the next `install`, the stale
+root-owned backup from the v1 attempt must be cleared first (`restore`
+doesn't delete it, only overwrites the live files):
+`sudo rm -rf /var/tmp/j416s-0147-before`. Then
+`sudo python3 scripts/manage-0147.py check` (should pass on the new
+hash) and, once confirmed, `sudo python3 scripts/manage-0147.py install`
+(module swap only, no reboot). Test plan unchanged from the design
+note: reboot-with-hub regression check first, then a real
+lid-close/s2idle/lid-open cycle with the hub never touched — this
+time watching specifically for **zero** ACIO start retries (matching
+the 0146-only baseline), not just whether the picture comes back.
+
+## 0147 v1 REVERTED: caused a regression, ACIO reset failed completely
 
 Installed and tested on hardware (lid-close/s2idle/lid-open, hub never
 touched). Result: worse than 0146 alone, not better. Reverted via

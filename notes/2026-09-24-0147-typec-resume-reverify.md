@@ -149,3 +149,93 @@ Hash: `25a843beba6585d18c6a8af6f3a73ea862ec1d99ddb1f91a5606bf05302f5669`
    `dmesg` for the same chain a real replug produces (`DP IN tunnel
    routing`, `USB4 tunnel clock preflight`, `set_digital_out_mode`) --
    this time without any physical replug at all.
+
+## First attempt: regression, reverted
+
+Installed and tested (lid-close/s2idle/lid-open, hub never touched).
+Result: worse than 0146 alone. The ACIO reset handshake exhausted all
+5 of 0146's retry attempts and failed completely
+(`ACIO block failed to start: -110`, repeated `CIO 0 still busy before
+reconfigure request`), whereas 0146 alone succeeds on the first
+attempt with zero retries. Reverted via `manage-0147.py restore`,
+verified against the pre-install backup. Full writeup in
+`notes/ACTION-LOG.md`.
+
+At the time, the log also showed `typec mux set typec0 ... usb4=0`
+immediately followed by `usb4=1`, apparently firing microseconds after
+`PM: suspend exit` -- too fast to be this fix's own 500ms-debounced
+`cd321x_resume_reverify()`. This looked like it might be an
+independent second trigger contending for the same M3/PMGR firmware,
+but that was never confirmed and turned out to be the wrong framing.
+
+## Corrected root cause: reconnect fires too early, not a second trigger
+
+`cd321x_typec_update_mode()` (the function that ultimately calls
+`apple_cio_tbt_switch_set()`) has exactly one call site in the entire
+file: inside `cd321x_update_work()`, the same debounced work item both
+a real replug and this fix's `cd321x_resume_reverify()` go through.
+There is no other, independent path into it -- confirmed by grep, no
+second trigger exists.
+
+`PM: suspend exit` is printed at the very tail of the *entire*
+suspend/resume transaction, from `suspend_finish()`, strictly after
+every device (ACIO, thunderbolt, DCP, the crossbar) has already run
+its own `.resume()`. `tipd_resume()`, by contrast, is just one
+individual device's `.resume()` callback -- there's no guarantee it
+runs anywhere near that tail point, and this driver's device (I2C,
+comparatively simple) plausibly resumes well before ACIO/thunderbolt's
+own, more involved resume work finishes settling.
+
+The original fix called `cd321x_resume_reverify()` directly from
+`tipd_resume()`. That schedules the debounced work ~500ms after
+*this device's own* resume runs -- which can easily land while
+ACIO/thunderbolt's resume work (and the shared M3/PMGR firmware behind
+`apple_cio_start()`'s reset-deassert handshake) is still in progress,
+well before the rest of the system, and `PM: suspend exit`, has
+actually settled. A real physical replug never hits this, because a
+human always does it seconds after the whole system has visibly come
+back -- long after any such contention would have cleared on its own.
+So the "microseconds after `PM: suspend exit`" observation wasn't a
+mystery second trigger -- it was this fix's own reconnect, coincidentally
+finishing around the same wall-clock moment as the late-printed
+`PM: suspend exit` line, while still overlapping the tail of the
+system's broader resume work.
+
+## Corrected fix: trigger from PM_POST_SUSPEND, not tipd_resume()
+
+`register_pm_notifier()`/`PM_POST_SUSPEND` is delivered strictly after
+`dpm_resume_end()` -- i.e. after every device in the system, including
+ACIO/thunderbolt, has completed its own ordinary resume. Moving the
+trigger there removes the race entirely, without any arbitrary added
+delay: `cd321x_resume_reverify()` itself is unchanged, only *when* it
+gets called changes.
+
+`drivers/usb/typec/tipd/tps6598x.h`: added `struct notifier_block pm_nb;`
+to `struct tps6598x`.
+
+`drivers/usb/typec/tipd/core.c`:
+- `tipd_resume()`: removed the direct `resume_reverify()` call.
+- New `tipd_pm_notify()`, registered via `register_pm_notifier()` at
+  the end of `tipd_init()` and unregistered in `tipd_remove()`, gated
+  the same way as before (only when `tps->data->resume_reverify` is
+  non-NULL, i.e. only the two Apple-specific vtables) -- calls
+  `tps->data->resume_reverify(tps)` on `PM_POST_SUSPEND`.
+
+Same watchdog-reset safety argument as before still holds unchanged:
+the synthetic disconnect always drives through zero first. Nothing
+about *what* the fix does changed, only *when* it's allowed to run.
+
+## Build verification (corrected version)
+
+Clean rebuild from scratch: zero errors, zero warnings (aside from the
+pre-existing, unrelated `pahole` version-mismatch notice seen on every
+module in this project).
+Hash: `c0a9cfe7257141052479cd3365780cb0520df32a8672d95c62aa7bc659bf0b48`
+
+## Updated test plan
+
+Same as before -- install, reboot-with-hub regression check, then the
+real lid-close/s2idle/lid-open test with the hub never touched. This
+time also watch specifically for zero ACIO start retries (matching the
+0146-only baseline), not just whether the picture comes back, since
+that retry count is exactly the signal the first attempt got wrong.
