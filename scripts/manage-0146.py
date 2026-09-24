@@ -72,9 +72,13 @@ def verify_image():
     with tempfile.TemporaryDirectory(prefix='j416s-0146-initramfs-') as tmp:
         run('lsinitcpio', '-x', str(IMAGE), cwd=tmp, stdout=subprocess.DEVNULL)
         tree = Path(tmp)
-        found = list(tree.rglob('thunderbolt_apple.ko'))
-        if not found or any(digest(p) != CANDIDATE[1] for p in found):
-            raise RuntimeError('Wrong or missing thunderbolt_apple in initramfs')
+        # thunderbolt_apple.ko is not normally pulled into the initramfs at all
+        # (not needed for early boot/root mount, unlike appledrm.ko) -- only
+        # fail if a copy that IS present has the wrong hash, matching the
+        # pattern manage-0143.py/manage-0144.py already use for this module.
+        for p in tree.rglob('thunderbolt_apple.ko'):
+            if digest(p) != CANDIDATE[1]:
+                raise RuntimeError('Wrong thunderbolt_apple in initramfs')
 
 
 def restore():
