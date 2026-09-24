@@ -52,7 +52,7 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0129 booted and captured)
+## Current state (as of 2026-09-24, candidate 0130 prepared)
 
 **0129 result: the timeout hypothesis was partially right, but a deeper
 issue remains.** With `set_hpd` widened to 8000ms, it (and everything
@@ -70,17 +70,16 @@ in every prior dcpext1 failure -- and, unlike 0127, the firmware-driven
 link-training burst (`SET_LINK_RATE`, `WILL_CHANGE_LINK_CONFIG`, etc.)
 never fires at all this time, so `dcp_tunnel_crossbar_up()` is still
 unexercised on the correct pipeline. `DPRX` stayed 0 for the whole boot
-(`captures/2026-09-24-0129-boot-kernel.log`). Awaiting Oliver's own
-visual confirmation either way; nothing in the logs suggests a picture
-would have appeared this run.
+(`captures/2026-09-24-0129-boot-kernel.log`). **Oliver confirmed by eye:
+no picture, no flicker, nothing at all** -- consistent with the logs.
 
-Next candidate under consideration (not yet built): widen
-`DPTX_CONNECT_TIMEOUT` (dcp.c:1379, currently 2000ms) the same way, as a
-single-variable follow-up to see whether the link-training burst is also
-just running late, or whether `WILL_CHANGE_LINK_CONFIG`/`SET_LINK_RATE`
-never get sent by firmware on this pipeline/port at all regardless of
-patience -- which would point at something firmware-side rather than a
-host timeout.
+**Candidate 0130 prepared, awaiting Oliver's install+reboot.** Widens
+`DPTX_CONNECT_TIMEOUT` (`dcp.c:1379`, was 2000ms) to 8000ms the same way,
+as a single-variable follow-up: does the link-training burst also just
+run late, or does `WILL_CHANGE_LINK_CONFIG`/`SET_LINK_RATE` genuinely
+never get sent by firmware on this pipeline/port regardless of patience?
+Full reasoning in
+`notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md`.
 
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
 `DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
@@ -122,7 +121,7 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
 `captures/2026-09-24-0128-boot-kernel.log`,
 `captures/2026-09-24-0128-retry-boot-kernel.log`.
 
-## Recent candidates (0126-0129)
+## Recent candidates (0126-0130)
 
 - **0126** (drm/apple/dcp.c, one-line): stopped forcing the USB4 tunnel's
   ATC PHY into `PHY_MODE_DP` (both the reference PR and our own
@@ -158,8 +157,24 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   anywhere in the capture), but the failure point just moved to 0127's own
   `linkcfg_completion` timeout instead -- see "Current state" above.
   `notes/2026-09-24-0129-widen-set-hpd-timeout-diagnostic.md`.
+- **0130** (drm/apple/dcp.c, one-line): direct follow-up to 0129. Widens
+  `DPTX_CONNECT_TIMEOUT` (2000ms -> 8000ms) the same way, to test whether
+  the missing `SET_LINK_RATE`/`WILL_CHANGE_LINK_CONFIG` burst is also just
+  running late or genuinely never sent by firmware on this pipeline/port.
+  Not yet installed/booted.
+  `notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md`.
 
 Currently installed and booted: candidate 0129
 (`appledrm.ko` SHA256 `131f3d85cad626e5387df05b55016f80dac60196cb5d555c4dc73503ab96a6a9`,
 `thunderbolt_apple.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
 unchanged from 0127/0128, hashes in `scripts/manage-0129.py`).
+
+Candidate 0130 built and verified, not yet installed
+(`appledrm.ko` SHA256 `2d0b5f5b9d831f0a740a150e47d9774858cf9bf089c97698f32d70dedacced8c`,
+other four modules byte-identical to 0128/0129, hashes in
+`scripts/manage-0130.py`). To arm and test, after this commit is pushed:
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0130.py check
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0130.py install
+```
+then reboot, and capture `dmesg`/`journalctl -k` from this boot.

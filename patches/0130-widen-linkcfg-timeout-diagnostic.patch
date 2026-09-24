@@ -1,0 +1,60 @@
+From 32931b948dbf57de9b0506c3064dea66a8df3ce5 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 08:27:12 +0200
+Subject: [PATCH] drm: apple: dptx: widen DPTX_CONNECT_TIMEOUT to 8s as a
+ diagnostic
+
+Direct follow-up to 0129: widening set_hpd's own timeout there confirmed
+DCP really was sending a valid, slower-than-1s reply that the host was
+cutting off -- but the failure just moved one step later, to this
+existing 2000ms wait_for_completion_timeout(linkcfg_completion, ...).
+Every dcpext1 attempt since (0128 x2, 0129 x2) shows the identical
+pattern: request_display succeeds, then ~5s of silence, then DCP sends
+DEVICE_NOT_RESPONDING/DEVICE_NOT_STARTED on its own, then this
+completion times out with no SET_LINK_RATE/WILL_CHANGE_LINK_CONFIG burst
+ever appearing (unlike 0127, where that burst fired instantly and DCP
+reached DPRX_DONE=1).
+
+Same single-variable logic as 0129: widen only this one wait to 8s and
+see whether the link-training burst is also just running late, or
+whether it genuinely never comes on this pipeline/port regardless of
+patience -- which would point away from timeouts entirely and toward
+whatever DCP's firmware actually decided during that silent window.
+
+dcp->hpd_mutex is already released before this wait begins (dcp.c:1470,
+unchanged), so unlike 0129 this change adds no additional lock-hold time
+at all. Single macro value changed; the only other reference
+(the dev_dbg elapsed-time print) is unaffected in behavior. Full
+reasoning in notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 0fe8c5f..dc64c1e 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1376,7 +1376,17 @@ bool dcp_has_typec_routes(struct platform_device *pdev)
+ 	return dcp->nr_typec_routes;
+ }
+ 
+-#define DPTX_CONNECT_TIMEOUT msecs_to_jiffies(2000)
++/*
++ * Diagnostic (candidate 0130, see notes/2026-09-24-0130-*.md): widening
++ * set_hpd's own timeout in 0129 confirmed a real, slower DCP reply was
++ * being cut off there -- the failure just moved to this next wait
++ * instead (DEVICE_NOT_RESPONDING/DEVICE_NOT_STARTED fire, then this
++ * completion times out with no SET_LINK_RATE/WILL_CHANGE_LINK_CONFIG
++ * burst at all). Widening this one too, same single-variable logic,
++ * to see whether that burst is also just running late or genuinely
++ * never coming on this pipeline/port regardless of patience.
++ */
++#define DPTX_CONNECT_TIMEOUT msecs_to_jiffies(8000)
+ #define DPTX_RECONNECT_DELAY msecs_to_jiffies(1000)
+ #define DPTX_RECONNECT_RETRIES 1
+ 
+-- 
+2.55.0
+
