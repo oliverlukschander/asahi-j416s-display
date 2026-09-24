@@ -93,6 +93,29 @@ open question is now *why* DCP reaches
 waits for it. `captures/2026-09-24-0130-boot-kernel.log`.
 `notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md`.
 
+**New lead found while reading the 0130 capture (not yet acted on):** the
+generic `apple_dp_aux_work()` poller (`drivers/thunderbolt/apple.c:997`)
+independently samples the DP IN adapter's CS0-CS13 registers every 500ms
+for up to 12s and logs `"DP IN CS changed ..."` on *any* difference. That
+line appears **zero times** across all four dcpext1 failures (0128 x2,
+0129, 0130) -- 96 samples total, nothing ever moves -- and exactly **once**
+in the one dcpext0 success (0127, the DPRX transition itself). Meanwhile
+`dpin%u: active handshake=%d` (`apple_dpin_set_active()`,
+`drivers/thunderbolt/apple.c:2081`) logs `handshake=0` (success) at the
+same point in *every* run, success or failure alike, so the software-side
+DPTX_INACTIVE handshake (HPD/CONTROL/ACK/MODE_A/MODE_B registers) reports
+completing cleanly regardless of outcome. Put together: the handshake
+that's supposed to wake the ACIO analog block reports success every time,
+but the separate CS0-CS13 status registers it should cause to move never
+move at all on dcpext1/right-port -- this looks less like a slow retry
+and more like the physical AUX engine never actually gets kicked into
+motion on this pipeline/port, for a reason not yet identified. Note
+0127's own `DPRX_DONE=1` happened *after* its own `dcp_tunnel_crossbar_up()`
+already failed with `-22` that run, so crossbar selection does not look
+load-bearing for this either -- ruled out as the likely explanation, not
+just unexamined. No next candidate proposed yet; wanted Oliver's read on
+this before picking the next single-variable thing to try.
+
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
 `DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
 USB4 tunnel -- the first and only time this has happened in this project's
