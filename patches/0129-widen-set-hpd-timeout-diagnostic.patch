@@ -1,0 +1,67 @@
+From d4d8abe009fe5b4696a63a5cb7b7d55a1208b4e8 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 08:10:50 +0200
+Subject: [PATCH] drm: apple: dptx: widen the tunnel set_hpd timeout to 8s as a
+ diagnostic
+
+Both 0128 boots (dcpext1, the correct pipeline) stall identically right
+after request_display succeeds: dptxport_set_hpd() times out at its
+default 1000ms, then release_display, then a retried validate, each in
+turn -- three consecutive AFK timeouts on the same channel. DCP's own
+firmware separately sends DEVICE_NOT_RESPONDING/DEVICE_NOT_STARTED and
+DEACTIVATE a few seconds later, unprompted.
+
+Whether that's a real internal AUX retry our 1s host timeout is cutting
+off, or a genuinely failed handshake, was open. The strongest evidence
+so far points to genuine failure: tb_dp_wait_dprx() (generic, non-Apple
+thunderbolt/tunnel.c) polls the same DPRX_DONE hardware bit completely
+independently of DCP/AFK, starting at tunnel-up with its own 12000ms
+budget -- and it never asserts either, in both runs, a window already
+far more patient than the 1s AFK timeout. But afk_service_call_timeout()
+silently discards a reply that arrives after its caller's timeout with
+no log trace, so today's captures cannot actually distinguish "DCP never
+replies" from "DCP replies late and we already stopped listening."
+
+dptxport_set_hpd_timeout() already exists and is the exact knob needed;
+this changes the one call site in dcp_dptx_connect() to use it directly
+with an 8s budget instead of the plain 1s wrapper -- long enough to
+exceed DCP's own apparent ~5s internal give-up, short of the tunnel
+layer's 12s budget. dcp->hpd_mutex is held for the extra duration, but
+it is scoped to this DCP instance (315c00000.dcp) and not shared with
+the panel's own (389c00000.dcp), so this cannot stall the internal
+display. Single call site changed; no other behavior touched. Full
+reasoning in notes/2026-09-24-0129-widen-set-hpd-timeout-diagnostic.md.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 6c24ef6..0fe8c5f 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -1445,7 +1445,19 @@ static int dcp_dptx_connect(struct apple_dcp *dcp, u32 port)
+ 	}
+ 	dcp->dptxport[port].connected = true;
+ 	if (dcp_is_typec_output(dcp)) {
+-		ret = dptxport_set_hpd(dcp->dptxport[port].service, true);
++		/*
++		 * Diagnostic (candidate 0129, see notes/2026-09-24-0129-*.md):
++		 * every dcpext1 run so far stalls exactly here, and every
++		 * outbound AFK call after it, at the normal 1000ms budget --
++		 * while tb_dp_wait_dprx()'s independent poll (generic
++		 * thunderbolt/tunnel.c, started at tunnel-up, 12000ms budget,
++		 * unaffected by this call either way) also never sees DPRX
++		 * assert. Widening only this one call's timeout exposes
++		 * whether DCP replies late (a real internal retry we were
++		 * cutting off) or never at all.
++		 */
++		ret = dptxport_set_hpd_timeout(dcp->dptxport[port].service,
++					       true, 8000);
+ 		if (ret) {
+ 			dev_err(dcp->dev,
+ 				"dcp_dptx_connect: failed to assert Type-C HPD: %d\n",
+-- 
+2.55.0
+
