@@ -11,7 +11,7 @@ that worked, because it generates a genuine hardware attach event.
 
 Added cd321x_resume_reverify(), wired only into the Apple-specific
 CD321x/sn201202x vtables (tipd_cd321x_data, tipd_sn201202x_data; the
-plain TI TPS6598x/TPS25750 variants get a NULL hook, unaffected). It
+plain TI TPS6598X/TPS25750 variants get a NULL hook, unaffected). It
 reproduces a genuine unplug-then-replug entirely through the existing,
 already-validated connect()/cd321x_update_work() path: calls the
 existing connect() callback twice (once with PLUG_PRESENT cleared, a
@@ -24,19 +24,26 @@ same window as the Type-C mux's own decisions risks the SoC
 watchdog-reset scenario apple_cio_tbt_switch_set() documents. This
 fix stays within the single, already-serialized switch-driven path.
 
-First attempt (calling resume_reverify() directly from tipd_resume())
-regressed on hardware: it fired too early, while ACIO/thunderbolt's
-own resume/M3-PMGR handshake was still settling, and exhausted 0146's
-retry budget outright. Corrected version triggers from a
-PM_POST_SUSPEND notifier instead (register_pm_notifier(), delivered
-strictly after every device's own .resume() has completed), removing
-the race without any arbitrary delay. cd321x_resume_reverify() itself
-is unchanged -- only when it's invoked changed. Full detail in
-notes/2026-09-24-0147-typec-resume-reverify.md.
+v1 (calling resume_reverify() directly from tipd_resume()) regressed
+on hardware: it fired too early, while ACIO/thunderbolt's own
+resume/M3-PMGR handshake was still settling, and exhausted 0146's
+retry budget outright. v2 triggers from a PM_POST_SUSPEND notifier
+instead (register_pm_notifier(), delivered strictly after every
+device's own .resume() has completed), removing the race without any
+arbitrary delay.
 
-Only tps6598x-core.ko changes (built from drivers/usb/typec/tipd/core.c
--- the I2C/SPMI bus-glue modules are untouched since only core.c was
-edited).
+v2's *build* (not the kernel fix itself) had a separate bug, found the
+hard way: adding `struct notifier_block pm_nb` to the shared
+tps6598x.h header shifts the byte offset of every field after it
+(including the `data` vtable pointer), so every module built from a
+file that includes this header needs rebuilding together, not just
+core.c. Only rebuilding tps6598x-core.ko left the I2C/SPMI bus-glue
+modules (tps6598x.ko, sn201202x.ko) compiled against the *old* struct
+layout -- a real ABI mismatch across independently-loaded modules that
+corrupted the vtable pointer and caused a genuine hang on the next
+boot. All three are now tracked and rebuilt/installed together here.
+Full detail in notes/2026-09-24-0147-typec-resume-reverify.md and the
+recovery writeup in notes/ACTION-LOG.md.
 """
 import argparse
 import hashlib
@@ -52,12 +59,34 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULES = Path('/usr/lib/modules') / VERSION
 IMAGE = Path('/boot/initramfs-linux-aurora.img')
 BACKUP = Path('/var/tmp/j416s-0147-before')
-CANDIDATE = (ROOT / 'src/typec/tps6598x-core.ko',
-             'c0a9cfe7257141052479cd3365780cb0520df32a8672d95c62aa7bc659bf0b48')
+
+# All three modules are built from files that include the shared
+# tps6598x.h header -- they must be rebuilt and installed as one unit.
+CANDIDATES = {
+    'tps6598x-core.ko': (ROOT / 'src/typec/tps6598x-core.ko',
+                         'c0a9cfe7257141052479cd3365780cb0520df32a8672d95c62aa7bc659bf0b48'),
+    'tps6598x.ko': (ROOT / 'src/typec/tps6598x.ko',
+                    '58bb328588f492ab80e8cd8af193109804c1b43895af3e7d52f5c80a29be36ba'),
+    'sn201202x.ko': (ROOT / 'src/typec/sn201202x.ko',
+                     '4dd29aeca03709d4b5f246a60a22a66bf6b79dc20b467ae62dd3dadb0947b492'),
+}
 TARGETS = {
     'tps6598x-core-kernel.ko': MODULES / 'kernel/drivers/usb/typec/tipd/tps6598x-core.ko',
     'tps6598x-core-updates.ko': MODULES / 'updates/tps6598x-core.ko',
+    'tps6598x-kernel.ko': MODULES / 'kernel/drivers/usb/typec/tipd/tps6598x.ko',
+    'tps6598x-updates.ko': MODULES / 'updates/tps6598x.ko',
+    'sn201202x-kernel.ko': MODULES / 'kernel/drivers/usb/typec/tipd/sn201202x.ko',
+    'sn201202x-updates.ko': MODULES / 'updates/sn201202x.ko',
     'initramfs-linux-aurora.img': IMAGE,
+}
+# Which candidate module each non-image target name is copied from.
+TARGET_MODULE = {
+    'tps6598x-core-kernel.ko': 'tps6598x-core.ko',
+    'tps6598x-core-updates.ko': 'tps6598x-core.ko',
+    'tps6598x-kernel.ko': 'tps6598x.ko',
+    'tps6598x-updates.ko': 'tps6598x.ko',
+    'sn201202x-kernel.ko': 'sn201202x.ko',
+    'sn201202x-updates.ko': 'sn201202x.ko',
 }
 
 
@@ -82,13 +111,23 @@ def preflight():
             raise RuntimeError(f'Unplug external display: {name}')
 
 
+def check_candidates():
+    for name, (source, expected) in CANDIDATES.items():
+        if digest(source) != expected:
+            raise RuntimeError(f'Candidate checksum mismatch: {source}')
+    for name, target in TARGETS.items():
+        if name.endswith('.ko') and not target.is_file():
+            raise RuntimeError(f'Missing original: {target}')
+
+
 def verify_image():
     with tempfile.TemporaryDirectory(prefix='j416s-0147-initramfs-') as tmp:
         run('lsinitcpio', '-x', str(IMAGE), cwd=tmp, stdout=subprocess.DEVNULL)
         tree = Path(tmp)
-        for p in tree.rglob('tps6598x-core.ko'):
-            if digest(p) != CANDIDATE[1]:
-                raise RuntimeError('Wrong tps6598x-core in initramfs')
+        for modname, (_, expected) in CANDIDATES.items():
+            for p in tree.rglob(modname):
+                if digest(p) != expected:
+                    raise RuntimeError(f'Wrong {modname} in initramfs')
 
 
 def restore():
@@ -103,18 +142,13 @@ def restore():
     run('depmod', '-a', VERSION)
     run('mkinitcpio', '-p', 'linux-aurora')
     os.sync()
-    print('Restored pre-0147 tps6598x-core module and initramfs; no live reload/reboot.', flush=True)
+    print('Restored pre-0147 typec modules and initramfs; no live reload/reboot.', flush=True)
 
 
 def install():
     if BACKUP.exists():
         raise RuntimeError('Backup already exists; refusing to overwrite')
-    source, expected = CANDIDATE
-    if digest(source) != expected:
-        raise RuntimeError(f'Candidate checksum mismatch: {source}')
-    for target in TARGETS.values():
-        if not target.is_file():
-            raise RuntimeError(f'Missing original: {target}')
+    check_candidates()
 
     BACKUP.mkdir(mode=0o700)
     manifest = {}
@@ -130,7 +164,8 @@ def install():
     try:
         preflight()
         for name, target in TARGETS.items():
-            if name.endswith('.ko'):
+            if name in TARGET_MODULE:
+                source, expected = CANDIDATES[TARGET_MODULE[name]]
                 shutil.copy2(source, target)
                 if digest(target) != expected:
                     raise RuntimeError(f'Installed checksum mismatch: {target}')
@@ -151,13 +186,8 @@ def main():
     args = parser.parse_args()
     preflight()
     if args.action == 'check':
-        source, expected = CANDIDATE
-        if digest(source) != expected:
-            raise RuntimeError(f'Candidate checksum mismatch: {source}')
-        for name, target in TARGETS.items():
-            if name.endswith('.ko') and not target.is_file():
-                raise RuntimeError(f'Missing original: {target}')
-        print('Correct kernel/machine; candidate hash matches; ready to install.')
+        check_candidates()
+        print('Correct kernel/machine; candidate hashes match; ready to install.')
         return
     if os.geteuid() != 0:
         raise RuntimeError('Run with sudo')

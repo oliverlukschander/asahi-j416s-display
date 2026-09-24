@@ -52,6 +52,75 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0147 v2 caused a real hang, recovered: struct ABI mismatch + a separate module-tree wipe
+
+Installed v2 (kernel commit `db7b1c019`) and rebooted with the hub
+connected for the regression check. **Result: a genuine hard hang** —
+required holding the power button multiple times to recover, not a
+slow boot. Oliver: *"i had to restart the mac like 3 times because it
+was dead stuck ... yes i pressed the power button until it was off"*.
+
+**Root cause of the hang**: `struct notifier_block pm_nb;` was added
+to `struct tps6598x` in the *shared* header `tps6598x.h`, right before
+the `data` vtable pointer, but only `tps6598x-core.ko` (core.c +
+trace.c) was rebuilt. The I2C and SPMI bus-glue drivers (`i2c.c`/
+`spmi.c`) also include this header and build into their **own,
+separately loaded** modules (`tps6598x.ko`, `sn201202x.ko`) — those
+were never rebuilt, so their code still wrote `tps->data` at the *old*
+offset while the freshly-built core module read it from the *new*,
+shifted offset. That's a real ABI mismatch across independently-loaded
+modules, corrupting the vtable pointer used by every chip operation —
+confirmed via `journalctl -b -1`: the external/hub DCP's Thunderbolt
+tunnel connect sequence never ran at all (compare the confirmed-good
+0146 baseline, where it completes in <300ms), consistent with this
+corruption derailing the PD-controller connect path entirely.
+
+**Fix**: `src/typec/Makefile` now also builds `tps6598x.o` (i2c.c) and
+`sn201202x.o` (spmi.c) as separate targets in the same directory,
+matching upstream's own module boundaries. All three are rebuilt
+together from the same header every time, and `manage-0147.py` now
+tracks/installs/restores all three as one unit. New hashes:
+`tps6598x-core.ko` `c0a9cfe7257141052479cd3365780cb0520df32a8672d95c62aa7bc659bf0b48`,
+`tps6598x.ko` `58bb328588f492ab80e8cd8af193109804c1b43895af3e7d52f5c80a29be36ba`,
+`sn201202x.ko` `4dd29aeca03709d4b5f246a60a22a66bf6b79dc20b467ae62dd3dadb0947b492`.
+
+**Separate, unrelated incident found during recovery**: while
+diagnosing the hang, `/usr/lib/modules/7.1.12-2.5-1-ARCH` turned out
+to be completely gone — renamed to `/usr/lib/modules/.old` and then
+emptied by a stock tmpfiles rule (`R! /usr/lib/modules/.old/* - - -
+4w`, unconditional on `R`, `!` = boot-only) during the fallback boot.
+Unrelated to the code bug above: `linux-aurora` was never registered
+with pacman (`install-aurora-second-entry.sh` deliberately avoids
+`pacman -U` because the package Conflicts with `linux-asahi`), which
+is exactly what let the system treat the directory as orphaned and
+prune it.
+
+**Recovery** (all done directly, root filesystem operations only, no
+module load into the *running* kernel and no reboot — that boundary
+was kept even though passwordless sudo was available in this
+environment): verified `pkg/linux-aurora-7.1.12.aurora2.5-1-aarch64.pkg.tar.xz`
+against its recorded SHA256SUMS and GPG signature (good signature,
+Omarchy ARM Repository key), extracted it fresh as the pristine base
+(1864 stock modules), then rebuilt and reinstalled every
+custom-touched module family — appledrm, mux, thunderbolt +
+thunderbolt_apple, phy-apple-atc, and all three typec modules — from
+the current `linux-aurora-pr` git HEAD (`db7b1c019`) into both
+`kernel/...` and `updates/...`, ran `depmod`, rebuilt the initramfs,
+and verified every hash matches between source, live tree, and the
+rebuilt initramfs. Confirmed `/boot/vmlinuz-linux-aurora`,
+`/boot/grub/custom.cfg`, and the `linux-asahi` (currently-running
+fallback) boot files were all untouched throughout.
+
+**Not yet rebooted/tested.** This recovery is unverified until Oliver
+reboots into `linux-aurora` and confirms it actually comes up — do not
+treat the checksum-level verification above as equivalent to a real
+boot. Full detail in `notes/2026-09-24-0147-typec-resume-reverify.md`.
+
+**Follow-up, outside this session's scope**: this doesn't fix *why*
+the directory was orphaned — it's still not pacman-registered, by
+original design. If whatever renames the aurora module directory to
+`.old` fires again, this can recur.
+
 ## 0147 v2 prepared: trigger from PM_POST_SUSPEND instead of tipd_resume()
 
 Root-caused the v1 regression below. It was never a mystery second

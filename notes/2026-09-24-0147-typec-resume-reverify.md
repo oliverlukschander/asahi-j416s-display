@@ -239,3 +239,78 @@ real lid-close/s2idle/lid-open test with the hub never touched. This
 time also watch specifically for zero ACIO start retries (matching the
 0146-only baseline), not just whether the picture comes back, since
 that retry count is exactly the signal the first attempt got wrong.
+
+## v2's own bug: struct ABI mismatch across separately-built modules, caused a real hang
+
+The v2 install (PM_POST_SUSPEND notifier) was tested with a cold boot,
+hub connected. Result: the machine genuinely hung -- required holding
+the power button multiple times to recover, not just a slow boot.
+Confirmed via `journalctl -b -1`: the external/hub-side DCP
+(`289c00000.dcp`) never ran its Thunderbolt DP tunnel connect sequence
+at all (compare to the confirmed-good 0146 baseline boot, where that
+same sequence completes in under 300ms), and the whole boot stalled
+~19s waiting on deferred probes/genpd sync tied to the CIO devices
+before the shutdown.
+
+Root cause: `struct notifier_block pm_nb;` was added to `struct
+tps6598x` in the *shared* header `tps6598x.h`, right before the `data`
+vtable pointer. Only `tps6598x-core.ko` (core.c + trace.c) was rebuilt
+and reinstalled. The I2C and SPMI bus-glue drivers (`i2c.c`/`spmi.c`)
+also include this header and are built into their **own, separately
+loaded** kernel modules (`tps6598x.ko`, `sn201202x.ko`) -- those were
+never rebuilt, so their compiled code still wrote `tps->data` at the
+*old* byte offset while the freshly-built core module read it from the
+*new*, shifted offset. That desyncs the vtable pointer every
+operation on the chip goes through (`connect()`, `read_data_status()`,
+etc.) -- exactly the kind of corruption that can silently misbehave or
+hang depending on what ends up at that offset. A field added to a
+struct in a header shared across independently-loaded modules requires
+rebuilding *every* module that includes it, not just the one whose
+`.c` file changed.
+
+**Fix**: extended `src/typec/Makefile` to also build `tps6598x.o`
+(from `i2c.c`) and `sn201202x.o` (from `spmi.c`) as separate module
+targets in the same directory, matching upstream's own module
+boundaries (`drivers/usb/typec/tipd/Makefile`) and the pattern already
+used by this project's `thunderbolt`/`phy` module dirs (multiple
+`obj-m` targets sharing one directory). All three typec modules are
+now rebuilt together from the same header on every change, and
+`manage-0147.py` now checks/installs/restores all three as one unit
+instead of just `tps6598x-core.ko`.
+
+## Separate, unrelated incident found during recovery: the module tree itself was wiped
+
+While investigating the hang, found `/usr/lib/modules/7.1.12-2.5-1-ARCH`
+did not exist at all -- renamed to `/usr/lib/modules/.old` and then
+emptied by a stock tmpfiles rule (`R! /usr/lib/modules/.old/* - - -
+4w`, which unconditionally removes on every boot regardless of the age
+field) during the fallback boot. This is unrelated to the code change
+above -- `linux-aurora` was never registered with pacman (`pacman -Q
+linux-aurora` returns not found), by original design
+(`install-aurora-second-entry.sh` explicitly avoids `pacman -U`
+because the package Conflicts with `linux-asahi`), which is exactly
+what let the system's kernel-management tooling treat it as an
+orphaned, unowned directory and prune it.
+
+Recovered by: verifying the archived package
+(`pkg/linux-aurora-7.1.12.aurora2.5-1-aarch64.pkg.tar.xz`) against its
+recorded SHA256SUMS and GPG signature (good signature, matches the
+Omarchy ARM Repository signing key), extracting it fresh as the
+pristine base, then rebuilding and reinstalling every custom-touched
+module family (appledrm, mux, thunderbolt + thunderbolt_apple,
+phy-apple-atc, and now all three typec modules) from the current
+`linux-aurora-pr` git HEAD (`db7b1c019`) into both the `kernel/...` and
+`updates/...` locations, followed by `depmod` and `mkinitcpio -p
+linux-aurora`. Verified the rebuilt initramfs's module hashes match the
+live tree exactly, and that `/boot/vmlinuz-linux-aurora`,
+`/boot/grub/custom.cfg`, and the `linux-asahi` boot files were all
+untouched throughout. Full detail in `notes/ACTION-LOG.md`.
+
+**Not a recurrence risk for pacman**: this doesn't fix *why* the
+directory was orphaned (it's still not pacman-registered, by design,
+same as before) -- if the same tmpfiles-driven cleanup mechanism
+triggers again after another `.old`-renaming event, this could repeat.
+Worth a follow-up outside this session's scope: either register the
+package properly under a non-conflicting name, or find and neutralize
+whatever renames the aurora module directory to `.old` in the first
+place.

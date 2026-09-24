@@ -1,8 +1,10 @@
 KDIR ?= /home/oliver/Development/omarchy/aurora-j416s/kbuild/usr/lib/modules/7.1.12-2.5-1-ARCH/build
 
-obj-m := tps6598x-core.o
+obj-m := tps6598x-core.o tps6598x.o sn201202x.o
 tps6598x-core-y := core.o
 tps6598x-core-y += trace.o
+tps6598x-y := i2c.o
+sn201202x-y := spmi.o
 
 ccflags-y += -I$(src)
 
