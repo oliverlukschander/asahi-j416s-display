@@ -235,6 +235,42 @@ After committing/pushing execute exactly:
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0128.py install
 ```
 
+## 2026-09-24 -0128 result: correct DCP now targeted, but DPRX=0 this run
+
+Rebooted into 0128, hub on the *right* port this time (user relocated;
+same hub/monitor). Captured captures/2026-09-24-0128-boot-kernel.log.
+Confirmed the fix worked: connect calls now target `apple-dcp
+315c00000.dcp` (dcpext1) as intended, target=0x8021 core=1 atc=2 --
+exactly the reference PR's own validated encoding for dpin0 on ATC 2.
+
+This run did not reproduce 0127's DPRX_DONE=1. Sequence: validate/connect/
+request_display (call #1) all succeed, DCP calls GET_SUPPORTS_HPD/
+GET_MAX_LANE_COUNT/ACTIVATE normally -- then our own outbound `set_hpd`
+(group 8 cmd 8) times out after 1000ms, then `release_display` also times
+out, then a retried `validate` (call #2) also times out. Only ~4-5 seconds
+later does DCP finally send us APCALL 22 (DEVICE_NOT_RESPONDING) and 24
+(DEVICE_NOT_STARTED), "firmware reports link fault", then DEACTIVATE.
+DPRX stayed 0 throughout; 12s later the usual "DPRX timeout, keeping DP
+tunnel". USB4 protocol probe finished: -110; no automatic retry
+(DPTX_RECONNECT_RETRIES=1, already exhausted).
+
+Read as: DCP's firmware itself was internally busy (almost certainly its
+own AUX/DPCD retry attempts) for several seconds after request_display,
+unresponsive to any of our host-issued AFK calls during that window --
+our calls' 1-second timeouts are simply shorter than DCP's own internal
+retry period, not evidence of an AFK workqueue deadlock on our side (the
+inbound ACTIVATE apcall, which also runs the native DPIN0 handshake
+synchronously, completed fine and did not block request_display's own
+reply moments earlier in the same boot). This looks like the AUX/DPRX
+handshake genuinely not completing this specific attempt, not a new
+regression from the dcpext1 fix -- the architecture is proven capable of
+DPRX=1 (0127), and this is either normal flakiness on this hub/adapter
+chain or a variable (physical port, cable reseat) not yet isolated.
+
+No code change indicated yet. Asked Oliver for a same-setup reboot retry
+(zero-risk, no config change) to see if this reproduces or if it was a
+one-off, before deciding on any further candidate.
+
 ## Last actions
 
 - **0124** (instrumentation, no behavior change): closed several silent
