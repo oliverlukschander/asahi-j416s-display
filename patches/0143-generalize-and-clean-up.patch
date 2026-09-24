@@ -1,0 +1,1048 @@
+From 75548e30512ebdcd0cd9a32928d9694a1598e20d Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 14:01:58 +0200
+Subject: [PATCH] Generalize and clean up: the USB4 DP tunnel now works with
+ zero flags
+
+The DP tunnel is confirmed working end to end on real hardware (a real
+2560x1440 picture on the external monitor over the OWC Thunderbolt 5 hub
++ Synaptics VMM7100 adapter), the culmination of candidates 0136-0142
+this session. This commit removes every diagnostic-only addition made
+purely to investigate the remaining issues, and every module_param gate
+that was either confirmed dead scaffolding or a redundant opt-in layered
+on top of scoping that was already hardware-precise -- so the driver now
+needs no special module options at all on this hardware.
+
+Removed entirely (all part of the pre-0127 "native DPIN0" single-purpose
+proof of concept, fully superseded by the real tunnel-routing mechanism):
+- usb4_native_dpin, usb4_protocol_probe, dcp_usb4_native_route() and the
+  possible_crtcs exclusion it drove in apple_probe_typec_ports() (this
+  exclusion was actively excluding dcpext0's CRTC bit from the tunnel
+  connector's encoder, which is exactly why every atomic commit for it
+  failed the generic encoder/CRTC pairing check with EINVAL before ever
+  reaching a driver-level hook -- root-caused via two rounds of stale
+  test-environment config that kept these "diagnostic" flags set to 1
+  since candidate 0129, candidates 0140/0142).
+- dpin_native and apple_usb4_dpin0_set_active() (drivers/thunderbolt/
+  apple.c) -- an orphaned, single-caller-free duplicate of the real,
+  generalized apple_dpin_set_active() a few hundred lines below it.
+- usb4_defer_bringup and the whole deferred-bringup/frame-snapshot
+  mechanism in the crossbar driver (t602x_right_dpin0_bring_up(),
+  apple_dpxbar_right_dpin0_bring_up(), apple_dpxbar_right_frame_snapshot(),
+  apple_dpxbar_is_typec_crossbar(), and their struct fields).
+
+Generalized to unconditional, permanent behavior (removed the opt-in
+flag, kept the logic):
+- usb4_route_prefer_fixed_diag -> apple_dcp_tb_dp_tunnel()'s route
+  scoring now always prefers a pipeline with a fixed output (dcpext0)
+  for a Type-C tunnel route. Extensive hardware testing this session
+  found dcpext1 (Type-C only, the "obvious" choice) never completes a
+  real link for a tunnel target -- DCP firmware accepts request_display
+  but never issues another apcall, a firmware-internal decision with no
+  driver-source asymmetry to explain or fix it. dcpext0 reaches a full
+  real AUX/DPCD link and, with the fixes below, a working picture.
+- usb4_tunnel_clock (drivers/phy/apple/atc.c) and dp_bw_grant (drivers/
+  thunderbolt/tunnel.c) -- both already gated on
+  of_machine_is_compatible("apple,j416s") plus specific port/PHY
+  compatibility checks; the extra opt-in flag was redundant. (
+  dp_video_counter, a genuine self-described optional debugfs
+  diagnostic, is left untouched -- not scaffolding.)
+
+Removed (fired on every atomic commit or every frame in production use,
+added purely to investigate this session's mysteries, no longer needed):
+- apple_plane_atomic_check()'s per-exit dev_info() calls (plane.c is now
+  byte-identical to its pre-session state).
+- dcp_hotplug()'s and dcp_crtc_atomic_modeset()'s crtc-state diagnostics
+  (iomfb.c).
+- dcp_crtc_atomic_check()'s per-commit diagnostic (dcp.c).
+- apple_probe_typec_ports()'s possible_crtcs-computation diagnostic
+  (apple_drv.c).
+
+Net: -556/+43 lines across 10 files. Built and verified: all four
+affected modules (appledrm, mux-apple-display-crossbar,
+thunderbolt/thunderbolt_apple, phy-apple-atc) rebuild cleanly with no
+new warnings (one pre-existing, unrelated unused-function warning in
+apple.c predates this session entirely, confirmed via git show HEAD).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/apple_drv.c      |  27 +----
+ drivers/gpu/drm/apple/dcp-internal.h   |   4 -
+ drivers/gpu/drm/apple/dcp.c            |  99 +++-------------
+ drivers/gpu/drm/apple/iomfb.c          |  39 +------
+ drivers/gpu/drm/apple/iomfb_template.c |  53 ---------
+ drivers/gpu/drm/apple/plane.c          |  51 +-------
+ drivers/mux/apple-display-crossbar.c   | 156 ++-----------------------
+ drivers/phy/apple/atc.c                |  12 +-
+ drivers/thunderbolt/apple.c            | 151 +-----------------------
+ drivers/thunderbolt/tunnel.c           |   7 +-
+ 10 files changed, 43 insertions(+), 556 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/apple_drv.c b/drivers/gpu/drm/apple/apple_drv.c
+index f2586e7d3..4c6fa6232 100644
+--- a/drivers/gpu/drm/apple/apple_drv.c
++++ b/drivers/gpu/drm/apple/apple_drv.c
+@@ -466,35 +466,10 @@ static int apple_probe_typec_ports(struct drm_device *drm,
+ 		INIT_WORK(&connector->hotplug_wq, dcp_hotplug);
+ 
+ 		for (i = 0; i < num_dcp; i++) {
+-			struct apple_dcp *candidate = platform_get_drvdata(dcp[i]);
+-			bool native_route = dcp_usb4_native_route(idx);
+-			bool has_candidate = dcp_typec_port_has_candidate(idx, dcp[i]);
+-
+-			/*
+-			 * Diagnostic (candidate 0141, see notes/2026-09-24-0141-*.md):
+-			 * 0140 dropped usb4_native_dpin/usb4_protocol_probe so
+-			 * native_route should read false here now, but the tunnel
+-			 * connector's plane atomic_check still never fires and
+-			 * every Aquamarine commit still fails ATOMIC_TEST_ONLY
+-			 * with EINVAL, unchanged. Log the actual computed
+-			 * contribution per candidate to see directly whether this
+-			 * exclusion is (still) why dcpext0's CRTC bit is missing
+-			 * from this port's possible_crtcs, or whether it never was.
+-			 */
+-			drm_info(drm,
+-				 "typec port %u candidate dcp-index=%u native_route=%d has_candidate=%d crtc_mask=0x%x\n",
+-				 idx, candidate->index, native_route, has_candidate,
+-				 crtc_mask[i]);
+-
+-			if (native_route && candidate->index != 2)
+-				continue;
+-			if (has_candidate)
++			if (dcp_typec_port_has_candidate(idx, dcp[i]))
+ 				mask |= crtc_mask[i];
+ 		}
+ 
+-		drm_info(drm, "typec port %u final possible_crtcs mask=0x%x\n",
+-			 idx, mask);
+-
+ 		if (!mask) {
+ 			drm_warn(drm, "Type-C port %u has no display pipeline\n",
+ 				 idx);
+diff --git a/drivers/gpu/drm/apple/dcp-internal.h b/drivers/gpu/drm/apple/dcp-internal.h
+index b7061101c..2ce9b6a93 100644
+--- a/drivers/gpu/drm/apple/dcp-internal.h
++++ b/drivers/gpu/drm/apple/dcp-internal.h
+@@ -57,9 +57,6 @@ struct apple_dcp_typec_route {
+ 
+ bool dcp_is_typec_output(struct apple_dcp *dcp);
+ bool dcp_is_usb4_output(struct apple_dcp *dcp);
+-bool dcp_usb4_protocol_probe_enabled(void);
+-extern bool usb4_native_dpin;
+-bool dcp_usb4_native_route(unsigned int typec_index);
+ 
+ struct dcpav_service_epic;
+ 
+@@ -302,7 +299,6 @@ struct apple_dcp {
+ 	struct typec_mux *typec_mux;
+ 	struct apple_dcp_typec_route typec_routes[DCP_MAX_TYPEC_ROUTES];
+ 	struct apple_dcp_typec_route *active_typec_route;
+-	bool right_frame_snapshot_done[2];
+ 	u32 nr_typec_routes;
+ 	bool phy_managed_by_typec;
+ 	bool typec_cable_connected;
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 2497200eb..fb18a1ef3 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -64,40 +64,6 @@ static bool show_notch;
+ module_param(show_notch, bool, 0644);
+ MODULE_PARM_DESC(show_notch, "Use the full display height and shows the notch");
+ 
+-/* Opt-in, one attempt per module lifetime; never a live parameter write. */
+-static bool usb4_protocol_probe;
+-module_param(usb4_protocol_probe, bool, 0444);
+-MODULE_PARM_DESC(usb4_protocol_probe,
+-		 "One USB4 protocol probe without a PHY (native: right port)");
+-bool usb4_native_dpin;
+-module_param(usb4_native_dpin, bool, 0444);
+-MODULE_PARM_DESC(usb4_native_dpin,
+-		 "Opt-in native DP-IN ACTIVATE handshake; requires usb4_protocol_probe");
+-
+-/*
+- * Diagnostic (candidate 0135, see notes/2026-09-24-0135-*.md): success
+- * (0127) and every dcpext1 failure since (0128-0134) differ in BOTH the
+- * physical Type-C port AND the DCP pipeline at once, never in isolation --
+- * 0127 was left-port+dcpext0, every failure is right-port+dcpext1. Setting
+- * this skips the 0128 fixed-output route-scoring penalty for one boot,
+- * so whichever port is actually tunneled lands on dcpext0 instead of
+- * dcpext1 -- reproducing 0127's own pipeline choice, but now on the port
+- * actually under test. Does not produce a working picture either way
+- * (dcpext0's plane/CRTC wiring is wrong for a Type-C-tunneled source,
+- * confirmed by 0127 itself); the only thing being tested is whether the
+- * rich link-training apcall burst and DPRX_DONE=1 that 0127 reached are a
+- * property of the port, or of the pipeline. Opt-in, diagnostic only.
+- */
+-static bool usb4_route_prefer_fixed_diag;
+-module_param(usb4_route_prefer_fixed_diag, bool, 0444);
+-MODULE_PARM_DESC(usb4_route_prefer_fixed_diag,
+-		 "Diagnostic: skip the dcpext1 route-scoring preference, forcing dcpext0 (0127's pipeline) on whichever port tunnels");
+-
+-bool dcp_usb4_protocol_probe_enabled(void)
+-{
+-	return usb4_protocol_probe;
+-}
+-
+ bool hdmi_audio;
+ module_param(hdmi_audio, bool, 0644);
+ MODULE_PARM_DESC(hdmi_audio, "Enable unstable HDMI audio support");
+@@ -161,21 +127,6 @@ static bool dcp_typec_route_fixed_output_busy(struct apple_dcp_typec_route *rout
+ 	return false;
+ }
+ 
+-/*
+- * Every typec_index with its own ACIO/USB4 controller instance
+- * (0 and 1 on the left, 2 on the right on j416s) works identically
+- * here -- there is nothing right-port-specific about the native DPIN0
+- * mechanism itself, only the physical base address differs per port
+- * (see apple_usb4_typec_acio_base() in drivers/thunderbolt/apple.c).
+- * Originally bounded to typec_index==2 only while this was a
+- * single-port proof of concept; generalized once a second port needed
+- * testing.
+- */
+-bool dcp_usb4_native_route(unsigned int typec_index)
+-{
+-	return usb4_native_dpin && usb4_protocol_probe && typec_index <= 2;
+-}
+-
+ static bool dcp_typec_route_available(struct apple_dcp_typec_route *route)
+ {
+ 	return !route->dcp->active_typec_route &&
+@@ -609,20 +560,25 @@ int apple_dcp_tb_dp_tunnel(struct device_node *connector_np, unsigned int dpin,
+ 		score = dcp_typec_route_score(candidate);
+ 		/*
+ 		 * j416s-specific, not in the reference (t8103 has a single
+-		 * dcpext): prefer a pipeline with no fixed output of its own
+-		 * (dcpext1, USB-C only) over one that can also drive a fixed
+-		 * HDMI/DP output (dcpext0). dcp_typec_route_available()
+-		 * already excludes dcpext0 while its fixed output is
+-		 * actually live, but a plain CRTC-index comparison otherwise
+-		 * lets dcpext0 win a tunnel route whenever nothing is
+-		 * plugged into HDMI -- confirmed on real hardware (2026-09-24
+-		 * candidate 0127's first boot: the tunnel routed to
+-		 * dcp@289c00000/dcpext0 instead of dcp@315c00000/dcpext1,
+-		 * every prior candidate's own working AFK target). Matches
+-		 * the same bias the pre-port dcp_typec_route_score_usb4()
+-		 * applied for exactly this reason.
++		 * dcpext): prefer a pipeline with a fixed output of its own
++		 * (dcpext0) for a Type-C tunnel route. dcpext1 (Type-C only)
++		 * looks like the natural choice, but extensive hardware
++		 * testing (2026-09-24, candidates 0128-0134) found it never
++		 * completes a real link for a tunnel target: DCP firmware
++		 * accepts request_display but never issues another apcall,
++		 * on every attempt. The driver-issued connect parameters are
++		 * byte-identical between the two pipelines, and nothing in
++		 * this driver's source explains the difference, so this is a
++		 * firmware-internal decision on the dcpext1 coprocessor
++		 * instance, not something fixable here. dcpext0, forced onto
++		 * the same physical port and tunnel (candidate 0135), reached
++		 * a full real AUX/DPCD link (DPRX_DONE=1) on the first
++		 * attempt and, once a stale test-environment misconfiguration
++		 * was cleared (candidates 0136-0142), a working picture --
++		 * so prefer it unconditionally for a tunnel route on this
++		 * hardware.
+ 		 */
+-		if (candidate->dcp->fixed_phy && !usb4_route_prefer_fixed_diag)
++		if (!candidate->dcp->fixed_phy)
+ 			score += 100;
+ 		if (score < best_score) {
+ 			best = candidate;
+@@ -1358,21 +1314,6 @@ int dcp_crtc_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state)
+ 
+ 	crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
+ 
+-	/*
+-	 * Diagnostic (candidate 0141): the tunnel connector's plane
+-	 * atomic_check never fires and every Aquamarine commit fails
+-	 * ATOMIC_TEST_ONLY with EINVAL, unchanged before and after removing
+-	 * the possible_crtcs exclusion (0140). Log every reach of this
+-	 * per-CRTC hook to see whether the generic core even gets this far
+-	 * for dcpext0's CRTC during a failed attempt, or rejects the
+-	 * transaction earlier (encoder/CRTC pairing) before any driver hook
+-	 * for this CRTC runs at all.
+-	 */
+-	dev_info(dcp->dev,
+-		 "dcp_crtc_atomic_check: crtc=%d mode=%dx%d active=%d enable=%d\n",
+-		 crtc->base.id, crtc_state->mode.hdisplay, crtc_state->mode.vdisplay,
+-		 crtc_state->active, crtc_state->enable);
+-
+ 	needs_modeset = drm_atomic_crtc_needs_modeset(crtc_state) || !dcp->valid_mode;
+ 	if (!needs_modeset && (!dcp->connector || !dcp->connector->connected)) {
+ 		/*
+@@ -1550,10 +1491,6 @@ static void dcp_typec_reconnect_work(struct work_struct *work)
+ 	if (!READ_ONCE(dcp->typec_cable_connected))
+ 		return;
+ 	ret = dcp_dptx_connect(dcp, 0);
+-	if (dcp_is_usb4_output(dcp) && usb4_protocol_probe) {
+-		dev_info(dcp->dev, "USB4 protocol probe finished: %d; no automatic retry\n", ret);
+-		return;
+-	}
+ 	if (!ret) {
+ 		dcp->typec_reconnect_tries = 0;
+ 		return;
+diff --git a/drivers/gpu/drm/apple/iomfb.c b/drivers/gpu/drm/apple/iomfb.c
+index c447441f6..1e33d5282 100644
+--- a/drivers/gpu/drm/apple/iomfb.c
++++ b/drivers/gpu/drm/apple/iomfb.c
+@@ -283,23 +283,6 @@ void dcp_hotplug(struct work_struct *work)
+ 	dev_info(dcp->dev, "%s() connected:%d valid_mode:%d nr_modes:%u\n", __func__,
+ 		 connector->connected, dcp->valid_mode, dcp->nr_modes);
+ 
+-	/*
+-	 * Diagnostic (candidate 0139): report whether this connector has an
+-	 * active CRTC bound and what mode it already holds, unconditionally
+-	 * (not gated on dcp_is_usb4_output), so a next capture can tell
+-	 * whether Hyprland ever actually committed anything for a
+-	 * USB4-tunneled connector versus never touching it at all.
+-	 */
+-	{
+-		struct drm_crtc *crtc = connector->base.state ?
+-					 connector->base.state->crtc : NULL;
+-		dev_info(dcp->dev,
+-			 "%s: crtc=%p active=%d mode=%dx%d\n", __func__,
+-			 crtc, crtc && crtc->state ? crtc->state->active : -1,
+-			 crtc && crtc->state ? crtc->state->mode.hdisplay : -1,
+-			 crtc && crtc->state ? crtc->state->mode.vdisplay : -1);
+-	}
+-
+ 	if (!connector->connected) {
+ 		drm_edid_free(connector->drm_edid);
+ 		connector->drm_edid = NULL;
+@@ -533,21 +516,8 @@ int dcp_crtc_atomic_modeset(struct drm_crtc *crtc,
+ 		return 0;
+ 
+ 	/* ignore no mode, poweroff is handled elsewhere */
+-	if (crtc_state->mode.hdisplay == 0 && crtc_state->mode.vdisplay == 0) {
+-		/*
+-		 * Diagnostic (candidate 0139, see notes/2026-09-24-0139-*.md):
+-		 * a USB4-tunneled connector has been observed stuck applying
+-		 * a 0x0 mode with no picture. This silent bail-out is the
+-		 * only place that would ever run for such a commit -- log
+-		 * whether it's actually reached, and whether the CRTC is
+-		 * active, to tell a real-but-degenerate atomic commit apart
+-		 * from no commit ever landing at all.
+-		 */
+-		dev_info(dcp->dev,
+-			 "%s: 0x0 commit for crtc active=%d (usb4=%d)\n",
+-			 __func__, crtc_state->active, dcp_is_usb4_output(dcp));
++	if (crtc_state->mode.hdisplay == 0 && crtc_state->mode.vdisplay == 0)
+ 		return 0;
+-	}
+ 
+ 	switch (dcp->fw_compat) {
+ 	case DCP_FIRMWARE_V_12_3:
+@@ -593,13 +563,6 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
+ 	 * re-runs the modeset, which marks the mode valid again, before the
+ 	 * firmware has reported the display back.
+ 	 */
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev,
+-			      "USB4 frame: flush entry valid=%u connected=%u busy=%u\n",
+-			      dcp->valid_mode,
+-			      dcp->connector && dcp->connector->connected,
+-			      dcp_channel_busy(&dcp->ch_cmd));
+-
+ 	if (!dcp->valid_mode || !dcp->connector || !dcp->connector->connected) {
+ 		schedule_work(&dcp->vblank_wq);
+ 		return;
+diff --git a/drivers/gpu/drm/apple/iomfb_template.c b/drivers/gpu/drm/apple/iomfb_template.c
+index f65e65d08..a09935f0d 100644
+--- a/drivers/gpu/drm/apple/iomfb_template.c
++++ b/drivers/gpu/drm/apple/iomfb_template.c
+@@ -120,47 +120,14 @@ static u32 dcpep_cb_zero(struct apple_dcp *dcp)
+ 	return 0;
+ }
+ 
+-extern int apple_dpxbar_right_frame_snapshot(struct mux_control *mux);
+-
+-static void right_frame_snapshot(struct apple_dcp *dcp)
+-{
+-	struct apple_dcp_typec_route *route = dcp->active_typec_route;
+-	struct mux_control *mux;
+-	int (*snapshot)(struct mux_control *mux);
+-	bool usb4;
+-	int ret;
+-
+-	if (!usb4_native_dpin || !dcp_usb4_protocol_probe_enabled() ||
+-	    dcp->index != 2 || !route ||
+-	    !dcp_usb4_native_route(route->typec_index) || route->mux_index != 2)
+-		return;
+-	usb4 = dcp_is_usb4_output(dcp);
+-	mux = route->active_xbar ?: route->xbar;
+-	if (!mux || dcp->right_frame_snapshot_done[usb4])
+-		return;
+-	dcp->right_frame_snapshot_done[usb4] = true;
+-	snapshot = symbol_get(apple_dpxbar_right_frame_snapshot);
+-	if (!snapshot) {
+-		dev_info(dcp->dev, "Right frame: crossbar snapshot unavailable\n");
+-		return;
+-	}
+-	ret = snapshot(mux);
+-	symbol_put(apple_dpxbar_right_frame_snapshot);
+-	dev_info(dcp->dev, "Right frame: usb4=%u crossbar snapshot result=%d\n",
+-		 usb4, ret);
+-}
+-
+ static void dcpep_cb_swap_complete(struct apple_dcp *dcp,
+ 				   struct DCP_FW_NAME(dc_swap_complete_resp) *resp)
+ {
+ 	ktime_t now = ktime_get();
+ 	trace_iomfb_swap_complete(dcp, resp->swap_id);
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev, "USB4 frame: complete id=%u\n", resp->swap_id);
+ 	dcp->last_swap_id = resp->swap_id;
+ 
+ 	dcp_drm_crtc_page_flip(dcp, now);
+-	right_frame_snapshot(dcp);
+ 	if (dcp->crc_enabled) {
+ 		u32 crc32 = 0;
+ 		drm_crtc_add_crc_entry(&dcp->crtc->base, true, resp->swap_id, &crc32);
+@@ -1147,9 +1114,6 @@ static void
+ dcpep_cb_swap_complete_intent_gated(struct apple_dcp *dcp,
+ 				    struct dcp_swap_complete_intent_gated *info)
+ {
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev, "USB4 frame: complete intent id=%u %ux%u\n",
+-			      info->swap_id, info->width, info->height);
+ 	trace_iomfb_swap_complete_intent_gated(dcp, info->swap_id,
+ 		info->width, info->height);
+ }
+@@ -1158,8 +1122,6 @@ static void
+ dcpep_cb_abort_swap_ap_gated(struct apple_dcp *dcp, u32 *swap_id)
+ {
+ 	trace_iomfb_abort_swap_ap_gated(dcp, *swap_id);
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev, "USB4 frame: abort id=%u\n", *swap_id);
+ }
+ 
+ static struct dcpep_get_tiling_state_resp
+@@ -1241,9 +1203,6 @@ static void dcp_swapped(struct apple_dcp *dcp, void *data, void *cookie)
+ {
+ 	struct DCP_FW_NAME(dcp_swap_submit_resp) *resp = data;
+ 
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev, "USB4 frame: submit ack ret=%u\n", resp->ret);
+-
+ 	if (resp->ret) {
+ 		dev_err(dcp->dev, "swap failed! status %u\n", resp->ret);
+ 		dcp_drm_crtc_vblank(dcp->crtc);
+@@ -1271,9 +1230,6 @@ static void dcp_swap_started(struct apple_dcp *dcp, void *data, void *cookie)
+ 
+ 	DCP_FW_UNION(dcp->swap).swap.swap_id = resp->swap_id;
+ 
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev, "USB4 frame: start ack; submit id=%u\n",
+-			      resp->swap_id);
+ 	trace_iomfb_swap_submit(dcp, resp->swap_id);
+ 	dcp_swap_submit(dcp, false, &DCP_FW_UNION(dcp->swap), dcp_swapped, NULL);
+ }
+@@ -1283,9 +1239,6 @@ static void do_swap(struct apple_dcp *dcp, void *data, void *cookie)
+ {
+ 	struct dcp_swap_start_req start_req = { 0 };
+ 
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev, "USB4 frame: start request connected=%u\n",
+-			      dcp->connector && dcp->connector->connected);
+ 	if (dcp->connector && dcp->connector->connected)
+ 		dcp_swap_start(dcp, false, &start_req, dcp_swap_started, NULL);
+ 	else
+@@ -1580,12 +1533,6 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
+ 		dcp->brightness.update = false;
+ 	}
+ 
+-	if (usb4_native_dpin && dcp_is_usb4_output(dcp))
+-		dev_info_once(dcp->dev,
+-			      "USB4 frame: flush surface=%u enabled=0x%x ctm=%u\n",
+-			      has_surface, req->swap.swap_enabled,
+-			      crtc_state->color_mgmt_changed);
+-
+ 	if (crtc_state->color_mgmt_changed) {
+ 		struct iomfb_set_matrix_req mat = {
+ 			.location = 9,
+diff --git a/drivers/gpu/drm/apple/plane.c b/drivers/gpu/drm/apple/plane.c
+index 81e103a83..51a6c2dbd 100644
+--- a/drivers/gpu/drm/apple/plane.c
++++ b/drivers/gpu/drm/apple/plane.c
+@@ -32,20 +32,8 @@ static int apple_plane_atomic_check(struct drm_plane *plane,
+ 		return 0;
+ 
+ 	crtc_state = drm_atomic_get_crtc_state(state, new_plane_state->crtc);
+-	if (IS_ERR(crtc_state)) {
+-		/*
+-		 * Diagnostic (candidate 0139, see notes/2026-09-24-0139-*.md):
+-		 * a USB4-tunneled connector's plane commit was observed
+-		 * failing atomic TEST_ONLY with EINVAL for every candidate
+-		 * mode Hyprland/Aquamarine tried (800x600 down to 640x480),
+-		 * with no log trace anywhere in this function's silent
+-		 * return paths. Log every exit to find which one fires.
+-		 */
+-		dev_info(state->dev->dev,
+-			 "%s: plane=%d crtc_state error: %ld\n", __func__,
+-			 plane->base.id, PTR_ERR(crtc_state));
++	if (IS_ERR(crtc_state))
+ 		return PTR_ERR(crtc_state);
+-	}
+ 
+ 	/*
+ 	 * DCP limits downscaling to 2x and upscaling to 4x. Attempting to
+@@ -63,24 +51,11 @@ static int apple_plane_atomic_check(struct drm_plane *plane,
+ 						  FRAC_16_16(1, 2),
+ 						  FRAC_16_16(4, 1),
+ 						  true, true);
+-	if (ret < 0) {
+-		dev_info(state->dev->dev,
+-			 "%s: plane=%d crtc=%d mode=%dx%d fb=%dx%d ret=%d\n",
+-			 __func__, plane->base.id, new_plane_state->crtc->base.id,
+-			 crtc_state->mode.hdisplay, crtc_state->mode.vdisplay,
+-			 new_plane_state->fb ? new_plane_state->fb->width : -1,
+-			 new_plane_state->fb ? new_plane_state->fb->height : -1,
+-			 ret);
++	if (ret < 0)
+ 		return ret;
+-	}
+ 
+-	if (!new_plane_state->visible) {
+-		dev_info(state->dev->dev,
+-			 "%s: plane=%d not visible, mode=%dx%d\n", __func__,
+-			 plane->base.id, crtc_state->mode.hdisplay,
+-			 crtc_state->mode.vdisplay);
++	if (!new_plane_state->visible)
+ 		return 0;
+-	}
+ 
+ 	/*
+ 	 * DCP does not allow a surface to clip off the screen, and will crash
+@@ -111,15 +86,8 @@ static int apple_plane_atomic_check(struct drm_plane *plane,
+ 	 * Pitches have to be 64-byte aligned.
+ 	 */
+ 	for (u32 i = 0; i < new_plane_state->fb->format->num_planes; i++)
+-		if (new_plane_state->fb->pitches[i] & 63) {
+-			dev_info(state->dev->dev,
+-				 "%s: plane=%d unaligned pitch[%u]=%u fb=%dx%d\n",
+-				 __func__, plane->base.id, i,
+-				 new_plane_state->fb->pitches[i],
+-				 new_plane_state->fb->width,
+-				 new_plane_state->fb->height);
++		if (new_plane_state->fb->pitches[i] & 63)
+ 			return -EINVAL;
+-		}
+ 
+ 	/*
+ 	 * FIXME: dcp can currently only use multi-planar buffers using the same
+@@ -133,19 +101,10 @@ static int apple_plane_atomic_check(struct drm_plane *plane,
+ 		const struct drm_gem_object *first = new_plane_state->fb->obj[0];
+ 		for (u32 i = 1; i < new_plane_state->fb->format->num_planes; i++)
+ 			if (new_plane_state->fb->obj[i] != NULL &&
+-			    new_plane_state->fb->obj[i] != first) {
+-				dev_info(state->dev->dev,
+-					 "%s: plane=%d mismatched multi-plane obj[%u]\n",
+-					 __func__, plane->base.id, i);
++			    new_plane_state->fb->obj[i] != first)
+ 				return -EINVAL;
+-			}
+ 	}
+ 
+-	dev_info(state->dev->dev,
+-		 "%s: plane=%d crtc=%d mode=%dx%d fb=%dx%d OK\n", __func__,
+-		 plane->base.id, new_plane_state->crtc->base.id,
+-		 crtc_state->mode.hdisplay, crtc_state->mode.vdisplay,
+-		 new_plane_state->fb->width, new_plane_state->fb->height);
+ 	return 0;
+ }
+ 
+diff --git a/drivers/mux/apple-display-crossbar.c b/drivers/mux/apple-display-crossbar.c
+index 425df2d0f..89569ec3c 100644
+--- a/drivers/mux/apple-display-crossbar.c
++++ b/drivers/mux/apple-display-crossbar.c
+@@ -99,18 +99,11 @@ struct apple_dpxbar_hw {
+ 	const struct mux_control_ops *ops;
+ };
+ 
+-static bool usb4_defer_bringup;
+-module_param(usb4_defer_bringup, bool, 0444);
+-MODULE_PARM_DESC(usb4_defer_bringup, "Defer J416s right DPIN0 gates until tunnel clock setup");
+-
+ struct apple_dpxbar {
+ 	struct device *dev;
+ 	void __iomem *regs;
+ 	int selected_dispext[MUX_MAX];
+ 	spinlock_t lock;
+-	bool frame_snapshot_done[MUX_MAX];
+-	bool dpin0_bringup_attempted;
+-	bool defer_dpin0_bringup;
+ };
+ 
+ static inline void dpxbar_mask32(struct apple_dpxbar *xbar, u32 reg, u32 mask,
+@@ -218,7 +211,6 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 	unsigned int dispext_bit_en;
+ 	u32 atc_bit, mux_mask, mux_val;
+ 	bool enable;
+-	bool deferred = dpxbar->defer_dpin0_bringup && index == MUX_DPIN0;
+ 	int ret = 0;
+ 
+ 	if (index >= MUX_MAX)
+@@ -236,9 +228,6 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 		return -EINVAL;
+ 	}
+ 
+-	if (deferred && enable && state != 2)
+-		return -EINVAL;
+-
+ 	atc_bit = t602x_atc_bit(index);
+ 	mux_mask = t602x_mux_mask(index);
+ 	mux_val = t602x_mux_set(index, mux_state);
+@@ -282,10 +271,8 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 			    T602X_FIFO_RD_PCLK2_EN : FIFO_RD_PCLK1_EN, atc_bit);
+ 
+ 		dpxbar_clear32(dpxbar, T602X_REG_034, atc_bit);
+-		if (!deferred) {
+-			dpxbar_clear32(dpxbar, CROSSBAR_ATC_EN, atc_bit);
+-			dpxbar_clear32(dpxbar, CROSSBAR_DISPEXT_EN, prev_dispext_bit);
+-		}
++		dpxbar_clear32(dpxbar, CROSSBAR_ATC_EN, atc_bit);
++		dpxbar_clear32(dpxbar, CROSSBAR_DISPEXT_EN, prev_dispext_bit);
+ 		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, 0);
+ 
+ 		dpxbar->selected_dispext[index] = -1;
+@@ -295,10 +282,6 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 		dpxbar_mask32(dpxbar, T602X_REG_030, mux_mask, mux_val);
+ 		udelay(10);
+ 
+-		/* Native connect() selects only; DID_CHANGE enables after PLL setup. */
+-		if (deferred)
+-			goto route_selected;
+-
+ 		dpxbar_clear32(dpxbar, T602X_FIFO_WR_N_CLK_EN, dispext_bit);
+ 		dpxbar_clear32(dpxbar, T602X_REG_014, 0x4);
+ 
+@@ -323,7 +306,6 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 
+ 		dpxbar_set32(dpxbar, T602X_FIFO_RD_UNK_EN, dispext_bit);
+ 
+-route_selected:
+ 		dpxbar->selected_dispext[index] = state;
+ 	}
+ 
+@@ -338,37 +320,11 @@ static int apple_dpxbar_set_t602x(struct mux_control *mux, int state)
+ 		dev_info(dpxbar->dev, "Switched %s to disconnected state\n",
+ 			 apple_dpxbar_names[index]);
+ 
+-	if (deferred && enable)
+-		dev_info(dpxbar->dev, "native DPIN0: route selected; gates deferred until clock setup\n");
+ 	t602x_dump(dpxbar, enable ? apple_dpxbar_names[index] : "idle");
+ 
+ 	return ret;
+ }
+ 
+-/* Native T602x clock1 bring-up for an already selected right DPIN0/source2. */
+-static int t602x_right_dpin0_bring_up(struct apple_dpxbar *xbar)
+-{
+-	/* Release existing resets; do not take the live connection down first. */
+-	dpxbar_clear32(xbar, T602X_FIFO_WR_N_CLK_EN, BIT(2));
+-	dpxbar_clear32(xbar, T602X_REG_014, BIT(2));
+-	dpxbar_clear32(xbar, T602X_FIFO_RD_PCLK2_EN, BIT(0));
+-	udelay(1);
+-	if ((readl(xbar->regs + T602X_REG_804_STAT) & BIT(2)) ||
+-	    (readl(xbar->regs + T602X_REG_810_STAT) & BIT(2)) ||
+-	    (readl(xbar->regs + T602X_REG_81C_STAT) & BIT(0)))
+-		return -ETIMEDOUT;
+-
+-	dpxbar_set32(xbar, T602X_FIFO_WR_UNK_EN, BIT(2));
+-	dpxbar_mask32(xbar, T602X_REG_018, GENMASK(5, 4), BIT(4));
+-	dpxbar_mask32(xbar, T602X_FIFO_RD_N_CLK_EN, GENMASK(1, 0), BIT(0));
+-	dpxbar_set32(xbar, T602X_FIFO_WR_DPTX_CLK_EN, BIT(2));
+-	dpxbar_set32(xbar, T602X_REG_00C, BIT(2));
+-	dpxbar_set32(xbar, T602X_REG_01C, BIT(0));
+-	dpxbar_set32(xbar, T602X_REG_034, BIT(0));
+-	dpxbar_set32(xbar, T602X_FIFO_RD_UNK_EN, BIT(2));
+-	return 0;
+-}
+-
+ static int apple_dpxbar_set(struct mux_control *mux, int state)
+ {
+ 	struct apple_dpxbar *dpxbar = mux_chip_priv(mux->chip);
+@@ -508,97 +464,12 @@ static const struct mux_control_ops apple_dpxbar_t602x_ops = {
+ };
+ 
+ /*
+- * j416s has one display crossbar instance per Type-C port at
+- * 0x70304c000 (left), 0xb0304c000 (left), 0xf0304c000 (right) --
+- * the same top-byte pattern as the ACIO/DPIN0 addresses in
+- * drivers/thunderbolt/apple.c. Originally these three call sites only
+- * accepted the right port's address while this was a single-port
+- * proof of concept; generalized once a second port needed testing.
+- */
+-static bool apple_dpxbar_is_typec_crossbar(u64 base)
+-{
+-	return base == 0x70304c000ULL || base == 0xb0304c000ULL ||
+-	       base == 0xf0304c000ULL;
+-}
+-
+-/* Optional diagnostic, called only by the native DPIN0 experiment. */
+-int apple_dpxbar_right_frame_snapshot(struct mux_control *mux);
+-int apple_dpxbar_right_frame_snapshot(struct mux_control *mux)
+-{
+-	struct apple_dpxbar *xbar;
+-	struct resource *res;
+-	unsigned long flags;
+-	unsigned int index;
+-	int ret = 0;
+-
+-	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
+-	    !of_machine_is_compatible("apple,j416s"))
+-		return -EINVAL;
+-	index = mux_control_get_index(mux);
+-	if (index != MUX_DPIN0 && index != MUX_DPPHY)
+-		return -EINVAL;
+-	xbar = mux_chip_priv(mux->chip);
+-	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+-	if (!res || !apple_dpxbar_is_typec_crossbar(res->start) || resource_size(res) < 0x1000)
+-		return -EINVAL;
+-
+-	/* Selection and disconnect use this same lock. No new mapping/writes. */
+-	spin_lock_irqsave(&xbar->lock, flags);
+-	if (xbar->selected_dispext[index] != 2)
+-		ret = -ENODEV;
+-	else if (xbar->frame_snapshot_done[index])
+-		ret = -EALREADY;
+-	else {
+-		xbar->frame_snapshot_done[index] = true;
+-		t602x_dump(xbar, index == MUX_DPIN0 ?
+-			   "after-frame-dpin0" : "after-frame-dpphy");
+-	}
+-	spin_unlock_irqrestore(&xbar->lock, flags);
+-	return ret;
+-}
+-EXPORT_SYMBOL_GPL(apple_dpxbar_right_frame_snapshot);
+-
+-/* Optional, one-shot native bring-up after successful USB4 clock setup. */
+-int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux);
+-int apple_dpxbar_right_dpin0_bring_up(struct mux_control *mux)
+-{
+-	struct apple_dpxbar *xbar;
+-	struct resource *res;
+-	unsigned long flags;
+-	int ret;
+-
+-	if (!mux || mux->chip->ops != &apple_dpxbar_t602x_ops ||
+-	    mux_control_get_index(mux) != MUX_DPIN0 ||
+-	    !of_machine_is_compatible("apple,j416s"))
+-		return -EINVAL;
+-	xbar = mux_chip_priv(mux->chip);
+-	res = platform_get_resource(to_platform_device(xbar->dev), IORESOURCE_MEM, 0);
+-	if (!res || !apple_dpxbar_is_typec_crossbar(res->start) || resource_size(res) < 0x1000)
+-		return -EINVAL;
+-	spin_lock_irqsave(&xbar->lock, flags);
+-	if (xbar->selected_dispext[MUX_DPIN0] != 2)
+-		ret = -ENODEV;
+-	else if (xbar->dpin0_bringup_attempted)
+-		ret = -EALREADY;
+-	else {
+-		xbar->dpin0_bringup_attempted = true;
+-		ret = t602x_right_dpin0_bring_up(xbar);
+-		t602x_dump(xbar, "native-link-up-dpin0");
+-	}
+-	spin_unlock_irqrestore(&xbar->lock, flags);
+-	dev_info(xbar->dev, "native DPIN0 crossbar bring-up result=%d\n", ret);
+-	return ret;
+-}
+-EXPORT_SYMBOL_GPL(apple_dpxbar_right_dpin0_bring_up);
+-
+-/*
+- * Generalization of t602x_right_dpin0_bring_up() (kept above, unchanged, for
+- * the existing native-DPIN0 experiment) to any index and any already-
+- * selected dispext, for aurora-silicon/linux#8's dcp_tunnel_crossbar_up():
+- * bring the clock/FIFO gates up on a mux that dcp_typec_route_activate()
+- * already selected (deferred mode, no gates yet). Same register set,
+- * parameterized on the live selected_dispext[index] instead of a hardcoded
+- * source 2, and this index's own atc_bit instead of always dpin0's.
++ * For aurora-silicon/linux#8's dcp_tunnel_crossbar_up(): bring the
++ * clock/FIFO gates up on a mux that dcp_typec_route_activate() already
++ * selected. Same register set as apple_dpxbar_set_t602x()'s enable path,
++ * parameterized on the live selected_dispext[index] instead of a
++ * hardcoded source 2, and this index's own atc_bit instead of always
++ * dpin0's.
+  */
+ int apple_dpxbar_link_up(struct mux_control *mux);
+ int apple_dpxbar_link_up(struct mux_control *mux)
+@@ -661,9 +532,8 @@ EXPORT_SYMBOL_GPL(apple_dpxbar_link_up);
+  * deselecting the mux or dropping CROSSBAR_ATC_EN/CROSSBAR_DISPEXT_EN --
+  * ported from aurora-silicon/linux#8's own apple_dpxbar_link_down()
+  * semantics ("mux selection and ATC output enable kept"). Re-asserts the
+- * same reset bits apple_dpxbar_link_up()/t602x_right_dpin0_bring_up()
+- * release, so a later link_up() on the same route starts from the same
+- * state as a fresh selection.
++ * same reset bits apple_dpxbar_link_up() releases, so a later link_up()
++ * on the same route starts from the same state as a fresh selection.
+  */
+ int apple_dpxbar_link_down(struct mux_control *mux);
+ int apple_dpxbar_link_down(struct mux_control *mux)
+@@ -706,7 +576,6 @@ static int apple_dpxbar_probe(struct platform_device *pdev)
+ 	struct mux_chip *mux_chip;
+ 	struct apple_dpxbar *dpxbar;
+ 	const struct apple_dpxbar_hw *hw;
+-	struct resource *res;
+ 	int ret;
+ 
+ 	hw = of_device_get_match_data(dev);
+@@ -718,11 +587,6 @@ static int apple_dpxbar_probe(struct platform_device *pdev)
+ 	mux_chip->ops = hw->ops;
+ 	spin_lock_init(&dpxbar->lock);
+ 
+-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-	dpxbar->defer_dpin0_bringup = usb4_defer_bringup && res &&
+-		apple_dpxbar_is_typec_crossbar(res->start) && resource_size(res) >= 0x1000 &&
+-		of_machine_is_compatible("apple,j416s") &&
+-		of_device_is_compatible(dev->of_node, "apple,t6020-display-crossbar");
+ 	dpxbar->dev = dev;
+ 	dpxbar->regs = devm_platform_ioremap_resource(pdev, 0);
+ 	if (IS_ERR(dpxbar->regs))
+diff --git a/drivers/phy/apple/atc.c b/drivers/phy/apple/atc.c
+index db0f583b2..aef2714aa 100644
+--- a/drivers/phy/apple/atc.c
++++ b/drivers/phy/apple/atc.c
+@@ -1898,14 +1898,10 @@ static int atcphy_power_on(struct apple_atcphy *atcphy)
+ }
+ 
+ /*
+- * Bounded J416s right DPIN0 clock experiment. Native 13.5 uses a fixed
+- * AUSPLL descriptor and selects the requested rate at TX_DP_CTRL0.
+- * All addresses below belong to the existing ATC core mapping, not ACIO RC.
++ * J416s DP tunnel clock. Native 13.5 uses a fixed AUSPLL descriptor and
++ * selects the requested rate at TX_DP_CTRL0. All addresses below belong
++ * to the existing ATC core mapping, not ACIO RC.
+  */
+-static bool usb4_tunnel_clock;
+-module_param(usb4_tunnel_clock, bool, 0444);
+-MODULE_PARM_DESC(usb4_tunnel_clock, "Opt-in J416s right DPIN0 tunnel clock");
+-
+ struct atc_tunnel_saved_reg {
+ 	u32 reg;
+ 	u32 mask;
+@@ -2367,7 +2363,7 @@ int apple_atc_dp_tunnel_rate(struct phy *phy, u8 rate)
+ 	struct apple_atcphy *atcphy;
+ 	int ret;
+ 
+-	if (!usb4_tunnel_clock || !phy || phy->ops != &apple_atc_dp_phy_ops ||
++	if (!phy || phy->ops != &apple_atc_dp_phy_ops ||
+ 	    !of_machine_is_compatible("apple,j416s"))
+ 		return -EOPNOTSUPP;
+ 	atcphy = phy_get_drvdata(phy);
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index d395869f9..6b1c15e79 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -121,11 +121,6 @@
+ #define TB_VSE_CAP_APPLE_CABLE_INFO_LEGACY_ADAPTER BIT(9)
+ #define TB_VSE_CAP_APPLE_CABLE_INFO_TBT2_3 BIT(10)
+ 
+-/* J416s lab candidate: never enabled implicitly by a connected hub. */
+-static bool dpin_native;
+-module_param(dpin_native, bool, 0444);
+-MODULE_PARM_DESC(dpin_native, "Opt-in J416s right-port native DP-IN handshake");
+-
+ /*
+  * Bounded lab sweep of the unconfirmed DPIN0 MODE_A/MODE_B value (see
+  * apple-dpin-handshake.h); writable so the remaining candidates in the
+@@ -153,9 +148,6 @@ struct apple_cio {
+ 	void __iomem *rc_base;
+ 	struct resource *rc_res;
+ 	struct apple_tunable *rc_tunable;
+-	void __iomem *dpin_base;
+-	bool dpin_attempted;
+-	bool dpin_active;
+ 
+ 	struct resource *sram_res;
+ 	void __iomem *sram_base;
+@@ -1545,7 +1537,6 @@ static void apple_cio_stop(struct apple_cio *acio)
+ 		dev_pm_syscore_device(acio->pd_list->pd_devs[i], false);
+ 	}
+ 
+-	acio->dpin_active = false;
+ 	acio->current_cable_info = 0;
+ }
+ 
+@@ -1931,141 +1922,6 @@ static int apple_dpin_wait(void *ctx)
+ 	return 0;
+ }
+ 
+-/*
+- * j416s has one ACIO/USB4 controller instance per Type-C port, each at
+- * a base address that differs only in the top byte: 0=left/0x7,
+- * 1=left/0xb, 2=right/0xf (confirmed against this machine's own device
+- * tree: /sys/firmware/devicetree/base/aliases/usb4-<N>-acio). DPIN0's
+- * offset within each instance's window is fixed, so the same top byte
+- * that selects the ACIO node also selects the matching DPIN0 range.
+- * Originally hardcoded to the right port only (0xf...) while this was
+- * a single-port proof of concept; generalized once a second port
+- * needed testing.
+- */
+-static u64 apple_usb4_typec_acio_base(unsigned int typec_index)
+-{
+-	switch (typec_index) {
+-	case 0: return 0x701ac0000ULL;
+-	case 1: return 0xb01ac0000ULL;
+-	case 2: return 0xf01ac0000ULL;
+-	default: return 0;
+-	}
+-}
+-
+-int apple_usb4_dpin0_set_active(unsigned int typec_index, bool active);
+-int apple_usb4_dpin0_set_active(unsigned int typec_index, bool active)
+-{
+-	u64 acio_base = apple_usb4_typec_acio_base(typec_index);
+-	u64 dpin0_base = (acio_base & 0xf00000000ULL) | 0x01e50000ULL;
+-	char path[32];
+-	struct resource res = {
+-		.start = dpin0_base,
+-		.end = dpin0_base + 0x3fffULL,
+-		.flags = IORESOURCE_MEM | IORESOURCE_MEM_NONPOSTED,
+-		.name = "j416s-native-dpin0",
+-	};
+-	struct apple_dpin_poll poll;
+-	struct apple_dpin_io io = {
+-		.read = apple_dpin_read,
+-		.write = apple_dpin_write,
+-		.wait = apple_dpin_wait,
+-		.ctx = &poll,
+-	};
+-	struct platform_device *pdev;
+-	struct device_node *np;
+-	struct apple_cio *acio;
+-	int ret = -ENODEV;
+-
+-	if (!dpin_native || !of_machine_is_compatible("apple,j416s") || !acio_base)
+-		return -EOPNOTSUPP;
+-	snprintf(path, sizeof(path), "/soc/cio@%llx", acio_base);
+-	np = of_find_node_by_path(path);
+-	if (!np)
+-		return -ENODEV;
+-	pdev = of_find_device_by_node(np);
+-	of_node_put(np);
+-	if (!pdev)
+-		return -ENODEV;
+-	/* Fail rather than wait behind unbind or a cable power transition. */
+-	if (!device_trylock(&pdev->dev)) {
+-		ret = -EBUSY;
+-		goto put;
+-	}
+-	if (pdev->dev.driver != &apple_cio_driver.driver)
+-		goto unlock_device;
+-	acio = platform_get_drvdata(pdev);
+-	if (!acio || !mutex_trylock(&acio->lock)) {
+-		ret = -EBUSY;
+-		goto unlock_device;
+-	}
+-	if (!acio->current_cable_info || !acio->nhi_pdev ||
+-	    acio->rc_res->start != acio_base) {
+-		/*
+-		 * A real physical unplug clears current_cable_info (and often
+-		 * nhi_pdev) before the DCP-issued DEACTIVATE APCALL reaches
+-		 * us, so this trips on every ordinary disconnect, not just a
+-		 * stale or unrelated call -- confirmed by seeing exactly this
+-		 * -ENODEV on a real deactivate during the 0112 sweep, which
+-		 * silently skipped both the MODE_A/MODE_B register clear and
+-		 * the dpin_attempted reset below, permanently latching out
+-		 * every activate for the rest of that boot. DPIN0's registers
+-		 * are on-die SoC hardware, not torn down by cable removal, so
+-		 * if we previously activated (dpin_base already mapped), fall
+-		 * through to the same deactivate/cleanup path as normal
+-		 * instead of leaving our own state stuck. Only bail out here
+-		 * when there is truly nothing of ours to clean up.
+-		 */
+-		if (active || !acio->dpin_base)
+-			goto unlock_cio;
+-	}
+-	if (active == acio->dpin_active) {
+-		ret = 0;
+-		goto unlock_cio;
+-	}
+-	if (active && acio->dpin_attempted) {
+-		ret = -EALREADY;
+-		goto unlock_cio;
+-	}
+-	if (active)
+-		acio->dpin_attempted = true;
+-	if (!acio->dpin_base) {
+-		acio->dpin_base = devm_ioremap_resource(&pdev->dev, &res);
+-		if (IS_ERR(acio->dpin_base)) {
+-			ret = PTR_ERR(acio->dpin_base);
+-			acio->dpin_base = NULL;
+-			goto unlock_cio;
+-		}
+-	}
+-	poll.base = acio->dpin_base;
+-	poll.deadline = jiffies + msecs_to_jiffies(1000);
+-	dev_info(acio->dev,
+-		 "native DPIN0: active=%u base=%pa, CONTROL=0x0c ACK=0x10 mode_value=%u\n",
+-		 active, &res.start, dpin_mode_value);
+-	ret = apple_dpin_handshake(&io, active, dpin_mode_value);
+-	if (!ret) {
+-		acio->dpin_active = active;
+-		/*
+-		 * A clean deactivate clears MODE_A/MODE_B back to a known
+-		 * baseline (apple_dpin_handshake()'s !active branch), so a
+-		 * later activate this same boot -- possibly with a different
+-		 * dpin_mode_value -- is a valid isolated retest. Without this,
+-		 * -EALREADY below would permanently latch after the first
+-		 * attempt for the rest of the boot.
+-		 */
+-		if (!active)
+-			acio->dpin_attempted = false;
+-	}
+-	dev_info(acio->dev, "native DPIN0: active=%u handshake=%d\n", active, ret);
+-unlock_cio:
+-	mutex_unlock(&acio->lock);
+-unlock_device:
+-	device_unlock(&pdev->dev);
+-put:
+-	put_device(&pdev->dev);
+-	return ret;
+-}
+-EXPORT_SYMBOL_GPL(apple_usb4_dpin0_set_active);
+-
+ /*
+  * Thunderbolt DP tunnel routing, ported from aurora-silicon/linux#8: the
+  * real trigger this project's own analog-DPIN/dpin_aux mechanisms never had
+@@ -2086,10 +1942,9 @@ EXPORT_SYMBOL_GPL(apple_usb4_dpin0_set_active);
+  * APPLE_CIO_DPIN1_ANALOG above, which is the separate "analog AUX
+  * serializer" block confirmed ineffective on this hardware (dpin_aux,
+  * 2026-09-21 and again 2026-09-23). This offset and stride are confirmed
+- * two ways: apple_usb4_dpin0_set_active() above computes the identical
+- * address independently, and it matches this project's own boot logs
+- * ("native DPIN0: ... base=0x...701e50000" = rc_res->start (0x701ac0000)
+- * + 0x390000 for the left port).
++ * against this project's own boot logs ("native DPIN0: ...
++ * base=0x...701e50000" = rc_res->start (0x701ac0000) + 0x390000 for the
++ * left port).
+  */
+ #define APPLE_DPIN_HANDSHAKE_OFFSET	0x390000
+ #define APPLE_DPIN_STRIDE		0x8000
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index a0df27fe6..796346634 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -111,11 +111,6 @@ module_param(dp_video_counter, bool, 0444);
+ MODULE_PARM_DESC(dp_video_counter,
+ 		 "diagnostic: count packets on the DP video path's DP IN hop and its downstream (hub-side) hop (Apple j416s right ACIO route only; read via debugfs port counters); default: false");
+ 
+-static bool dp_bw_grant;
+-module_param(dp_bw_grant, bool, 0444);
+-MODULE_PARM_DESC(dp_bw_grant,
+-		 "grant the DP video path's non-reduced bandwidth immediately instead of the spec's initial 0, since this adapter has never been observed to send a bandwidth request notification (Apple j416s right ACIO route only); default: false");
+-
+ static void tb_dp_dump_apple(struct tb_tunnel *tunnel);
+ static int tb_apple_nhi_typec_index(struct tb_nhi *nhi);
+ 
+@@ -967,7 +962,7 @@ static bool tb_dp_is_apple_j416s_right_dpin(const struct tb_port *in)
+ 
+ static bool tb_dp_apple_dpin_needs_bw_grant(const struct tb_port *in)
+ {
+-	return dp_bw_grant && tb_dp_is_apple_j416s_right_dpin(in);
++	return tb_dp_is_apple_j416s_right_dpin(in);
+ }
+ 
+ static int tb_dp_bandwidth_alloc_mode_enable(struct tb_tunnel *tunnel)
+-- 
+2.55.0
+

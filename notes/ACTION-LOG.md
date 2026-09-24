@@ -52,7 +52,58 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0142 prepared: found the SECOND stale-config batch that made 0140 a no-op)
+## RESOLVED (2026-09-24): the USB4/Thunderbolt DP tunnel works
+
+**Candidate 0142 produced a real, working picture: 2560x1440 on the BenQ
+monitor over the OWC Thunderbolt 5 hub + Synaptics VMM7100 adapter.**
+Confirmed directly by Oliver, and by
+`captures/2026-09-24-0142-boot-kernel.log`
+(`apple_plane_atomic_check: ... mode=2560x1440 fb=2560x1440 OK`,
+`hyprctl monitors` showing `2560x1440@59.95100`, not `0x0`). This is the
+first time in the whole project that the hub-tunneled path -- as opposed
+to direct HDMI or a plain USB-C-to-HDMI adapter, both DP alt-mode, a
+different mechanism entirely -- has ever worked.
+
+**What it took, in order:** (0136) a leftover pre-0127 test config was
+forcing the crossbar to reject any pipeline but dcpext1; (0137) a dead
+flag from a removed manual-training mechanism was blocking
+`dcp_dptx_connect()`'s completion for a USB4 tunnel; (0138) a generic
+Thunderbolt-core bug (not Apple-specific) skipped the notification this
+driver needs to clear its own reconnect state on physical unplug; (0139)
+diagnostics pinpointed that Hyprland's atomic commits were being rejected
+before ever reaching per-plane validation; (0140/0142) two full batches
+of leftover pre-0135 test configs were forcing `usb4_native_dpin`/
+`usb4_protocol_probe` on, which excluded dcpext0's CRTC from the tunnel
+connector's `possible_crtcs` mask -- the actual reason every atomic
+commit failed with EINVAL regardless of resolution. A native-macOS log
+comparison (same M2 Pro hardware, same hub, native `log stream`) was the
+key turning point that reframed the investigation from "kernel firmware
+mystery" to "a real atomic commit is landing and being rejected," and a
+live Hyprland rolling-log capture (Aquamarine's own debug output) is what
+actually showed the EINVAL cascade directly.
+
+**0143 generalizes and cleans up**: removed every diagnostic-only
+addition and every module flag that was either dead pre-0127 scaffolding
+or a redundant opt-in on top of already-precise hardware scoping, and
+made the working configuration (prefer dcpext0 for a Type-C tunnel route)
+the unconditional, permanent default. Net -556/+43 lines across 10
+files. **The driver now needs zero special module options on this
+hardware.** Full detail in
+`notes/2026-09-24-0143-generalize-and-clean-up.md`. Prepared, not yet
+installed -- needs its own hardware confirmation since it touches real
+code paths, even though every change was verified by reading the code
+rather than guessed.
+
+**Still open, not addressed by 0143 (separate from the picture working
+at all)**: the ~29s autonomous link teardown DCP firmware performs on an
+"unclaimed" link is still not understood at the driver-source level, and
+was concluded very likely firmware-internal by an adversarially-verified
+research pass. It did not block getting a real picture (Hyprland claims
+the link with a real modeset well within that window once the
+`possible_crtcs` bug was fixed), but may be worth another look if any
+future symptom resembles a display that works briefly then drops.
+
+## Prior state (candidate 0142 prepared: found the SECOND stale-config batch that made 0140 a no-op)
 
 **0141's probe-time diagnostic explains exactly why 0140 had zero
 effect.** `captures/2026-09-24-0141-boot-kernel.log`: for every Type-C
