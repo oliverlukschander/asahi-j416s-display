@@ -1,0 +1,148 @@
+From 63955f611ba0d67ee4b236857b5108115c0e473a Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 08:48:05 +0200
+Subject: [PATCH] thunderbolt: pulse HPD propagation on Apple host DP IN
+ adapters
+
+Ported from aurora-silicon/linux#8 (t8103, hardware-tested on three
+docks/multiple monitors: CalDigit TS3 Plus, Kensington SD5560T, CalDigit
+TS4). Its dp_tunnel_changed() pulses ADP_DP_CS_3_HPD_PROPAGATE on the DP
+IN adapter right after tunnel activation and waits for
+ADP_DP_CS_2_HPD -- an Apple host's DP IN adapter has no real physical DP
+connector wired to it, so nothing else ever sets that bit, and every
+downstream USB4 DP tunnel mechanism (AUX/DPCD, DPRX) is gated on it.
+
+Found by comparing this project's own driver against that reference:
+our port (0127) deliberately reused the existing dp_tunnel_pre/post_
+activate/deactivate hooks instead of the reference's separate NHI op to
+avoid touching shared tb.c/tunnel.c -- but in doing so, this one
+specific register-level step from the same commit was never carried
+over. Confirmed absent: zero references to ADP_DP_CS_3_HPD_PROPAGATE,
+tb_dp_tunnel_notify, or an HPD-propagate pulse anywhere in this tree
+before this commit.
+
+This project's own diagnostic poller (apple_dp_aux_work(), drivers/
+thunderbolt/apple.c) independently samples the DP IN adapter's CS0-CS13
+registers every 500ms and logs any change; across all four dcpext1
+failures so far (0128 x2, 0129, 0130 -- 96 samples total) it logs zero
+changes, versus exactly one (the DPRX transition) on the one dcpext0
+success (0127). That is consistent with the adapter's AUX engine never
+being kicked into motion at all on this pipeline/port, which an
+unpropagated HPD is a plausible, concrete explanation for.
+
+Added tb_dp_apple_pulse_hpd(), called from tb_dp_activate() right
+before this project's own dp_tunnel_post_activate hook (so the DCP glue
+routes a display only after HPD has actually propagated, preserving the
+reference's own ordering even though our hook lives one level deeper
+than its dp_tunnel_changed callsite). Gated on tb_nhi_is_apple() (already
+used elsewhere in this file) and tb_port_is_dpin(), both pre-existing
+checks -- zero effect on non-Apple hosts or non-DP-IN tunnels. A failed
+pulse is logged and the tunnel setup continues regardless, matching the
+reference's own non-fatal handling.
+
+Deliberately not ported this candidate: the reference's ADP_DP_CS_3_
+NO_AUTO_LT hold-off on the DP OUT (hub) adapter, and its 5-NFC-credit
+override for the DP IN video hop. Both are real, separate pieces of the
+same hardware-tested commit, but this keeps the current test to one
+variable; see notes/2026-09-24-0131-*.md for the reasoning and what
+they would target if this alone is not enough.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/thunderbolt/tb_regs.h |  6 ++++
+ drivers/thunderbolt/tunnel.c  | 54 ++++++++++++++++++++++++++++++++++-
+ 2 files changed, 59 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/thunderbolt/tb_regs.h b/drivers/thunderbolt/tb_regs.h
+index f90cf21..ca7c340 100644
+--- a/drivers/thunderbolt/tb_regs.h
++++ b/drivers/thunderbolt/tb_regs.h
+@@ -428,6 +428,12 @@ struct tb_regs_port_header {
+ #define ADP_DP_CS_2_ESTIMATED_BW_SHIFT		24
+ #define ADP_DP_CS_3				0x03
+ #define ADP_DP_CS_3_HPDC			BIT(9)
++/*
++ * Apple silicon host DP IN adapter: pulsing this tells the adapter to
++ * propagate HPD to ADP_DP_CS_2_HPD. Ported from aurora-silicon/linux#8
++ * (t8103, hardware-tested); candidate 0131, see notes/2026-09-24-0131-*.md.
++ */
++#define ADP_DP_CS_3_HPD_PROPAGATE		BIT(10)
+ #define DP_LOCAL_CAP				0x04
+ #define DP_REMOTE_CAP				0x05
+ /* For DP IN adapter */
+diff --git a/drivers/thunderbolt/tunnel.c b/drivers/thunderbolt/tunnel.c
+index ff2a165..cd0e820 100644
+--- a/drivers/thunderbolt/tunnel.c
++++ b/drivers/thunderbolt/tunnel.c
+@@ -1226,6 +1226,55 @@ static void tb_dp_dprx_stop(struct tb_tunnel *tunnel)
+ 	}
+ }
+ 
++/*
++ * Apple silicon host DP IN adapter: this adapter has no real physical DP
++ * connector wired to it, so nothing ever sets its own ADP_DP_CS_2_HPD --
++ * pulse ADP_DP_CS_3_HPD_PROPAGATE to tell it to propagate HPD itself, and
++ * wait for it to take, same as aurora-silicon/linux#8's hardware-tested
++ * t8103 implementation (three docks, multiple monitors). Diagnostic
++ * candidate 0131: on this project's own hardware, the CS0-CS13 registers
++ * this pulse should move have been observed completely static across
++ * every dcpext1/right-port failure so far (0128-0130), unlike the one
++ * success (0127, dcpext0/left-port) -- see notes/2026-09-24-0131-*.md.
++ * Logs and continues either way; a failed pulse is not treated as a fatal
++ * tunnel-activation error, matching the reference.
++ */
++static void tb_dp_apple_pulse_hpd(struct tb_port *in)
++{
++	int i, hpd = 0;
++	u32 v;
++
++	if (!in->cap_adap)
++		return;
++	if (tb_port_read(in, &v, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_3, 1)) {
++		tb_port_warn(in, "Apple: cannot read DP adapter state, HPD not pulsed\n");
++		return;
++	}
++	/* HPDC may still be set from a previous tunnel's teardown */
++	v &= ~ADP_DP_CS_3_HPDC;
++	v |= ADP_DP_CS_3_HPD_PROPAGATE;
++	if (tb_port_write(in, &v, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_3, 1)) {
++		tb_port_warn(in, "Apple: cannot pulse HPD propagation\n");
++		return;
++	}
++	usleep_range(10000, 11000);
++	v &= ~ADP_DP_CS_3_HPD_PROPAGATE;
++	if (tb_port_write(in, &v, TB_CFG_PORT, in->cap_adap + ADP_DP_CS_3, 1))
++		tb_port_warn(in, "Apple: cannot end HPD propagation pulse\n");
++	for (i = 0; i < 200; i++) {
++		hpd = tb_dp_port_hpd_is_active(in);
++		if (hpd)
++			break;
++		usleep_range(10000, 11000);
++	}
++	if (hpd < 0)
++		tb_port_warn(in, "Apple: cannot read HPD status: %d\n", hpd);
++	else if (!hpd)
++		tb_port_warn(in, "Apple: HPD did not propagate\n");
++	else
++		tb_port_info(in, "Apple: HPD propagated\n");
++}
++
+ static int tb_dp_activate(struct tb_tunnel *tunnel, bool active)
+ {
+ 	int ret;
+@@ -1276,8 +1325,11 @@ static int tb_dp_activate(struct tb_tunnel *tunnel, bool active)
+ 			return ret;
+ 	}
+ 
+-	if (active && tb_nhi_is_apple(tunnel->tb->nhi))
++	if (active && tb_nhi_is_apple(tunnel->tb->nhi)) {
++		if (tb_port_is_dpin(tunnel->src_port))
++			tb_dp_apple_pulse_hpd(tunnel->src_port);
+ 		tb_dp_dump_apple(tunnel);
++	}
+ 
+ 	if (active) {
+ 		const struct tb_nhi_ops *ops = tunnel->tb->nhi->ops;
+-- 
+2.55.0
+

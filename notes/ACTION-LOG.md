@@ -52,7 +52,7 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0130 result confirmed)
+## Current state (as of 2026-09-24, candidate 0131 prepared)
 
 **0129 result: the timeout hypothesis was partially right, but a deeper
 issue remains.** With `set_hpd` widened to 8000ms, it (and everything
@@ -116,6 +116,36 @@ load-bearing for this either -- ruled out as the likely explanation, not
 just unexamined. No next candidate proposed yet; wanted Oliver's read on
 this before picking the next single-variable thing to try.
 
+**Comprehensive comparison against aurora-silicon/linux#8 done at Oliver's
+request; a concrete, hardware-tested candidate found.** Fetched the actual
+PR (t8103/M1, hardware-tested on three docks/multiple monitors) and diffed
+it against the shared merge-base with this tree. The DCP-side port (0127)
+already matches the reference closely. But the reference's Thunderbolt-side
+commit (`4a7fd72`) does something in **generic** `tb.c`/`tunnel.c`, gated
+behind an Apple-host check, that this project's port never carried over:
+right after tunnel activation, it pulses `ADP_DP_CS_3_HPD_PROPAGATE` on the
+DP IN adapter and waits up to 2s for `ADP_DP_CS_2_HPD` -- because an Apple
+host's DP IN adapter has no real physical DP connector wired to it, so
+nothing else would ever set that bit. 0127's port deliberately avoided
+touching `tb.c`/`tunnel.c` (to keep `thunderbolt.ko` byte-identical, the
+right call for the *routing trigger*), but this specific register-level
+step lived in that same generic code and was simply never ported.
+Confirmed absent by direct search: zero references anywhere in this tree
+to `ADP_DP_CS_3_HPD_PROPAGATE`, `tb_dp_tunnel_notify`, or
+`tb_port_is_apple_host_dpin` before this. This lines up exactly with the
+CS0-13-never-changes finding above -- an unpropagated HPD is a direct,
+mechanistic explanation for registers that never move. Full comparison
+and reasoning in
+`notes/2026-09-24-0131-pulse-hpd-propagation-apple-host-dpin.md`.
+
+**Candidate 0131 prepared, awaiting Oliver's install+reboot.** Ports just
+this one piece (the HPD-propagate pulse), gated on the same pre-existing
+`tb_nhi_is_apple()`/`tb_port_is_dpin()` checks so it's a no-op for any
+non-Apple host or non-DP-IN tunnel. Deliberately not ported yet: the
+reference's `NO_AUTO_LT` hold-off on the hub's DP OUT adapter, and its
+5-NFC-credit override for the DP IN video hop -- both real, both part of
+the same commit, held back to keep this one variable at a time.
+
 **Architecture confirmed correct and sufficient.** Candidate 0127 achieved
 `DPRX_DONE=1` -- a genuine AUX/DPCD hardware handshake completing over the
 USB4 tunnel -- the first and only time this has happened in this project's
@@ -156,7 +186,7 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
 `captures/2026-09-24-0128-boot-kernel.log`,
 `captures/2026-09-24-0128-retry-boot-kernel.log`.
 
-## Recent candidates (0126-0130)
+## Recent candidates (0126-0131)
 
 - **0126** (drm/apple/dcp.c, one-line): stopped forcing the USB4 tunnel's
   ATC PHY into `PHY_MODE_DP` (both the reference PR and our own
@@ -192,24 +222,37 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   anywhere in the capture), but the failure point just moved to 0127's own
   `linkcfg_completion` timeout instead -- see "Current state" above.
   `notes/2026-09-24-0129-widen-set-hpd-timeout-diagnostic.md`.
-- **0130** (drm/apple/dcp.c, one-line): direct follow-up to 0129. Widens
-  `DPTX_CONNECT_TIMEOUT` (2000ms -> 8000ms) the same way, to test whether
-  the missing `SET_LINK_RATE`/`WILL_CHANGE_LINK_CONFIG` burst is also just
-  running late or genuinely never sent by firmware on this pipeline/port.
+- **0130** (drm/apple/dcp.c, one-line): direct follow-up to 0129. Widened
+  `DPTX_CONNECT_TIMEOUT` (2000ms -> 8000ms) the same way. Installed and
+  booted same day: both connect attempts ran the full 8000ms wait with no
+  change (still no `SET_LINK_RATE`/`WILL_CHANGE_LINK_CONFIG`, still
+  `DEVICE_NOT_RESPONDING`/`DEVICE_NOT_STARTED` at ~5s, `DPRX` stayed 0) --
+  Oliver confirmed by eye, no picture. Closed the "it's just cascading
+  timeouts" hypothesis. `notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md`.
+- **0131** (drivers/thunderbolt/tunnel.c + tb_regs.h): found by a
+  comprehensive comparison against aurora-silicon/linux#8 at Oliver's
+  request. Ports one specific register-level step from that hardware-
+  tested reference -- pulsing `ADP_DP_CS_3_HPD_PROPAGATE` on the DP IN
+  adapter and waiting for `ADP_DP_CS_2_HPD` -- that 0127's port never
+  carried over when it deliberately avoided touching shared `tb.c`/
+  `tunnel.c`. Directly explains the CS0-13-never-changes finding above.
   Not yet installed/booted.
-  `notes/2026-09-24-0130-widen-linkcfg-timeout-diagnostic.md`.
+  `notes/2026-09-24-0131-pulse-hpd-propagation-apple-host-dpin.md`.
 
-Currently installed and booted: candidate 0129
-(`appledrm.ko` SHA256 `131f3d85cad626e5387df05b55016f80dac60196cb5d555c4dc73503ab96a6a9`,
-`thunderbolt_apple.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
-unchanged from 0127/0128, hashes in `scripts/manage-0129.py`).
-
-Candidate 0130 built and verified, not yet installed
+Currently installed and booted: candidate 0130
 (`appledrm.ko` SHA256 `2d0b5f5b9d831f0a740a150e47d9774858cf9bf089c97698f32d70dedacced8c`,
-other four modules byte-identical to 0128/0129, hashes in
-`scripts/manage-0130.py`). To arm and test, after this commit is pushed:
+`thunderbolt_apple.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
+unchanged from 0127-0129, hashes in `scripts/manage-0130.py`).
+
+Candidate 0131 built and verified, not yet installed
+(`thunderbolt.ko` SHA256 `fd5f7196144fc760459f71cac094d19901c554531e96ab6c2c68096c7e9b7465`,
+`thunderbolt_apple.ko` SHA256 `4bd921e908a491ddc3ccd2dfd701fb39ae015df2824f0ad9862ca8ca71ef314d`
+(source unchanged, rebuilt against the new tb_regs.h/tunnel.o),
+`appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
+from 0130, hashes in `scripts/manage-0131.py`). To arm and test, after
+this commit is pushed:
 ```
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0130.py check
-sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0130.py install
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0131.py check
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0131.py install
 ```
 then reboot, and capture `dmesg`/`journalctl -k` from this boot.
