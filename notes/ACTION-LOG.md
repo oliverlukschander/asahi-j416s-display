@@ -52,6 +52,42 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0144 prepared: PR-prep cleanup, one real bug fixed
+
+Preparing to turn the branch into a PR against `aurora-silicon/linux`
+(a new PR, stacked on Oliver's own already-open PR #6
+`j416s-usb4-hub`, since PR #8 on that repo covers t8103/M1 only). A
+parallel review across all seven touched subsystems, then parallel
+cleanup edits, found and fixed one genuine bug plus a lot of
+debugging-session scaffolding that has no place upstream. Full detail
+in `notes/2026-09-24-0144-pr-prep-cleanup.md`.
+
+**The real bug**: `drivers/phy/apple/atc.c`'s `tunnel_attempted` flag
+was never cleared after a tunnel teardown, so the USB4 tunnel pixel
+clock could only ever be granted once per boot -- every subsequent
+unplug/replug would fail `apple_atc_dp_tunnel_rate()` with `-EALREADY`.
+Fixed: `atc_tunnel_restore()` now clears it too. Plausibly a
+contributing factor to tonight's earlier "doesn't recover after
+standby/replug" symptom, independent of the separate Aquamarine bug
+documented below -- both can be true at once.
+
+**Everything else**: dead code removed (exported symbols/struct fields
+with zero callers, verified by grep across the whole repo before
+deletion), every comment referencing this project's own
+candidate/session numbers rewritten into plain hardware-behavior
+descriptions (every technical fact preserved), unconditional
+`dev_info`/`dev_warn` diagnostic dumps downgraded to `dev_dbg`. Two
+honesty caveats kept deliberately explicit rather than smoothed over:
+the DPIN0 link-rate value is an empirically-determined estimate, not a
+spec-confirmed constant, and DPIN1 was never independently
+hardware-tested.
+
+All four affected modules rebuilt clean from scratch: zero errors,
+zero warnings. `python3 scripts/manage-0144.py check` passes. Not yet
+installed -- needs its own hardware confirmation (boot regression test,
+plus multiple replugs within one boot to confirm the PHY fix actually
+stops the `-EALREADY` failures).
+
 ## RESOLVED (2026-09-24): the USB4/Thunderbolt DP tunnel works
 
 **Candidate 0142 produced a real, working picture: 2560x1440 on the BenQ
