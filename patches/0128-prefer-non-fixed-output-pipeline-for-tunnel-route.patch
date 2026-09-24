@@ -1,0 +1,63 @@
+From 68d4d8fbb6001e3e5252b18729a670f1c1ac8367 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 06:26:21 +0200
+Subject: [PATCH] drm: apple: dcp: prefer non-fixed-output pipelines for a DP
+ tunnel route
+
+apple_dcp_tb_dp_tunnel()'s route scoring used plain
+dcp_typec_route_score() (CRTC index only), unlike the pre-port
+dcp_typec_route_score_usb4() it replaced, which penalized a pipeline
+with its own fixed output (dcpext0, HDMI-capable) so a tunnel would
+prefer the Type-C-only pipeline (dcpext1) instead. The reference PR
+(t8103) has no equivalent bias because t8103 has a single dcpext.
+
+Confirmed on real hardware (candidate 0127's first boot): the tunnel
+routed to dcp@289c00000 (dcpext0) instead of dcp@315c00000 (dcpext1,
+every prior candidate's own working AFK target) -- dcpext0 has a fixed
+phy@1303000000 dependency (HDMI analog), dcpext1 does not. DCP actually
+completed a genuine AUX/DPRX handshake for the first time this whole
+project (DPRX_DONE=1, "ACIO AUX completed") -- validating the
+underlying architecture -- but retried the connection once and gave up
+both times (release_display), consistent with dcpext0 having the wrong
+plane/CRTC/scanout wiring for a Type-C-tunneled source even though the
+physical AUX signal itself succeeded.
+
+Restores the same fixed_phy penalty dcp_typec_route_score_usb4() used
+to apply, inline in apple_dcp_tb_dp_tunnel()'s own scoring loop.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index 01d08a1..6c24ef6 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -595,6 +595,23 @@ int apple_dcp_tb_dp_tunnel(struct device_node *connector_np, unsigned int dpin,
+ 		if (!dcp_typec_route_available(candidate))
+ 			continue;
+ 		score = dcp_typec_route_score(candidate);
++		/*
++		 * j416s-specific, not in the reference (t8103 has a single
++		 * dcpext): prefer a pipeline with no fixed output of its own
++		 * (dcpext1, USB-C only) over one that can also drive a fixed
++		 * HDMI/DP output (dcpext0). dcp_typec_route_available()
++		 * already excludes dcpext0 while its fixed output is
++		 * actually live, but a plain CRTC-index comparison otherwise
++		 * lets dcpext0 win a tunnel route whenever nothing is
++		 * plugged into HDMI -- confirmed on real hardware (2026-09-24
++		 * candidate 0127's first boot: the tunnel routed to
++		 * dcp@289c00000/dcpext0 instead of dcp@315c00000/dcpext1,
++		 * every prior candidate's own working AFK target). Matches
++		 * the same bias the pre-port dcp_typec_route_score_usb4()
++		 * applied for exactly this reason.
++		 */
++		if (candidate->dcp->fixed_phy)
++			score += 100;
+ 		if (score < best_score) {
+ 			best = candidate;
+ 			best_score = score;
+-- 
+2.55.0
+

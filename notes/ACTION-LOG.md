@@ -190,6 +190,51 @@ After committing/pushing execute exactly:
 sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0127.py install
 ```
 
+## 2026-09-24 -0127 result: DPRX_DONE=1 achieved for the first time ever, wrong DCP pipeline found
+
+Rebooted into 0127 with hub connected. Captured
+captures/2026-09-24-0127-boot-kernel.log. **`apple_dcp_tb_dp_tunnel()`
+fired correctly** ("display routed to Thunderbolt DP tunnel dpin0"), the
+full connect sequence succeeded, DCP reached ACTIVATE, and then:
+`DP IN CS changed ... DPRX=1`, `DP IN DPRX_DONE=1 (ACIO AUX completed)` --
+the exact hardware signal this whole project has chased since it started,
+achieved for the first time. DCP then sent SET_TILED_DISPLAY_HINTS and
+several more apcalls but ultimately deactivated; the driver's own retry
+ran the whole sequence again with the same result. User confirmed: still
+dark.
+
+Root cause found immediately from the same capture: every connect call
+this boot targeted `apple-dcp 289c00000.dcp` (dcpext0, HDMI-capable, has a
+fixed `phy@1303000000` dependency per the boot's own devicetree dump) --
+not `315c00000.dcp` (dcpext1, USB-C only), the device every single prior
+candidate's own working AFK exchanges always used. The route-scoring
+simplification in 0127 dropped a fixed-output penalty
+(`dcp_typec_route_score_usb4()`, removed) that used to keep the tunnel off
+dcpext0. DPRX completing on dcpext0 anyway makes sense (AUX/DPRX is a
+tunnel-layer physical signal, not DCP-instance-specific); dcpext0's
+plane/CRTC/scanout wiring being wrong for a Type-C source plausibly
+explains why it still gave up. Full reasoning in
+notes/2026-09-24-0128-prefer-dcpext1-for-tunnel.md.
+
+## 2026-09-24 -0128: restore the fixed-output route-scoring penalty
+
+Kernel commit 68d4d8f: restored the same bias inline in
+`apple_dcp_tb_dp_tunnel()`'s own scoring loop (`if
+(candidate->dcp->fixed_phy) score += 100;`). Only dcp.o (and dptxep.o,
+rebuilt incidentally, unchanged content) recompiled. New appledrm.ko
+SHA256: 0102875210f5fd9aa0a8233e20abdde4894a2588947234e2cc8f2337577597ac.
+Other three modules (thunderbolt_apple, mux, atc) unchanged from 0127.
+Stale-symlink sweep clean, test-dpin-handshake.c 13/13 pass. Patch:
+patches/0128-prefer-non-fixed-output-pipeline-for-tunnel-route.patch.
+scripts/manage-0128.py derived from manage-0127.py (candidate number +
+appledrm hash only, mechanical).
+
+After committing/pushing execute exactly:
+
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0128.py install
+```
+
 ## Last actions
 
 - **0124** (instrumentation, no behavior change): closed several silent
