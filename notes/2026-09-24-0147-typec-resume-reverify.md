@@ -314,3 +314,43 @@ Worth a follow-up outside this session's scope: either register the
 package properly under a non-conflicting name, or find and neutralize
 whatever renames the aurora module directory to `.old` in the first
 place.
+
+## Confirmed on hardware: the kernel-side fix works
+
+Real test after the recovery above (reboot into `linux-aurora`, hub
+connected, cold boot succeeded cleanly -- tunnel auto-connected in
+~4s, zero ACIO retries, `boltctl` authorized). Then the actual test:
+lid close -> s2idle -> lid open, hub never touched.
+
+`dmesg` showed the full automatic chain working exactly as designed:
+`PM: suspend exit` -> ~1s later `cd321x_resume_reverify()`'s synthetic
+disconnect/reconnect (`typec mux set typec0 ... usb4=0` immediately
+followed by `usb4=1`) -> `dcp_dptx_connect()` -> tunnel clock preflight
+-> `set_digital_out_mode` all completing successfully, **zero ACIO
+start retries** (matching the 0146-only baseline). Oliver confirmed
+the picture came back on its own, no replug needed -- this candidate's
+actual goal.
+
+**Separate finding, not a regression here**: the picture went black
+again a short time later. Checked every layer at that point: DRM
+connector `card2-USB-1: connected`, `boltctl` still authorized, no
+further kernel-level tunnel/DCP errors, and `hyprctl monitors` showed
+Hyprland's own object for `USB-1` as fully healthy (`disabled: false`,
+`dpmsStatus: 1`, correct mode/position). Every layer below the
+compositor's actual frame output reported correct state. A physical
+unplug/replug (no suspend/resume involved) brought the picture back
+*immediately* -- this is the exact signature of the already-documented
+Aquamarine async-commit-queue bug from earlier in this project (fails
+to complete a real, non-test atomic commit on a live hotplug), not a
+new problem in this fix. That bug was already investigated and
+explicitly set aside as out of scope before 0147 was ever started; a
+risky live-instrumentation attempt to root-cause it further was
+already tried and abandoned earlier in this project.
+
+**Net result**: 0147's kernel/driver-side auto-recovery is confirmed
+correct and working. On this specific compositor (Aquamarine/
+Hyprland, as currently built), the end-to-end user-visible outcome
+still needs one of: a physical replug, a DPMS toggle, or an eventual
+upstream Aquamarine fix, until that separate bug is fixed. On any
+compositor without that specific bug -- or once it's fixed -- this
+kernel fix makes the recovery fully seamless with no replug at all.

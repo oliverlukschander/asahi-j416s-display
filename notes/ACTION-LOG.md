@@ -52,6 +52,34 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## 0147 CONFIRMED: kernel-side auto-recovery works; remaining black screen is the known Aquamarine bug
+
+After the recovery below, rebooted into `linux-aurora` (hub connected)
+— clean boot, tunnel auto-connected in ~4s, zero ACIO retries,
+`boltctl` authorized. Then the real test: lid close → s2idle → lid
+open, hub never touched.
+
+`dmesg` confirmed the full automatic chain: `PM: suspend exit` → ~1s
+later `cd321x_resume_reverify()`'s synthetic disconnect/reconnect →
+`dcp_dptx_connect()` → tunnel clock preflight → `set_digital_out_mode`,
+all succeeding, **zero ACIO retries**. Oliver: picture came back on
+its own, no replug — 0147's actual goal, achieved.
+
+Picture then went black again a short time later. Checked every
+layer: DRM connector `connected`, `boltctl` still authorized, no
+further kernel/tunnel errors, `hyprctl monitors` showed `USB-1` as
+fully healthy (`disabled: false`, `dpmsStatus: 1`, correct mode). A
+physical unplug/replug (no suspend/resume) fixed it *immediately* —
+the exact signature of the already-known, already-set-aside Aquamarine
+async-commit-queue bug (fails a real atomic commit on a live hotplug),
+not a regression in this fix. Confirmed via direct test at Oliver's
+suggestion, not assumed.
+
+**0147 is validated and working at the kernel level.** The residual
+"still needs a nudge to actually see it" symptom is compositor-side,
+out of scope for this candidate, and already documented separately
+from before this candidate existed.
+
 ## 0147 v2 caused a real hang, recovered: struct ABI mismatch + a separate module-tree wipe
 
 Installed v2 (kernel commit `db7b1c019`) and rebooted with the hub
