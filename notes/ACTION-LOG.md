@@ -111,6 +111,34 @@ watchdog reset described above. This entry and its design note are
 committed and pushed *before* installing, specifically so the record
 survives if the machine reboots unexpectedly instead of resuming.
 
+**Confirmed on hardware (2026-09-24 20:54-20:56), full loop, no
+crash/reboot the whole way through**: fresh boot, picture working,
+real lid-close -> s2idle -> lid-open cycle. `dmesg` showed zero "ACIO
+block failed to start" messages at all this time -- the very first
+`reset_control_deassert()` attempt succeeded, no retries even needed.
+`boltctl` confirmed the hub came back as a genuine, authorized
+Thunderbolt connection at 40 Gb/s, with a real topology under
+`/sys/bus/thunderbolt/devices` -- the actual deep bug from tonight is
+fixed. `uptime -s` unchanged across the whole test: no reboot, no
+crash, the watchdog-reset risk did not materialize.
+
+One remaining wrinkle, separate from this candidate's own scope: at
+lid-open, the kernel only ran a *delayed teardown* of the stale
+pre-suspend DP tunnel state (`tunnel down`, `Switched dpin0 to
+disconnected state` -- 0145's AUSPLL_LOCK warning fired here too, same
+10ms-isn't-always-enough finding, harmless in this exact spot since
+nothing depended on it clearing in time). Nothing then re-established
+the tunnel automatically. **One physical unplug/replug of the hub (with
+the now-healthy Thunderbolt link underneath) brought the picture back
+immediately** -- `2560x1440@59.95100`, confirmed. This matches the
+already-documented, separate Aquamarine hotplug-commit gap (or simply
+needs the DCP/Type-C side to be re-poked after this kind of resume,
+not yet root-caused) -- worth its own look another day, but the
+core "doesn't survive suspend at all" bug this whole session's standby
+investigation was chasing is resolved: Thunderbolt survives suspend
+now, and a single replug (rather than the previous "nothing works, ever")
+gets the display back.
+
 ## 0145 prepared: the actual "doesn't reactivate after standby" root cause
 
 Oliver moved the hub from the right-back to the left-back USB-C port
