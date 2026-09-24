@@ -1,0 +1,225 @@
+From 07dc4c1be106ac040bac7dd2a71e07a37b945634 Mon Sep 17 00:00:00 2001
+From: Oliver Lukschander <oliver.lukschander@golf.at>
+Date: Thu, 24 Sep 2026 10:07:29 +0200
+Subject: [PATCH] drm: apple, thunderbolt: apple: isolate the port/pipeline
+ confound; revert the FSM misreading
+
+A full parallel research sweep (8 independent agents: the project's own
+314KB historical archive, the reference PR's remaining files, an m1n1/
+Asahi register search, a macOS kext reverse-engineering search, a
+community-prior-art search across GitHub/lore.kernel.org, an exhaustive
+cross-capture register differ, a DCP apcall-protocol re-audit, and a
+crossbar/device-tree port-symmetry audit) converged on two findings.
+
+1. Revert 0133/0134 (drivers/thunderbolt/apple.c). Candidate 0133's
+   "stuck FSM" framing for APPLE_CIO_DPIN_ANALOG_FSM (+0x18) was a
+   misreading: this project's own source already documents it as an
+   ordinary one-shot, read-to-clear status register
+   (APPLE_CIO_DPIN_ANALOG_EMPTY = 0x80000000, and the pre-existing
+   comment "+0x18 is first-read status 0x1017 (read-to-clear)", from
+   candidates 0054-0056 -- before this session began). The dpin_aux
+   module parameter's own long-standing comment already explains the
+   risk 0133 introduced by reading it every 500ms instead of only once
+   at the end: "tests whether consuming +0x18 aborted a handshake."
+   0134's write-1-to-clear ack "had no effect" because there was
+   nothing to acknowledge -- 0x80000000 is the register's own idle
+   sentinel, not a latched error. Confirmed independently: 0128-0132
+   (which read this register only once, at the 12s give-up) never see
+   0x80000000 at all, only the ~0x1016/0x1017 family -- it only ever
+   reads as "empty" starting on the *second* read of its lifetime,
+   which only 0133/0134's instrumentation ever performed. Reverted back
+   to the original, deliberately cautious single-post-mortem-dump
+   design; removed the now-premised-on-nothing ack function.
+
+2. New diagnostic (drivers/gpu/drm/apple/dcp.c): the one success (0127)
+   and every failure since (0128-0134) differ in BOTH the physical
+   Type-C port AND the DCP pipeline simultaneously -- left-port+dcpext0
+   vs right-port+dcpext1, never isolated. Every register-level
+   "success vs failure" comparison drawn from this data (including the
+   +0x18 first-read-value contrast) is confounded by this and cannot be
+   trusted without a same-port data point in either direction. Adds
+   usb4_route_prefer_fixed_diag (default off): skips 0128's
+   fixed-output route-scoring penalty for one boot, so whichever port
+   is actually tunneled lands on dcpext0 instead of dcpext1 --
+   reproducing 0127's own pipeline choice, but on the port actually
+   under test. Will not produce a picture either way (dcpext0's
+   plane/CRTC wiring is wrong for a Type-C-tunneled source, per 0127
+   itself); tests only whether the rich link-training apcall burst and
+   DPRX_DONE=1 that 0127 reached are a property of the port or of the
+   pipeline.
+
+Also found and deliberately deferred: the reference PR's
+apple_dpxbar_link_up()/link_down() gate an ATC-facing output-clock
+register this project's T602x port never touches, and our own
+link_down() never clears CROSSBAR_DISPEXT_EN despite a comment claiming
+parity with the reference. Real gap, but the T602x register layout has
+clearly diverged from the generic one (extra registers with no
+established 1:1 mapping), the code path is unreachable on the current
+failure regardless (SET_LINK_RATE/DID_CHANGE_LINK_CONFIG never fire on
+any failing run), and guessing at an unfamiliar register serves no one.
+Left for a future candidate once we're past the current blocker.
+
+Full reasoning in notes/2026-09-24-0135-*.md.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+---
+ drivers/gpu/drm/apple/dcp.c | 21 +++++++++-
+ drivers/thunderbolt/apple.c | 78 +++++++++----------------------------
+ 2 files changed, 39 insertions(+), 60 deletions(-)
+
+diff --git a/drivers/gpu/drm/apple/dcp.c b/drivers/gpu/drm/apple/dcp.c
+index dc64c1e..55f5d83 100644
+--- a/drivers/gpu/drm/apple/dcp.c
++++ b/drivers/gpu/drm/apple/dcp.c
+@@ -76,6 +76,25 @@ module_param(usb4_native_dpin, bool, 0444);
+ MODULE_PARM_DESC(usb4_native_dpin,
+ 		 "Opt-in native DP-IN ACTIVATE handshake; requires usb4_protocol_probe");
+ 
++/*
++ * Diagnostic (candidate 0135, see notes/2026-09-24-0135-*.md): success
++ * (0127) and every dcpext1 failure since (0128-0134) differ in BOTH the
++ * physical Type-C port AND the DCP pipeline at once, never in isolation --
++ * 0127 was left-port+dcpext0, every failure is right-port+dcpext1. Setting
++ * this skips the 0128 fixed-output route-scoring penalty for one boot,
++ * so whichever port is actually tunneled lands on dcpext0 instead of
++ * dcpext1 -- reproducing 0127's own pipeline choice, but now on the port
++ * actually under test. Does not produce a working picture either way
++ * (dcpext0's plane/CRTC wiring is wrong for a Type-C-tunneled source,
++ * confirmed by 0127 itself); the only thing being tested is whether the
++ * rich link-training apcall burst and DPRX_DONE=1 that 0127 reached are a
++ * property of the port, or of the pipeline. Opt-in, diagnostic only.
++ */
++static bool usb4_route_prefer_fixed_diag;
++module_param(usb4_route_prefer_fixed_diag, bool, 0444);
++MODULE_PARM_DESC(usb4_route_prefer_fixed_diag,
++		 "Diagnostic: skip the dcpext1 route-scoring preference, forcing dcpext0 (0127's pipeline) on whichever port tunnels");
++
+ bool dcp_usb4_protocol_probe_enabled(void)
+ {
+ 	return usb4_protocol_probe;
+@@ -610,7 +629,7 @@ int apple_dcp_tb_dp_tunnel(struct device_node *connector_np, unsigned int dpin,
+ 		 * the same bias the pre-port dcp_typec_route_score_usb4()
+ 		 * applied for exactly this reason.
+ 		 */
+-		if (candidate->dcp->fixed_phy)
++		if (candidate->dcp->fixed_phy && !usb4_route_prefer_fixed_diag)
+ 			score += 100;
+ 		if (score < best_score) {
+ 			best = candidate;
+diff --git a/drivers/thunderbolt/apple.c b/drivers/thunderbolt/apple.c
+index b7b0102..d395869 100644
+--- a/drivers/thunderbolt/apple.c
++++ b/drivers/thunderbolt/apple.c
+@@ -297,7 +297,6 @@ struct apple_nhi {
+ 	u32 dp_in_cs[14];
+ 	bool dp_aux_armed;
+ 	unsigned int dp_aux_polls;
+-	bool dp_aux_fsm_acked;
+ };
+ 
+ #define nhi_to_anhi(nhi_) container_of((nhi_), struct apple_nhi, nhi)
+@@ -995,48 +994,6 @@ static int apple_dp_dptx_discover(struct tb_port *in)
+ 	return 0;
+ }
+ 
+-/*
+- * Diagnostic (candidate 0134, see notes/2026-09-24-0134-*.md): 0133 found
+- * APPLE_CIO_DPIN_ANALOG_FSM (+0x18) transition exactly once, early, then
+- * freeze solid at 0x80000000 (bit 31 only) for the rest of the attempt --
+- * through DEVICE_NOT_RESPONDING and the final give-up. This driver family
+- * already uses read-current-value-then-write-it-straight-back as its
+- * write-1-to-clear idiom elsewhere (apple_dpin_up()'s IRQ status
+- * acknowledge, drivers/thunderbolt/apple.c). Try exactly that idiom here,
+- * once, the first time this bit is observed set: if +0x18 is a status
+- * latch of the same kind, this clears only the bits that were set and
+- * leaves everything else alone -- the least presumptuous possible write,
+- * not a guessed constant. Runs at most once per tunnel-up (dp_aux_fsm_acked
+- * latches after the first attempt, win or lose) and only if DPRX has not
+- * already asserted (nothing to unstick once AUX has already completed).
+- * Deliberately does NOT touch +0x00 (the already-confirmed-ineffective
+- * control/start pulse dpin_aux tests) or any other offset.
+- */
+-static bool apple_dp_ack_analog_fsm(struct apple_nhi *anhi)
+-{
+-	struct apple_cio *acio = anhi->acio;
+-	u32 block, fsm;
+-
+-	if (!acio || !acio->rc_base)
+-		return false;
+-	block = anhi->analog_base ?: APPLE_CIO_DPIN0_ANALOG;
+-	if (block + APPLE_CIO_DPIN_ANALOG_FSM + 4 > resource_size(acio->rc_res))
+-		return false;
+-
+-	fsm = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
+-	if (!(fsm & BIT(31)))
+-		return false;
+-
+-	dev_info(acio->dev,
+-		 "Apple: FSM stuck at 0x%08x, attempting write-1-to-clear ack\n",
+-		 fsm);
+-	writel(fsm, acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
+-	mb();
+-	fsm = readl(acio->rc_base + block + APPLE_CIO_DPIN_ANALOG_FSM);
+-	dev_info(acio->dev, "Apple: FSM after ack: 0x%08x\n", fsm);
+-	return true;
+-}
+-
+ static void apple_dp_aux_work(struct work_struct *work)
+ {
+ 	struct apple_nhi *anhi =
+@@ -1083,25 +1040,29 @@ static void apple_dp_aux_work(struct work_struct *work)
+ 
+ 	anhi->dp_aux_polls++;
+ 	/*
+-	 * Diagnostic (candidate 0133, see notes/2026-09-24-0133-*.md): dump
+-	 * the analog block on every poll, not just the last one. Every
+-	 * host-side register fix so far (0129-0132) leaves DCP's own
+-	 * ~5-second internal wait before DEVICE_NOT_RESPONDING unchanged, so
+-	 * the open question is what (if anything) the ACIO analog block
+-	 * itself is doing during that window -- not yet observed, since the
+-	 * only prior dump was a single snapshot after the whole 12s poll
+-	 * budget was already spent.
++	 * Reverted candidates 0133/0134 (see notes/2026-09-24-0135-*.md):
++	 * dumping/reading this block on every poll was built on a
++	 * misreading of +0x18 as a stuck error FSM. It is an ordinary
++	 * one-shot, read-to-clear status register -- already documented
++	 * right here (APPLE_CIO_DPIN_ANALOG_EMPTY, and the comment a few
++	 * lines up: "+0x18 is first-read status 0x1017 (read-to-clear)",
++	 * from candidates 0054-0056). This project's own dpin_aux
++	 * default-off comment already explains why: reading it early
++	 * "tests whether consuming +0x18 aborted a handshake" -- exactly
++	 * the risk 0133 introduced by reading it every 500ms instead of
++	 * only once, after the fact. 0134's write-1-to-clear ack "had no
++	 * effect" because there was nothing to acknowledge: 0x80000000
++	 * is the register's own idle/empty sentinel, not a latched error.
++	 * Back to a single post-mortem dump, matching the original,
++	 * deliberately cautious design.
+ 	 */
+-	if (anhi->acio)
+-		apple_dp_dump_analog(anhi->acio,
+-				     dprx ? "dpin0 analog DPRX done" :
+-					    "dpin0 analog poll");
+-	if (!dprx && !anhi->dp_aux_fsm_acked &&
+-	    apple_dp_ack_analog_fsm(anhi))
+-		anhi->dp_aux_fsm_acked = true;
+ 	if (!dprx && anhi->dp_aux_polls < APPLE_DP_AUX_POLL_MAX) {
+ 		mod_delayed_work(system_wq, &anhi->dp_aux_work,
+ 				 msecs_to_jiffies(APPLE_DP_AUX_POLL_MS));
++	} else if (anhi->acio) {
++		apple_dp_dump_analog(anhi->acio,
++				     dprx ? "dpin0 analog DPRX done" :
++					    "dpin0 analog at timeout");
+ 	}
+ 
+ out_unlock:
+@@ -1159,7 +1120,6 @@ static int apple_nhi_dp_tunnel_post_activate(struct tb_nhi *nhi,
+ 	anhi->analog_base = apple_dp_in_analog_base(anhi, in);
+ 	anhi->analog_fsm = 0;
+ 	anhi->dp_aux_polls = 0;
+-	anhi->dp_aux_fsm_acked = false;
+ 	anhi->dp_aux_armed = true;
+ 	WRITE_ONCE(apple_dpin_anhi, anhi);
+ 
+-- 
+2.55.0
+

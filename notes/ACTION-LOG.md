@@ -52,7 +52,64 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
-## Current state (as of 2026-09-24, candidate 0134 result + major context finding)
+## Current state (as of 2026-09-24, candidate 0135 prepared, post-deep-research)
+
+**Full parallel research sweep run at Oliver's request (8 independent
+agents, ~1.1M tokens): overturns the 0133/0134 "stuck FSM" premise, and
+finds the confound that has undermined every register comparison since
+0127.** Full writeup in `notes/2026-09-24-0135-isolate-port-pipeline-confound-revert-fsm.md`;
+summary:
+
+- **The "stuck FSM" was a misreading.** This project's own source
+  already documents offset `+0x18` as an ordinary one-shot, read-to-clear
+  status register (`APPLE_CIO_DPIN_ANALOG_EMPTY = 0x80000000`, comment
+  "+0x18 is first-read status 0x1017 (read-to-clear)") -- from candidates
+  0054-0056, before this session. 0133's every-500ms polling was reading
+  past the one meaningful value into the documented "empty" sentinel;
+  0134's write-1-to-clear ack had nothing to acknowledge. Reverted both
+  back to the original, deliberately cautious single-post-mortem-dump
+  design.
+- **The real, load-bearing gap: 0127 (success) and every failure since
+  differ in BOTH physical port AND DCP pipeline at once, never in
+  isolation.** Every register-level comparison drawn from this data,
+  including the +0x18 first-read contrast that motivated 0133/0134, is
+  confounded and cannot be trusted without a same-port data point.
+  Offsets +0x00/+0x0c/+0x28/+0x34 (flagged after 0133) are confirmed
+  *not* diagnostic -- identical across all 9 captures, the success
+  included.
+- **Crossbar gap found, deliberately deferred**: the reference's
+  `apple_dpxbar_link_up()`/`link_down()` gate a register
+  (`OUT_PCLK1_EN`/`OUT_N_CLK_EN`) this project's T602x port never
+  touches, and `link_down()` never clears `CROSSBAR_DISPEXT_EN` despite
+  a comment claiming parity with the reference. Real, but T602x's
+  register layout has clearly diverged from the generic one compared
+  against (extra unnamed registers, no established 1:1 mapping), and this
+  code is unreachable on the current failure regardless (never gets past
+  the ~5s silence to reach `SET_LINK_RATE`). Left for later.
+- **Confirmed correct/ruled out**: PHY analog wake/AUSPLL sequence
+  (bit-for-bit matches reference); crossbar routing code and live
+  device-tree wiring (symmetric between both ports); DCP apcall dispatch
+  for `DEVICE_NOT_RESPONDING`/etc. (byte-identical across this project's
+  tree, the merge-base, and the working reference -- predates all three,
+  not the defect). The real fact from that last audit: DCP issues *zero*
+  apcalls for ~5s on every failure, versus an immediate real
+  link-training burst on the one success -- the fault is upstream of
+  anything the driver's apcall dispatcher ever sees.
+- **No external prior art exists.** Confirmed via live GitHub/web
+  research: no public source documents this ACIO block; the one parallel
+  community effort on the same SoC family is pre-hardware-test and behind
+  this project; Sven Peter's real upstream series confirms DP tunneling
+  unimplemented for every Apple Silicon generation. This project's own
+  state is very likely the most advanced public reference point for this
+  exact problem.
+
+**Candidate 0135 prepared, awaiting Oliver's install+reboot**: reverts
+0133/0134 (above), and adds `usb4_route_prefer_fixed_diag` (armed for
+this boot) to force the right port's tunnel onto the dcpext0 pipeline
+(0127's own pipeline), isolating whether the right ACIO's own hardware or
+the dcpext1 pairing is the actual discriminator. Full reasoning and test
+plan in the note above.
+
 
 **0134 result: the write-1-to-clear hypothesis is cleanly closed.** Log
 showed exactly the designed sequence: `"Apple: FSM stuck at 0x80000000,
@@ -307,7 +364,7 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
 `captures/2026-09-24-0128-boot-kernel.log`,
 `captures/2026-09-24-0128-retry-boot-kernel.log`.
 
-## Recent candidates (0126-0134)
+## Recent candidates (0126-0135)
 
 - **0126** (drm/apple/dcp.c, one-line): stopped forcing the USB4 tunnel's
   ATC PHY into `PHY_MODE_DP` (both the reference PR and our own
@@ -390,6 +447,16 @@ Full boot captures for all of this: `captures/2026-09-24-0127-boot-kernel.log`,
   no picture. Closes this specific hypothesis; see "Current state" above
   for the bigger-picture finding that followed.
   `notes/2026-09-24-0134-ack-analog-fsm-write1clear.md`.
+- **0135** (drivers/thunderbolt/apple.c revert + drivers/gpu/drm/apple/dcp.c,
+  new diagnostic): found via a full 8-agent parallel research sweep at
+  Oliver's request. Reverts 0133/0134 (the "stuck FSM" was a misreading of
+  an already-documented, pre-session read-to-clear status register) and
+  adds `usb4_route_prefer_fixed_diag` to isolate the port/pipeline confound
+  that has undermined every register-level comparison since 0127 -- forces
+  the right port's tunnel onto 0127's own dcpext0 pipeline, for one boot,
+  to test whether the port or the pipeline gates the rich apcall burst and
+  `DPRX_DONE=1`. Not yet installed/booted.
+  `notes/2026-09-24-0135-isolate-port-pipeline-confound-revert-fsm.md`.
 
 Currently installed and booted: candidate 0134
 (`thunderbolt_apple.ko` SHA256 `fa245b8411f4ab85db5143c2111a8cd423ac763aa471c289300ca4f56da46a08`,
@@ -398,5 +465,16 @@ Currently installed and booted: candidate 0134
 `appledrm.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko` unchanged
 from 0130-0133, hashes in `scripts/manage-0134.py`).
 
-No candidate prepared -- see "Current state" above for why, and the
-options being discussed with Oliver.
+Candidate 0135 built and verified, not yet installed
+(`appledrm.ko` SHA256 `62fea148ce8ab047ad96301ca4b6c977668edb7affc85e4cf35e91b9676fd27f`,
+`thunderbolt_apple.ko` SHA256 `cfcd0fce5f999ab0ee082cb2680468996c96c9a143ace01d324aff6ee7268374`
+(source-identical to 0132 except one comment, confirmed via `git diff`),
+`thunderbolt.ko`/`mux-apple-display-crossbar.ko`/`phy-apple-atc.ko`
+unchanged, hashes in `scripts/manage-0135.py`). `OPTIONS` for this
+candidate includes `usb4_route_prefer_fixed_diag=1` (armed for this
+boot's own test). To arm and test, after this commit is pushed:
+```
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0135.py check
+sudo -n python3 /home/oliver/Development/asahi-j416s-display/scripts/manage-0135.py install
+```
+then reboot, and capture `dmesg`/`journalctl -k` from this boot.
