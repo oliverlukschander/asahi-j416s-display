@@ -1,8 +1,8 @@
 diff --git i/src/backend/drm/DRM.cpp w/src/backend/drm/DRM.cpp
-index 431247b..f61183a 100644
+index 431247b..62ac715 100644
 --- i/src/backend/drm/DRM.cpp
 +++ w/src/backend/drm/DRM.cpp
-@@ -2007,6 +2007,20 @@ void Aquamarine::SDRMConnector::connect(drmModeConnector* connector) {
+@@ -2007,6 +2007,22 @@ void Aquamarine::SDRMConnector::connect(drmModeConnector* connector) {
          return;
      }
  
@@ -18,8 +18,48 @@ index 431247b..f61183a 100644
 +    // "Cannot commit when a page-flip is awaiting" / permanently-black-output
 +    // failure mode restoreAfterVT() already guards against for session
 +    // reactivation, just reached via a hotplug reconnect instead.
++    backend->backend->log(AQ_LOG_ERROR, std::format("AQFIX: connect() {} calling invalidateFrame(), crtc={}", szName, (void*)crtc.get()));
 +    invalidateFrame();
++    backend->backend->log(AQ_LOG_ERROR, std::format("AQFIX: connect() {} invalidateFrame() returned", szName));
 +
      // max_bpc-less retry is per-sink and must not persist across hotplugs.
      maxBpcFailed = false;
  
+@@ -2267,15 +2283,23 @@ void Aquamarine::SDRMConnector::applyCommit(SDRMConnectorCommitData& data) {
+ }
+ 
+ void Aquamarine::SDRMConnector::invalidateFrame() {
++    backend->backend->log(AQ_LOG_ERROR, std::format("AQFIX: invalidateFrame() {} enter, crtc={}", szName, (void*)crtc.get()));
+     sched.invalidate();
++    backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() sched.invalidate() returned");
+ 
+     if (crtc && crtc->pendingFlip.connector == self) {
++        backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() stale pendingFlip found for self, cleaning up");
+         const auto COMMIT_ID = crtc->pendingFlip.commitID;
+-        if (backend->commitThread && COMMIT_ID)
++        if (backend->commitThread && COMMIT_ID) {
++            backend->backend->log(AQ_LOG_ERROR, std::format("AQFIX: invalidateFrame() calling releaseQueue(crtc={}, commit={})", crtc->id, COMMIT_ID));
+             backend->commitThread->releaseQueue(crtc->id, COMMIT_ID);
++            backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() releaseQueue() returned");
++        }
+         crtc->disarmPageFlip();
++        backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() disarmPageFlip() returned");
+ 
+         if (output && COMMIT_ID && output->pendingAsyncCommit == COMMIT_ID) {
++            backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() emitting present(false)");
+             output->pendingAsyncCommit = 0;
+ 
+             timespec when = {};
+@@ -2285,8 +2309,11 @@ void Aquamarine::SDRMConnector::invalidateFrame() {
+                 .when      = &when,
+                 .commitID  = COMMIT_ID,
+             });
++            backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() present(false) emit returned");
+         }
+-    }
++    } else
++        backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() no stale pendingFlip for self");
++    backend->backend->log(AQ_LOG_ERROR, "AQFIX: invalidateFrame() exit");
+ }
+ 
+ void Aquamarine::SDRMConnector::setCRTC(SP<SDRMCRTC> newCRTC) {

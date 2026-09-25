@@ -52,6 +52,65 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Aquamarine reinstalled with debug instrumentation; found a separate, pre-existing bug that likely explains the freeze
+
+While reconciling the git/restore mess above, tried a VT-switch-based
+isolated test (`openvt` to VT2 running a second Hyprland with the
+patched library via `LD_LIBRARY_PATH`, no system file touched). That
+specific test setup failed immediately (no seat/session context via
+raw `openvt`, SIGABRT, no coredump) -- a dead end for testing method,
+but the VT switch itself (away from and back to Oliver's real VT1
+session, `chvt`) incidentally exercised the exact same kind of
+session-transition event we've been chasing all session, and his
+**live session's own hyprland.log** (`/run/user/1001/hypr/.../hyprland.log`,
+still on disk since no reboot happened) caught something important:
+
+Between `[libseat] Disabling seat` and `Enabling seat` (i.e. for the
+whole time VT1 was inactive), **210 occurrences of `ERR ]: drm: Session
+inactive`** in ~867 log lines -- a tight, back-to-back retry loop with
+no delay between attempts. Source: `CDRMOutput::commitState()`
+(`src/backend/drm/DRM.cpp`) checks `backend->backend->session->active`
+and cleanly returns `false` when inactive -- that part is fine. The
+actual bug is one level up: whatever drives `commit()`/`test()` (almost
+certainly Hyprland's own render/frame-scheduling loop, not Aquamarine
+itself) keeps re-attempting a commit every frame with **zero backoff**
+whenever it fails this way, spinning the main thread and starving
+input processing -- exactly the "picture visible, but nothing responds"
+signature from the SDDM-greeter freeze. This happened on his **current,
+unmodified, pristine** aquamarine (confirmed hash before touching
+anything) -- **not caused by the `invalidateFrame()` patch at all**.
+It self-resolved the moment the VT switch back to VT1 made the session
+active again.
+
+This substantially changes the risk picture: the original SDDM-greeter
+freeze was very likely this same pre-existing bug, hit through a
+different door (something about a fresh greeter session's own startup
+leaving it "inactive" for longer than normal, with nothing to
+naturally reactivate it the way a VT-switch-back does) -- not something
+the one-line `connect()` fix introduced. Worth a real, separate
+follow-up investigation (Hyprland's own render-loop backoff behavior
+on failed commits), but out of scope for finishing 0147 right now.
+
+Rebuilt the aquamarine fix with temporary `AQFIX:`-tagged
+`AQ_LOG_ERROR` instrumentation around `connect()`'s `invalidateFrame()`
+call and inside `invalidateFrame()` itself (entry/exit and each
+sub-step), so that if a freeze happens again, the still-on-disk
+hyprland.log (this time under `/run/user/963/hypr/.../hyprland.log`
+for the SDDM greeter user, survivable without a reboot if recovered via
+VT switch instead of a hard reset) will show exactly how far execution
+got. New hash:
+`86827698e645f7ceed3c460264b5f5dda06143a0b5331ef04534571e4d71e193`.
+Installed via the now-fixed atomic `manage-aquamarine-pageflip.py`
+(verified pristine beforehand, verified backup, verified installed
+hash after).
+
+**Recovery plan communicated to Oliver for this test**: if the greeter
+freezes again (no keyboard/cursor), do **not** hold the power button.
+Switch to a different VT (Ctrl+Alt+F2), log in there, and either wait a
+few seconds (VT activation may unstick it, as observed above) or kill
+the stuck Hyprland process directly -- either way avoids a reboot, so
+the greeter's own hyprland.log survives for inspection.
+
 ## Aquamarine stale-pageflip fix prepared: root cause of the black screen, not a delay
 
 Oliver rejected a timing-delay workaround for the 0147 black-screen
