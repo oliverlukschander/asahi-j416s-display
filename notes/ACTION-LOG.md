@@ -52,6 +52,48 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Aquamarine stale-pageflip fix prepared: root cause of the black screen, not a delay
+
+Oliver rejected a timing-delay workaround for the 0147 black-screen
+symptom outright ("i want the correct solution ... not just guess and
+wait X seconds"). Root-caused it for real instead by reading
+Aquamarine's actual source (github.com/hyprwm/aquamarine, cloned at
+tag `v0.15.1`, matching `pacman -Qi aquamarine` exactly):
+`SDRMConnector::connect()` (the hotplug-reconnect path) never clears a
+CRTC's stale pending-flip bookkeeping, unlike `disconnect()` and
+`setCRTC()` (only when the CRTC assignment changes, which it usually
+won't for the same dock reconnecting to the same CRTC). Aquamarine's
+own `restoreAfterVT()` has an explicit comment describing this exact
+failure class ("Cannot commit when a page-flip is awaiting" /
+"outputs permanently black after resume") for a *different* trigger
+(VT switch / session reactivation) -- our case reaches the identical
+failure mode via a hotplug reconnect after the Thunderbolt tunnel is
+torn down abruptly at suspend, a path that mitigation doesn't cover.
+
+**Fix**: one call, `invalidateFrame()` (already safe/idempotent),
+added at the top of `connect()`. Full writeup:
+`notes/2026-09-25-aquamarine-stale-pageflip.md`. Patch and rebuild
+script tracked at `src/aquamarine/` (patch + `build.sh`, source itself
+gitignored, not vendored). Clean rebuild against the exact installed
+version: zero errors/warnings, exported symbol set identical to the
+currently-installed library (aside from 3 incidental
+libstdc++/template-instantiation weak symbols, not a real ABI change).
+
+This is a plain shared library, not a kernel module -- no depmod,
+initramfs, or reboot. It *is* pacman-owned and actively mapped into
+the running Hyprland session, so the same discipline applies: verified
+backup before install (an existing backup from an earlier, abandoned
+live-instrumentation attempt on this same library was cross-checked
+byte-identical to the current install, confirming it's trustworthy),
+verified checksum after. Given that earlier attempt crashed Hyprland
+multiple times when hot-swapped live, Oliver chose: install the file
+now (safe, no session impact -- a running process keeps using its
+already-mapped old copy regardless of what changes on disk), then test
+by logging out and back in, not a live Hyprland restart.
+`scripts/manage-aquamarine-pageflip.py` handles check/install/restore.
+
+**Not yet installed or tested.**
+
 ## 0147 CONFIRMED: kernel-side auto-recovery works; remaining black screen is the known Aquamarine bug
 
 After the recovery below, rebooted into `linux-aurora` (hub connected)

@@ -354,3 +354,10 @@ still needs one of: a physical replug, a DPMS toggle, or an eventual
 upstream Aquamarine fix, until that separate bug is fixed. On any
 compositor without that specific bug -- or once it's fixed -- this
 kernel fix makes the recovery fully seamless with no replug at all.
+
+**Update**: that separate bug is now root-caused and fixed, for real,
+not with a delay -- see `notes/2026-09-25-aquamarine-stale-pageflip.md`.
+Aquamarine's `connect()` never cleared a CRTC's stale pending-flip
+state left over from an abrupt tunnel teardown, unlike `disconnect()`
+and `setCRTC()`. Once that's installed and tested, 0147 should deliver
+its full, originally-intended outcome end to end.
