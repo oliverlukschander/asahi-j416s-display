@@ -52,6 +52,56 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Third hard reset on this freeze; stopped live retries, reverted, moving to static analysis
+
+Retested the instrumented build via a real logout. Froze again,
+identical shape to the very first incident: internal panel loads,
+external monitor added via hotplug/reload ~800ms later
+(`sddm-greeter-qt6`: "Adding view for eDP-1" then "Adding view for
+USB-3"), then total input silence for ~20s until Oliver held the power
+button (`journalctl -b -1`: "Power key pressed short" -> "Triggering
+forced shutdown!"). This time on the **right** port (`USB-3`, at work),
+not the left port (`USB-1`, at home) where the first incident happened
+-- same failure shape on a different physical route argues this is a
+general race (fresh greeter session + external-monitor hotplug), not
+something tied to one specific port's wiring.
+
+The `AQFIX`-instrumented log never got captured. The background
+mirror script (`~/aqfix-log-mirror/watch.sh`, meant to copy the
+greeter's tmpfs-only hyprland.log to persistent storage every 0.5s
+specifically so a hard reset wouldn't lose it) globbed
+`/run/user/963/hypr/*/hyprland.log` -- that path was correct (963 is
+confirmed the `sddm` system user's UID from earlier session logs) but
+never matched anything this run; root cause not chased further since
+the priority was stopping the bleeding, not fixing the safety net.
+Also: the script itself is a background process with no persistence
+mechanism of its own -- it dies on every reboot and needs re-arming
+each time, which was missed once already this session (the second
+hard-reset's test ran with no watcher at all).
+
+**Three hard resets in this investigation is too many.** Stopped
+further live retries for now. Reverted aquamarine back to pristine --
+this time from `/var/tmp/aquamarine-trace-backup/libaquamarine.so.0.15.1.orig`
+(the original abandoned-live-instrumentation-attempt backup; the
+`manage-aquamarine-pageflip.py` script's own backup dir under
+`/var/tmp/j416s-aquamarine-pageflip-before` had itself been wiped by
+the intervening reboots, since `/var/tmp` is tmpfs on this system too
+-- confirmed via `findmnt`, matching the same class of problem as the
+in-place-overwrite bug fixed earlier). Verified the older backup's
+hash first (`82dd575887...`, matches exactly), then did a manual
+atomic swap (temp file + rename + checksum, same pattern as the fixed
+script) since the script's own state didn't apply here.
+
+**Revised plan**: pursue this entirely through reading Hyprland's own
+source (the render/frame-scheduling loop that drives `commit()`/
+`test()` with no backoff on repeated "Session inactive" failures --
+already confirmed via log evidence on Oliver's own *unpatched* session
+during an incidental VT switch, see the entry below) rather than any
+further live experiments on Oliver's daily-driver machine. Only return
+to live testing once this is either confirmed and fixed, or confirmed
+unrelated to the one-line `invalidateFrame()` patch with an alternative
+explanation in hand.
+
 ## Aquamarine reinstalled with debug instrumentation; found a separate, pre-existing bug that likely explains the freeze
 
 While reconciling the git/restore mess above, tried a VT-switch-based
