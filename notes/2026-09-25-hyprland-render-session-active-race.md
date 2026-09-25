@@ -129,14 +129,97 @@ the loop before the two flags ever agree.
   `canRender()` themselves before doing anything, the same way the
   plain `onFrame()` path already correctly does.
 
-## Not attempted yet, deliberately
+## Update: fix written, built, and staged -- Oliver's explicit sign-off
 
-A candidate fix is straightforward to write (add the missing
-`aqBackend->session->active` check to `renderMonitor()`, or call
-`canRender()` from `onSyncFired()`/`onPresented()` before proceeding).
-But this touches Hyprland's actual render/frame-pacing core -- a much
-larger, more central piece of code than the one-line Aquamarine fix
-that already cost three hard resets to (mis)diagnose live. Not
-attempting to build, install, or test this against Oliver's daily
-driver without a much more deliberate plan and his explicit sign-off
-first.
+Oliver: *"what we want to do is develop a proper fix, test it and file
+a PR for it like always"* -- proceeding with the same rigor as every
+kernel candidate this session.
+
+### The fix
+
+Two changes, `src/render/Renderer.cpp` and
+`src/output/MonitorFrameScheduler.cpp` (Hyprland v0.56.2, matching the
+installed package exactly):
+
+1. `IHyprRenderer::renderMonitor()`: the existing
+   `if (!g_pCompositor->m_sessionActive) return;` now also checks
+   `g_pCompositor->m_aqBackend->session->active`, matching
+   `canRender()`'s condition exactly.
+2. `CMonitorFrameScheduler::onSyncFired()` and `::onPresented()`: both
+   now call the existing `canRender()` (already correctly checks both
+   flags) right at the top, before doing anything else -- these are
+   the two functions that call `renderMonitor()`/commit directly,
+   bypassing `canRender()`'s gate entirely, which is the actual root
+   of the loop (fix #1 alone stops the wasted GPU render, but
+   `onSyncFired()` would still unconditionally call `onFinishRender()`
+   afterward and re-arm another sync wait regardless -- a lighter but
+   still potentially tight loop). `onPresented()` deliberately does
+   *not* clear `m_pendingThird` when bailing early -- the frame it
+   refers to may have already been rendered by an earlier, successful
+   `onSyncFired()`; leaving it set means it gets committed properly
+   once the session is active again, matching the existing "if it
+   didn't fire yet it doesn't matter, syncs will wait" comment already
+   in that code path.
+
+Patch and rebuild script tracked at `src/hyprland/` (patch +
+`build.sh`, source itself gitignored, not vendored, same pattern as
+`src/aquamarine/`).
+
+### Build verification
+
+Clean build against the exact installed version (cloned at tag
+`v0.56.2` + submodules, matching `pacman -Qi hyprland` exactly): zero
+errors, one warning (`MiscFunctions.cpp:97`, pre-existing, unrelated
+to any touched file). Hash:
+`4535df320536e0a1081be41652a040b342c684450859d4ec07765b7db8959b32`.
+
+### Deployment plan and safety preparation
+
+Same discipline as every live-system change this session, plus new
+safety measures specifically motivated by the three hard resets on the
+*other* fix this session:
+
+- **SysRq fully enabled** (`kernel.sysrq`, both live and persisted via
+  `/etc/sysctl.d/99-sysrq-emergency.conf`) -- Wayland compositors take
+  an exclusive `EVIOCGRAB` on input devices, which is why Ctrl+Alt+F2
+  didn't respond during the earlier freezes (a normal key combo goes
+  through that grab). SysRq is intercepted by the kernel *before* any
+  userspace grab, specifically for exactly this class of emergency.
+- **The real plan, though**: Claude's own shell access to this machine
+  is a separate channel entirely from Hyprland's input handling -- a
+  frozen compositor shouldn't affect it at all. If this freezes again,
+  Oliver should say so *before* reaching for the power button, so
+  Claude can check whether that access is still responsive and, if so,
+  find and kill the stuck process directly -- no reboot, logs intact.
+  SysRq is the fallback if that channel is *also* unresponsive (which
+  would suggest a much deeper problem than this specific bug).
+- **Log mirroring, fixed**: the earlier `~/aqfix-log-mirror/watch.sh`
+  never captured anything because it ran as `oliver`, and
+  `/run/user/963` (the sddm system user) is mode `0700` -- silently
+  unreadable. Now runs under `sudo`. Needs re-arming after every
+  reboot (it's a plain background process with no persistence of its
+  own); this was already missed once this session.
+- `scripts/manage-hyprland-session-race.py` handles check/install/
+  restore for `/usr/bin/Hyprland` with the same atomic
+  temp-file-then-rename swap used for the Aquamarine library, verified
+  backup before, verified checksum after. A running Hyprland process
+  keeps its own already-loaded image regardless of what changes on
+  disk -- this only affects the next fresh launch (next logout/login).
+
+### Test plan
+
+1. Install (binary swap only, verified backup, no logout yet).
+2. Re-arm the log watcher (root this time) for the current boot.
+3. Oliver logs out. Watch both displays.
+4. If it freezes again: tell Claude immediately, before touching the
+   power button, so a live kill can be attempted first.
+5. If it works: log back in, then do the real 0147 test (lid close ->
+   s2idle -> lid open, hub untouched) to confirm the actual
+   originally-intended end-to-end outcome -- auto-recovery with zero
+   replug and zero manual nudge.
+6. Once confirmed working across a few real cycles, package both this
+   fix and the Aquamarine stale-pageflip fix as a PR (Hyprland fix
+   likely upstream to hyprwm/Hyprland directly, given it's a genuine,
+   general bug unrelated to Apple hardware; Aquamarine fix similarly
+   upstream to hyprwm/aquamarine; the kernel work stays in the
+   aurora-silicon/linux PR track as before).

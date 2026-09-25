@@ -1,0 +1,63 @@
+diff --git i/src/output/MonitorFrameScheduler.cpp w/src/output/MonitorFrameScheduler.cpp
+index 9299bfb..68cb8a7 100644
+--- i/src/output/MonitorFrameScheduler.cpp
++++ w/src/output/MonitorFrameScheduler.cpp
+@@ -22,6 +22,19 @@ void CMonitorFrameScheduler::onSyncFired() {
+     if (!PMONITOR || !newSchedulingEnabled())
+         return;
+ 
++    // Unlike onFrame(), this is called directly off a GPU explicit-sync fd
++    // becoming readable -- entirely decoupled from the display's own frame
++    // cadence, and from canRender()'s gate. If the session goes inactive
++    // while a "missed frame" is in flight here, skipping this check would
++    // still render (wasted, since the eventual commit fails anyway) and
++    // then unconditionally re-arm another sync wait via onFinishRender(),
++    // which fires again immediately since nothing meaningful was queued --
++    // spinning as fast as the event loop allows, with no display frame
++    // ever pacing it, until the session is active again. Bail here first,
++    // the same way onFrame() already does via canRender().
++    if (!canRender())
++        return;
++
+     // Sync fired: reset submitted state, set as rendered. Check the last render time. If we are running
+     // late, we will instantly render here.
+ 
+@@ -57,6 +70,14 @@ void CMonitorFrameScheduler::onPresented() {
+     if (!PMONITOR || !newSchedulingEnabled())
+         return;
+ 
++    // Same reasoning as onSyncFired(): this commits directly, bypassing
++    // canRender(). Leave m_pendingThird set if we bail here -- the frame
++    // this refers to was already rendered earlier (or wasn't, per the
++    // existing comment below: "if it didn't fire yet it doesn't matter"),
++    // and it'll be committed properly once the session is active again.
++    if (!canRender())
++        return;
++
+     if (!m_pendingThird)
+         return;
+ 
+diff --git i/src/render/Renderer.cpp w/src/render/Renderer.cpp
+index 249f084..553c4be 100644
+--- i/src/render/Renderer.cpp
++++ w/src/render/Renderer.cpp
+@@ -2046,7 +2046,18 @@ void IHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
+         Debug::overlay()->frameData(pMonitor);
+     }
+ 
+-    if (!g_pCompositor->m_sessionActive)
++    // Mirrors CMonitorFrameScheduler::canRender()'s check. This function is
++    // also called directly and unconditionally from the explicit-sync
++    // scheduler's onSyncFired() (bypassing canRender() entirely), so it must
++    // check Aquamarine's own session-active flag itself, not just Hyprland's
++    // m_sessionActive -- the two can be briefly out of sync (e.g. early in a
++    // fresh session's startup, or during a hotplug-heavy reconnect), and
++    // without this, a "missed frame" detected in that window renders and
++    // re-arms indefinitely: the GPU render succeeds and re-triggers itself
++    // via onFinishRender() regardless of the display commit failing deeper
++    // inside Aquamarine, saturating the main thread and starving input
++    // processing for as long as the two flags disagree.
++    if (!g_pCompositor->m_sessionActive || (g_pCompositor->m_aqBackend->hasSession() && !g_pCompositor->m_aqBackend->session->active))
+         return;
+ 
+     Event::bus()->m_events.render.preChecks.emit(pMonitor);

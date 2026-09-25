@@ -52,6 +52,46 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Hyprland fix written, built, staged: same discipline, new safety measures
+
+Oliver: "what we want to do is develop a proper fix, test it and file
+a PR for it like always" -- proceeding on the root cause below.
+
+**Fix**: `renderMonitor()` (`src/render/Renderer.cpp`) now checks
+Aquamarine's own `aqBackend->session->active` too, not just Hyprland's
+`m_sessionActive` (matching `canRender()` exactly). `onSyncFired()`/
+`onPresented()` (`src/output/MonitorFrameScheduler.cpp`) -- which call
+`renderMonitor()`/commit directly, bypassing `canRender()`'s gate
+entirely -- now call `canRender()` themselves first. Clean build
+against the exact installed v0.56.2: zero errors, one pre-existing,
+unrelated warning. Hash:
+`4535df320536e0a1081be41652a040b342c684450859d4ec07765b7db8959b32`.
+Patch/rebuild script at `src/hyprland/`. Full detail:
+`notes/2026-09-25-hyprland-render-session-active-race.md`.
+
+**New safety measures**, motivated directly by the three hard resets
+on the Aquamarine fix:
+- SysRq fully enabled (live + persisted via
+  `/etc/sysctl.d/99-sysrq-emergency.conf`) -- Ctrl+Alt+F2 didn't work
+  during the freezes because Wayland compositors hold an exclusive
+  `EVIOCGRAB` on input devices; SysRq is intercepted by the kernel
+  before any userspace grab.
+- **Primary plan**: Claude's own shell access is a separate channel
+  from Hyprland's input handling entirely -- should stay responsive
+  through a compositor freeze. If it freezes again, Oliver tells
+  Claude *before* the power button, so a live kill can be attempted
+  first -- no reboot, no lost logs. SysRq is the fallback only if that
+  access is also unresponsive.
+- Log watcher fixed to run as root (`/run/user/963` is mode `0700`,
+  silently unreadable as `oliver` -- why it captured nothing last
+  time) and re-armed for the current boot.
+- `scripts/manage-hyprland-session-race.py`: same atomic
+  temp-file-then-rename swap pattern as the Aquamarine script, for
+  `/usr/bin/Hyprland`.
+
+**Not yet installed.** Committing this writeup first, per the
+standing protocol, before any install action.
+
 ## Freeze root-caused via static analysis: a real Hyprland bug, not the Aquamarine fix
 
 Read Hyprland's actual source (v0.56.2, matching installed exactly).

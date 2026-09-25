@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Stage, or restore, the Hyprland render-session-active-race fix.
+
+IHyprRenderer::renderMonitor() is called directly and unconditionally
+from CMonitorFrameScheduler::onSyncFired() (the explicit-sync "missed
+frame" path), bypassing canRender() entirely. It only checked Hyprland's
+own g_pCompositor->m_sessionActive, never Aquamarine's own
+aqBackend->session->active -- the two can briefly disagree (a fresh
+session's own startup, or a hotplug-heavy reconnect), and when they do,
+renderMonitor() renders anyway; the GPU render succeeds and re-arms
+itself via onFinishRender() regardless of the real display commit
+failing deeper inside Aquamarine, looping indefinitely and saturating
+the main thread -- exactly the "picture visible, input completely dead"
+freeze hit twice this session (once at home on the left port, once at
+work on the right port). Root-caused via static analysis only, after
+three hard resets from live-testing a different, unrelated fix (the
+Aquamarine connect() stale-pageflip patch) made further blind live
+retries unacceptable. Full detail in
+notes/2026-09-25-hyprland-render-session-active-race.md.
+
+Fix: renderMonitor() now checks both flags (matching canRender()'s
+existing condition exactly), and onSyncFired()/onPresented() -- which
+call renderMonitor()/commit directly, bypassing canRender() -- now call
+canRender() themselves first, the same way the plain onFrame() path
+already correctly does.
+
+This is the main system Hyprland binary (/usr/bin/Hyprland), not a
+kernel module or a library -- no depmod, initramfs, or reboot. Same
+discipline as every other live-system change this session: verified
+backup before install, verified checksum after, atomic temp-file-then-
+rename swap (a currently-running Hyprland process keeps its own
+already-loaded image regardless of what's on disk -- this only affects
+the next fresh launch, i.e. the next logout/login).
+"""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+CANDIDATE = ROOT / 'src/hyprland/src/build/Hyprland'
+PATCH = ROOT / 'src/hyprland/0001-fix-session-active-race.patch'
+TARGET = Path('/usr/bin/Hyprland')
+BACKUP = Path('/var/tmp/j416s-hyprland-session-race-before')
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def run(*args, **kwargs):
+    return subprocess.run(args, check=True, **kwargs)
+
+
+def preflight():
+    if b'apple,j416s' not in Path('/sys/firmware/devicetree/base/compatible').read_bytes().split(b'\0'):
+        raise RuntimeError('Wrong machine')
+    if not TARGET.is_file():
+        raise RuntimeError(f'Missing original: {TARGET}')
+
+
+def check_candidate():
+    if not CANDIDATE.is_file():
+        raise RuntimeError(f'Candidate missing, run src/hyprland/build.sh first: {CANDIDATE}')
+    if not PATCH.is_file():
+        raise RuntimeError(f'Patch file missing: {PATCH}')
+    out = subprocess.run(['file', str(CANDIDATE)], check=True, capture_output=True, text=True).stdout
+    # PIE binaries get reported by file(1) as either "pie executable" or
+    # "shared object" depending on subtle ELF header details -- both are
+    # legitimate; what actually matters is that it's a real dynamically
+    # linked aarch64 ELF, which the CMake build log already confirmed by
+    # explicitly linking a CXX executable named Hyprland.
+    if 'ELF' not in out or 'aarch64' not in out or not os.access(CANDIDATE, os.X_OK):
+        raise RuntimeError(f'Candidate is not a valid executable: {out.strip()}')
+
+
+def restore():
+    manifest = json.loads((BACKUP / 'manifest.json').read_text())
+    expected = manifest['sha256']
+    if digest(BACKUP / 'Hyprland') != expected:
+        raise RuntimeError('Backup checksum mismatch')
+    tmp = TARGET.with_suffix('.tmp')
+    shutil.copy2(BACKUP / 'Hyprland', tmp)
+    if digest(tmp) != expected:
+        raise RuntimeError('Copy verification failed before rename')
+    os.rename(tmp, TARGET)
+    os.chmod(TARGET, 0o755)
+    if digest(TARGET) != expected:
+        raise RuntimeError(f'Restored checksum mismatch: {TARGET}')
+    os.sync()
+    print('Restored pre-fix Hyprland binary (atomic swap). No logout/restart performed.', flush=True)
+
+
+def install():
+    if BACKUP.exists():
+        raise RuntimeError('Backup already exists; refusing to overwrite')
+    check_candidate()
+
+    BACKUP.mkdir(mode=0o700)
+    expected_backup = digest(TARGET)
+    shutil.copy2(TARGET, BACKUP / 'Hyprland')
+    if digest(BACKUP / 'Hyprland') != expected_backup:
+        raise RuntimeError('Backup verification failed')
+    (BACKUP / 'manifest.json').write_text(json.dumps({'sha256': expected_backup}, indent=2) + '\n')
+    os.sync()
+    print('Verified backup:', BACKUP, flush=True)
+    try:
+        preflight()
+        candidate_hash = digest(CANDIDATE)
+        tmp = TARGET.with_suffix('.tmp')
+        shutil.copy2(CANDIDATE, tmp)
+        if digest(tmp) != candidate_hash:
+            raise RuntimeError('Copy verification failed before rename')
+        os.rename(tmp, TARGET)
+        os.chmod(TARGET, 0o755)
+        if digest(TARGET) != candidate_hash:
+            raise RuntimeError(f'Installed checksum mismatch: {TARGET}')
+        os.sync()
+    except BaseException:
+        print('Installation failed; restoring verified original.', flush=True)
+        restore()
+        raise
+    print(f'Installed (hash {candidate_hash}). Log out and back in to test -- '
+          'do not restart Hyprland live.', flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['check', 'install', 'restore'])
+    args = parser.parse_args()
+    preflight()
+    if args.action == 'check':
+        check_candidate()
+        print('Correct machine; candidate is a valid Hyprland executable; ready to install.')
+        return
+    if os.geteuid() != 0:
+        raise RuntimeError('Run with sudo')
+    if args.action == 'install':
+        install()
+    else:
+        restore()
+
+
+if __name__ == '__main__':
+    main()
