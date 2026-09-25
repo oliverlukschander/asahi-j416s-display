@@ -1,63 +1,43 @@
-diff --git i/src/output/MonitorFrameScheduler.cpp w/src/output/MonitorFrameScheduler.cpp
-index 9299bfb..68cb8a7 100644
---- i/src/output/MonitorFrameScheduler.cpp
-+++ w/src/output/MonitorFrameScheduler.cpp
-@@ -22,6 +22,19 @@ void CMonitorFrameScheduler::onSyncFired() {
-     if (!PMONITOR || !newSchedulingEnabled())
-         return;
+diff --git i/src/output/Monitor.cpp w/src/output/Monitor.cpp
+index e69d8dd..451d4cc 100644
+--- i/src/output/Monitor.cpp
++++ w/src/output/Monitor.cpp
+@@ -2653,7 +2653,28 @@ void CMonitorState::ensureBufferPresent() {
+     m_owner->m_output->swapchain->rollback(); // restore the counter, don't advance the swapchain
+ }
  
-+    // Unlike onFrame(), this is called directly off a GPU explicit-sync fd
-+    // becoming readable -- entirely decoupled from the display's own frame
-+    // cadence, and from canRender()'s gate. If the session goes inactive
-+    // while a "missed frame" is in flight here, skipping this check would
-+    // still render (wasted, since the eventual commit fails anyway) and
-+    // then unconditionally re-arm another sync wait via onFinishRender(),
-+    // which fires again immediately since nothing meaningful was queued --
-+    // spinning as fast as the event loop allows, with no display frame
-+    // ever pacing it, until the session is active again. Bail here first,
-+    // the same way onFrame() already does via canRender().
-+    if (!canRender())
-+        return;
++// Many call sites across this file commit or test monitor state directly
++// (CMonitor::onConnect(), ::applyMonitorRule(), ::onDisconnect(), etc.) and
++// none of them individually check whether the session is active first --
++// only the frame-scheduler's own onFrame() path does, via canRender(). A
++// hotplug reconnect (a real display coming back after a Thunderbolt/USB4
++// tunnel teardown, or a fresh compositor session's own startup racing a
++// monitor appearing) can run any of these while the session is still
++// transitioning, and the resulting failed commit/test is not itself the
++// problem -- what's dangerous is relying on every current and future
++// caller to remember to gate itself, when a single missed call site is
++// enough to reach a real hardware commit attempt during exactly the
++// window commitState() and restoreAfterVT() (in Aquamarine) already
++// treat as unsafe. Gating here, at the one place every commit/test
++// ultimately funnels through, removes that risk categorically.
++static bool sessionIsActive() {
++    return !((g_pCompositor->m_aqBackend->hasSession() && !g_pCompositor->m_aqBackend->session->active) || !g_pCompositor->m_sessionActive);
++}
 +
-     // Sync fired: reset submitted state, set as rendered. Check the last render time. If we are running
-     // late, we will instantly render here.
- 
-@@ -57,6 +70,14 @@ void CMonitorFrameScheduler::onPresented() {
-     if (!PMONITOR || !newSchedulingEnabled())
-         return;
- 
-+    // Same reasoning as onSyncFired(): this commits directly, bypassing
-+    // canRender(). Leave m_pendingThird set if we bail here -- the frame
-+    // this refers to was already rendered earlier (or wasn't, per the
-+    // existing comment below: "if it didn't fire yet it doesn't matter"),
-+    // and it'll be committed properly once the session is active again.
-+    if (!canRender())
-+        return;
+ bool CMonitorState::commit() {
++    if (!sessionIsActive())
++        return false;
 +
-     if (!m_pendingThird)
-         return;
+     if (!updateSwapchain())
+         return false;
  
-diff --git i/src/render/Renderer.cpp w/src/render/Renderer.cpp
-index 249f084..553c4be 100644
---- i/src/render/Renderer.cpp
-+++ w/src/render/Renderer.cpp
-@@ -2046,7 +2046,18 @@ void IHyprRenderer::renderMonitor(PHLMONITOR pMonitor, bool commit) {
-         Debug::overlay()->frameData(pMonitor);
-     }
+@@ -2666,6 +2687,9 @@ bool CMonitorState::commit() {
+ }
  
--    if (!g_pCompositor->m_sessionActive)
-+    // Mirrors CMonitorFrameScheduler::canRender()'s check. This function is
-+    // also called directly and unconditionally from the explicit-sync
-+    // scheduler's onSyncFired() (bypassing canRender() entirely), so it must
-+    // check Aquamarine's own session-active flag itself, not just Hyprland's
-+    // m_sessionActive -- the two can be briefly out of sync (e.g. early in a
-+    // fresh session's startup, or during a hotplug-heavy reconnect), and
-+    // without this, a "missed frame" detected in that window renders and
-+    // re-arms indefinitely: the GPU render succeeds and re-triggers itself
-+    // via onFinishRender() regardless of the display commit failing deeper
-+    // inside Aquamarine, saturating the main thread and starving input
-+    // processing for as long as the two flags disagree.
-+    if (!g_pCompositor->m_sessionActive || (g_pCompositor->m_aqBackend->hasSession() && !g_pCompositor->m_aqBackend->session->active))
-         return;
+ bool CMonitorState::test() {
++    if (!sessionIsActive())
++        return false;
++
+     if (!updateSwapchain())
+         return false;
  
-     Event::bus()->m_events.render.preChecks.emit(pMonitor);

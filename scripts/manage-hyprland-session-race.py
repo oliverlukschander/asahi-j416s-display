@@ -1,28 +1,37 @@
 #!/usr/bin/env python3
 """Stage, or restore, the Hyprland render-session-active-race fix.
 
-IHyprRenderer::renderMonitor() is called directly and unconditionally
-from CMonitorFrameScheduler::onSyncFired() (the explicit-sync "missed
-frame" path), bypassing canRender() entirely. It only checked Hyprland's
-own g_pCompositor->m_sessionActive, never Aquamarine's own
-aqBackend->session->active -- the two can briefly disagree (a fresh
-session's own startup, or a hotplug-heavy reconnect), and when they do,
-renderMonitor() renders anyway; the GPU render succeeds and re-arms
-itself via onFinishRender() regardless of the real display commit
-failing deeper inside Aquamarine, looping indefinitely and saturating
-the main thread -- exactly the "picture visible, input completely dead"
-freeze hit twice this session (once at home on the left port, once at
-work on the right port). Root-caused via static analysis only, after
-three hard resets from live-testing a different, unrelated fix (the
-Aquamarine connect() stale-pageflip patch) made further blind live
-retries unacceptable. Full detail in
-notes/2026-09-25-hyprland-render-session-active-race.md.
+An earlier version of this fix (renderMonitor()/onSyncFired()/
+onPresented()) turned out to be dead code on this system --
+`hyprctl getoption render:new_render_scheduling` returns false, so
+onSyncFired()/onPresented() never run at all here, and renderMonitor()
+was already covered by canRender() at its only reachable call site.
+Reverted; not shipped. Four isolated-session live tests afterward
+(a real login on a spare VT, each a clean run with an explicit VT
+switch away and back) all came back with zero "Session inactive"
+occurrences -- confirming a plain VT switch alone doesn't reproduce
+this. Every real incident involved a monitor hotplug landing at the
+same time as a session transition, not the transition alone.
 
-Fix: renderMonitor() now checks both flags (matching canRender()'s
-existing condition exactly), and onSyncFired()/onPresented() -- which
-call renderMonitor()/commit directly, bypassing canRender() -- now call
-canRender() themselves first, the same way the plain onFrame() path
-already correctly does.
+Root cause, found by checking every m_state.commit()/m_state.test()/
+m_output->commit() call site in Monitor.cpp and Renderer.cpp (13 sites
+across 6 functions): CMonitor::onConnect() (runs on every monitor
+hotplug -- exactly 0147's resume-triggered reconnect, and exactly what
+a fresh greeter session's startup does when it detects the external
+monitor) and CMonitor::applyMonitorRule() (called from onConnect())
+both commit/test monitor state directly with zero session-active
+checks anywhere in either function. Every commit/test path in this
+file relies on its *caller* remembering to check canRender() first --
+several plainly don't, and that's inherently fragile: a single missed
+call site (existing or future) is enough to reach a real hardware
+commit attempt during exactly the window commitState()'s own guard and
+Aquamarine's restoreAfterVT() comment already treat as unsafe.
+
+Fix: gate CMonitorState::commit() and ::test() themselves -- the one
+place every one of these call sites ultimately funnels through -- with
+the identical two-flag check canRender() already uses. Closes the gap
+categorically rather than patching call sites one at a time. Full
+detail in notes/2026-09-25-hyprland-render-session-active-race.md.
 
 This is the main system Hyprland binary (/usr/bin/Hyprland), not a
 kernel module or a library -- no depmod, initramfs, or reboot. Same

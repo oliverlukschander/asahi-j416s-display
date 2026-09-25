@@ -206,20 +206,104 @@ safety measures specifically motivated by the three hard resets on the
   keeps its own already-loaded image regardless of what changes on
   disk -- this only affects the next fresh launch (next logout/login).
 
-### Test plan
+### That fix was wrong: confirmed dead code, reverted
 
-1. Install (binary swap only, verified backup, no logout yet).
-2. Re-arm the log watcher (root this time) for the current boot.
-3. Oliver logs out. Watch both displays.
-4. If it freezes again: tell Claude immediately, before touching the
-   power button, so a live kill can be attempted first.
-5. If it works: log back in, then do the real 0147 test (lid close ->
-   s2idle -> lid open, hub untouched) to confirm the actual
-   originally-intended end-to-end outcome -- auto-recovery with zero
-   replug and zero manual nudge.
-6. Once confirmed working across a few real cycles, package both this
-   fix and the Aquamarine stale-pageflip fix as a PR (Hyprland fix
-   likely upstream to hyprwm/Hyprland directly, given it's a genuine,
-   general bug unrelated to Apple hardware; Aquamarine fix similarly
-   upstream to hyprwm/aquamarine; the kernel work stays in the
-   aurora-silicon/linux PR track as before).
+`hyprctl getoption render:new_render_scheduling` on this machine
+returns `false`. `onSyncFired()`/`onPresented()` both return
+immediately at their very first line whenever that's off -- the
+`canRender()` calls added to them never executed at all. The
+`renderMonitor()` change was reachable, but redundant: its only
+caller in the disabled config (`onFrame()`'s plain branch) is already
+preceded by `canRender()`'s own check. This patch could not have had
+any effect on this system, in either direction. Reverted; not shipped.
+
+Four isolated-session tests afterward (real `login` on a spare VT via
+`systemd-run`/`openvt` attempts and, eventually, a proper text login,
+each running `timeout 20 Hyprland` with a persistent log path) all
+came back completely clean -- zero `Session inactive` occurrences,
+even with an explicit VT-switch-away-and-back during the window. This
+was the actual useful signal: **a plain VT switch alone, with no
+monitor activity, does not reproduce this.** Every real incident
+involved an external monitor hotplug (0147's own resume-triggered
+reconnect, or a fresh SDDM greeter session detecting the monitor
+during its own startup) landing at the same time as a session
+transition -- not the transition alone.
+
+Given the cost of live-testing this by then (several hard resets,
+none reproducing anything new), Oliver: *"i'd be fine with that, i'd
+love to have a full resolution of that issue than in the end"* --
+agreed to ship the two already-confirmed fixes (aurora-silicon/linux#25,
+hyprwm/aquamarine#422) now and continue this investigation via static
+analysis only, no more live resets, until there's a specific,
+well-reasoned hypothesis and a safe way to test it.
+
+## The real fix: gate CMonitorState::commit()/test() themselves
+
+Re-examined every `m_state.commit()`/`m_state.test()`/`m_output->commit()`
+call site in `Monitor.cpp` and `Renderer.cpp` systematically (13 sites
+across 6 functions), checking each one's enclosing function for any
+session-active gating at all:
+
+- **`CMonitor::onConnect()`** -- runs whenever a monitor connects (a
+  hotplug event; exactly 0147's resume-triggered reconnect, and
+  exactly what a fresh greeter session's own startup does when it
+  detects the external monitor). Calls `m_state.commit()` three times
+  (lines ~270, 280, 313). **Zero session-active checks anywhere in
+  the entire function.**
+- **`CMonitor::applyMonitorRule()`** -- called from `onConnect()`
+  (and elsewhere). Loops over up to ~8 candidate modes, calling
+  `m_state.test()` for each, then `m_state.commit()` for the winner
+  (lines ~738, 1055). **Also zero session-active checks.** If every
+  test fails (which `commitState(true)` guarantees while the session
+  is inactive, since it checks `session->active` before anything
+  else), `success` never becomes true and `scheduleModeRetry()` fires
+  -- a *bounded* retry (max 3, 1s apart) that still isn't
+  session-aware, so it wastes all three attempts if the session is
+  still inactive.
+- Two more call sites (`onDisconnect()`, `commitDPMSState()`) --
+  same pattern, no gating.
+- `attemptDirectScanout()`'s raw `m_output->commit()` calls are the
+  only exception, but reaching them requires an actively-fullscreen
+  solitary client (`isDSBlocked()` returns early otherwise) -- not
+  reachable from a login screen or an ordinary hotplug reconnect, so
+  left alone.
+
+None of this individually creates the *tight*, unbounded loop seen in
+the original 210-occurrence evidence -- that entry point is still not
+fully pinned down. But the underlying design flaw is real and larger
+than any one call site: **every commit/test path across this file
+relies on its *caller* remembering to check `canRender()` first**, and
+several plainly don't. That's inherently fragile -- a single missed
+site (existing or future) is enough to reach a real hardware commit
+attempt during the exact window `commitState()`'s own guard and
+`restoreAfterVT()`'s comment already treat as unsafe.
+
+**Fix**: gate `CMonitorState::commit()` and `::test()` themselves --
+the one place every one of these call sites ultimately funnels
+through, in `Monitor.cpp` right next to their existing implementation
+-- with the identical two-flag check `canRender()` already uses
+(`aqBackend->session->active` and `m_sessionActive`). This closes the
+gap categorically rather than patching call sites one at a time.
+
+### Build verification
+
+Clean rebuild against the exact installed v0.56.2 (fresh submodule
+init, fresh CMake configure after a stale cache pointed at a since-
+removed build directory from an earlier attempt): zero errors, one
+pre-existing unrelated warning (`MiscFunctions.cpp:97`, untouched by
+this change). Hash:
+`3dbb5ee7b40897d2b7926743fe40ecb8b7bb60f3dc9547daa6f3dbae18032a2a`.
+
+### Updated test plan
+
+Given the confirmed finding that a plain VT switch doesn't reproduce
+this, testing now needs an actual monitor connect event during a
+session-inactive window -- without touching Oliver's real external
+display/hub again. Plan: use Hyprland's own headless virtual-output
+support (`hyprctl output create headless`) against the isolated test
+session's own socket, timed to fire *while* that session's VT is
+switched away (fully scripted by Claude; Oliver only needs to do the
+initial login, same as the last several attempts). This exercises
+`onConnect()` during a real session-inactive window with zero real
+hardware involved, directly targeting the exact mechanism this fix
+addresses.
