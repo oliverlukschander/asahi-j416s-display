@@ -84,13 +84,15 @@ order.patch`, applied on top of the existing stale-pageflip patch via
 `77914a9ff0d5aaae94e194cfe527517e1197de1cd689b71fe4080b3daf61fc0b`.
 Full detail: `notes/2026-09-25-aquamarine-destructor-teardown-crash.md`.
 
-Not yet tested or installed system-wide. Oliver's tty2 test-login
-session is still alive from the test below; next step is having him
-re-run `bash /tmp/run-test.sh` (now `LD_LIBRARY_PATH`-pointed at the
-fixed `.so`, no fresh login needed) and confirming via `coredumpctl`
-that the crash is gone. Once confirmed: its own PR to
-`hyprwm/aquamarine`, same pattern as #422 -- unrelated bug, unrelated
-fix, unrelated to the freeze investigation it was found alongside.
+Confirmed fixed: Oliver re-ran `bash /tmp/run-test.sh` (fixed `.so` via
+`LD_LIBRARY_PATH`) on the same still-alive tty2 session -- clean exit,
+zero coredumps, zero segv/abort in journalctl, no leftover process,
+where the same test had crashed 3/3 times before. Installed system-wide
+via `manage-aquamarine-pageflip.py install` (hash
+`77914a9ff0d5aaae94e194cfe527517e1197de1cd689b71fe4080b3daf61fc0b`,
+verified on disk). Its own PR to `hyprwm/aquamarine` next, same
+pattern as #422 -- unrelated bug, unrelated fix, unrelated to the
+freeze investigation it was found alongside.
 
 ## Hyprland session-active-race fix built and tested: works, but surfaced the crash above
 
@@ -103,10 +105,18 @@ was fired against its socket and returned success; switching back
 showed all three outputs (`eDP-1`, `USB-3`, `testmon1`) healthy with
 sane geometry, and zero "Session inactive" log occurrences anywhere --
 the exact race this fix targets, correctly intercepted. **This fix
-works as designed.** Not yet installed system-wide
-(`scripts/manage-hyprland-session-race.py install`) pending the
-destructor-crash fix above being confirmed too, so both can be
-validated in the same pass rather than needing Oliver to test twice.
+works as designed.** Installed system-wide together with the
+destructor-crash fix above, in the same pass, via
+`manage-hyprland-session-race.py install` (hash
+`3dbb5ee7b40897d2b7926743fe40ecb8b7bb60f3dc9547daa6f3dbae18032a2a`,
+verified on disk). Both scripts' `install()` needed a small fix first:
+each refused to run because a verified backup already existed from an
+earlier install this session (aquamarine's instrumented build; a
+stale but valid backup for Hyprland) -- now reuses an existing backup
+when its manifest hash checks out, instead of refusing outright.
+Neither installed binary has been exercised by a real logout/login
+yet -- that's the next real-world confirmation, whenever Oliver next
+logs out.
 
 ## Two confirmed fixes shipped as PRs; Hyprland freeze investigation paused (live testing)
 
