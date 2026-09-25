@@ -1,0 +1,25 @@
+diff --git i/src/backend/drm/DRM.cpp w/src/backend/drm/DRM.cpp
+index 431247b..92e2f82 100644
+--- i/src/backend/drm/DRM.cpp
++++ w/src/backend/drm/DRM.cpp
+@@ -382,10 +382,18 @@ std::vector<SP<CDRMBackend>> Aquamarine::CDRMBackend::attempt(SP<CBackend> backe
+ Aquamarine::CDRMBackend::~CDRMBackend() {
+     stopCommitThread();
+ 
+-    for (auto& conn : connectors) {
++    // Two separate passes: disconnect() on one connector transitively calls
++    // cancelAsyncOutput() -> flushAsyncCommitEvents(), which iterates this
++    // same `connectors` vector and dereferences every entry unconditionally.
++    // Resetting entries in the same pass (as this used to do) leaves earlier
++    // slots null while later disconnect() calls are still walking the
++    // vector, so the very next connector's teardown segfaults on the null
++    // shared_ptr. Every entry must stay valid until all disconnect() calls
++    // are done.
++    for (auto& conn : connectors)
+         conn->disconnect();
++    for (auto& conn : connectors)
+         conn.reset();
+-    }
+ 
+     if (rendererState.allocator)
+         rendererState.allocator->destroyBuffers();

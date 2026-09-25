@@ -307,3 +307,32 @@ initial login, same as the last several attempts). This exercises
 `onConnect()` during a real session-inactive window with zero real
 hardware involved, directly targeting the exact mechanism this fix
 addresses.
+
+### Test executed: positive result for this fix
+
+Oliver logged into tty2 (real `agetty`/`login`, his own Ctrl+Alt+F2 now
+that the `keyd` F-key fix works) and ran the patched binary directly by
+path via `/tmp/run-test.sh`. With that session's VT switched away
+(`sudo chvt 1`), `hyprctl output create headless testmon1` was issued
+against its socket and returned success; `chvt` back to tty2 two seconds
+later.
+
+`hyprctl monitors` against the test instance afterward showed all three
+outputs healthy: `eDP-1` and `USB-3` unchanged, and `testmon1` (ID 2)
+correctly created at `1920x1080@60 at 2560x0` -- sane geometry, assigned
+workspace, not disabled. The log showed zero "Session inactive"
+occurrences anywhere (the old, broken behavior would have logged this
+repeatedly) -- consistent with `sessionIsActive()` correctly gating the
+commit attempt made during the inactive window, with the output cleanly
+picked up once `restoreAfterVT()` ran on session reactivation.
+
+**This fix works as designed.** No freeze, no hang, correct final state.
+
+While confirming this, a *separate*, pre-existing Aquamarine crash was
+found (the test process died partway through its `timeout 120` run, from
+an unrelated bug hit at process exit, already independently confirmed
+hitting the real system too) -- see
+`notes/2026-09-25-aquamarine-destructor-teardown-crash.md`. Not a
+consequence of this fix; different subsystem (backend teardown, not
+render scheduling), different code path (`CDRMBackend`'s destructor, never
+touched by this change).

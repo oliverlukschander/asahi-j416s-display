@@ -52,6 +52,62 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Aquamarine destructor teardown crash found and fixed, unrelated to the freeze investigation
+
+Found by accident validating the session-active-race fix below: the
+isolated test session's Hyprland process died partway through its
+`timeout 120` run, right after `hyprctl monitors` had shown a perfectly
+healthy three-monitor state. `coredumpctl` showed a SIGSEGV in
+`Aquamarine::CDRMBackend::flushAsyncCommitEvents()`, called from
+`~CDRMBackend()` during process-exit global destruction -- and the
+identical signature had **already hit the real, system-installed
+`/usr/bin/Hyprland` twice that same morning** (09:46:55, 09:47:35),
+before this test session even started. Not a test artifact.
+
+Root cause: `~CDRMBackend()`'s single loop over `connectors` calls
+`conn->disconnect()` then `conn.reset()` on each entry in turn.
+`disconnect()` transitively calls `flushAsyncCommitEvents()`, which
+walks the *entire* `connectors` vector again, dereferencing every
+entry unconditionally -- including earlier slots the same loop has
+already `.reset()`'d to null on a prior iteration. Every other reader
+of `connectors` in this file (14 call sites checked) assumes every
+entry is always non-null; this destructor is the one place that broke
+that invariant. Any system with 2+ connectors that ever both drove a
+real picture triggers it on exit -- not exotic hardware, just normal
+use.
+
+**Fix**: split the destructor into two passes -- disconnect everything
+first (every entry stays valid for the whole pass), reset everything
+only after. Two lines. `src/aquamarine/0002-fix-destructor-teardown-
+order.patch`, applied on top of the existing stale-pageflip patch via
+`build.sh`. Rebuilt: `libaquamarine.so.0.15.1` SHA256
+`77914a9ff0d5aaae94e194cfe527517e1197de1cd689b71fe4080b3daf61fc0b`.
+Full detail: `notes/2026-09-25-aquamarine-destructor-teardown-crash.md`.
+
+Not yet tested or installed system-wide. Oliver's tty2 test-login
+session is still alive from the test below; next step is having him
+re-run `bash /tmp/run-test.sh` (now `LD_LIBRARY_PATH`-pointed at the
+fixed `.so`, no fresh login needed) and confirming via `coredumpctl`
+that the crash is gone. Once confirmed: its own PR to
+`hyprwm/aquamarine`, same pattern as #422 -- unrelated bug, unrelated
+fix, unrelated to the freeze investigation it was found alongside.
+
+## Hyprland session-active-race fix built and tested: works, but surfaced the crash above
+
+The corrected fix (see "Freeze root-caused via static analysis" below)
+was built and tested via an isolated test session: Oliver logged into
+tty2 for real (his own Ctrl+Alt+F2, now that the `keyd` F-key fix
+works) and ran the patched binary directly by path. With that
+session's VT switched away, `hyprctl output create headless testmon1`
+was fired against its socket and returned success; switching back
+showed all three outputs (`eDP-1`, `USB-3`, `testmon1`) healthy with
+sane geometry, and zero "Session inactive" log occurrences anywhere --
+the exact race this fix targets, correctly intercepted. **This fix
+works as designed.** Not yet installed system-wide
+(`scripts/manage-hyprland-session-race.py install`) pending the
+destructor-crash fix above being confirmed too, so both can be
+validated in the same pass rather than needing Oliver to test twice.
+
 ## Two confirmed fixes shipped as PRs; Hyprland freeze investigation paused (live testing)
 
 After the Hyprland `renderMonitor()` fix turned out to be dead code

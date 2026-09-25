@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Rebuilds libaquamarine.so with 0001-connect-clear-stale-pageflip.patch
-# applied, pinned to the exact tag matching the installed package
-# (pacman -Qi aquamarine). See notes/2026-09-25-aquamarine-stale-pageflip.md.
+# Rebuilds libaquamarine.so with both local patches applied, pinned to the
+# exact tag matching the installed package (pacman -Qi aquamarine):
+#   0001-connect-clear-stale-pageflip.patch -- stale pendingFlip on hotplug
+#     reconnect (notes/2026-09-25-aquamarine-stale-pageflip.md)
+#   0002-fix-destructor-teardown-order.patch -- null-deref crash tearing
+#     down 2+ connectors on exit (notes/2026-09-25-aquamarine-destructor-teardown-crash.md)
 set -euo pipefail
 
 TAG=v0.15.1
@@ -14,8 +17,10 @@ fi
 
 cd "$WORK"
 git checkout -- . >/dev/null 2>&1 || true
-git apply --check "$ROOT/0001-connect-clear-stale-pageflip.patch"
-git apply "$ROOT/0001-connect-clear-stale-pageflip.patch"
+for p in 0001-connect-clear-stale-pageflip.patch 0002-fix-destructor-teardown-order.patch; do
+    git apply --check "$ROOT/$p"
+    git apply "$ROOT/$p"
+done
 
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)"
