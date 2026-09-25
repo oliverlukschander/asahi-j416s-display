@@ -104,18 +104,29 @@ def restore():
 
 
 def install():
-    if BACKUP.exists():
-        raise RuntimeError('Backup already exists; refusing to overwrite')
     check_candidate()
 
-    BACKUP.mkdir(mode=0o700)
-    expected_backup = digest(TARGET)
-    shutil.copy2(TARGET, BACKUP / 'Hyprland')
-    if digest(BACKUP / 'Hyprland') != expected_backup:
-        raise RuntimeError('Backup verification failed')
-    (BACKUP / 'manifest.json').write_text(json.dumps({'sha256': expected_backup}, indent=2) + '\n')
-    os.sync()
-    print('Verified backup:', BACKUP, flush=True)
+    if BACKUP.exists():
+        # A verified backup from an earlier install this session already
+        # captures a legitimate prior state -- reuse it rather than refusing
+        # outright (restore() only ever needs one valid fallback, not the
+        # single earliest one) or silently clobbering it.
+        manifest_path = BACKUP / 'manifest.json'
+        if not manifest_path.is_file():
+            raise RuntimeError(f'Backup exists but has no manifest, refusing to touch it: {BACKUP}')
+        expected_backup = json.loads(manifest_path.read_text())['sha256']
+        if digest(BACKUP / 'Hyprland') != expected_backup:
+            raise RuntimeError(f'Existing backup failed verification, refusing to touch it: {BACKUP}')
+        print('Reusing existing verified backup:', BACKUP, flush=True)
+    else:
+        BACKUP.mkdir(mode=0o700)
+        expected_backup = digest(TARGET)
+        shutil.copy2(TARGET, BACKUP / 'Hyprland')
+        if digest(BACKUP / 'Hyprland') != expected_backup:
+            raise RuntimeError('Backup verification failed')
+        (BACKUP / 'manifest.json').write_text(json.dumps({'sha256': expected_backup}, indent=2) + '\n')
+        os.sync()
+        print('Verified backup:', BACKUP, flush=True)
     try:
         preflight()
         candidate_hash = digest(CANDIDATE)
