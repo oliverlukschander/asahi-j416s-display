@@ -92,7 +92,55 @@ already-mapped old copy regardless of what changes on disk), then test
 by logging out and back in, not a live Hyprland restart.
 `scripts/manage-aquamarine-pageflip.py` handles check/install/restore.
 
-**Not yet installed or tested.**
+**Update: installed, tested, REVERTED.** Oliver logged out to test it.
+Kernel log shows the modeset itself completed successfully
+(`set_digital_out_mode finished:8276` at 06:38:16.724, no further
+driver-level errors afterward) -- SDDM's greeter (which runs its own
+dedicated Hyprland instance, `start-hyprland -- --config
+/usr/share/sddm/hyprland.lua`, so it does load the patched
+libaquamarine) showed the login screen, but **neither the external
+keyboard (via the hub) nor the internal keyboard could type, and the
+mouse cursor had vanished entirely** -- a live picture with a
+completely dead input path, for ~24 seconds, until Oliver held the
+power button and the SMC forced a hardware shutdown (confirmed via
+`journalctl`: "Power key pressed short" then "Triggering forced
+shutdown!" -- not a kernel panic; the kernel was healthy and silent
+the whole time, meaning whatever hung was entirely in userspace).
+
+This is the classic signature of a userspace compositor deadlock: the
+last real KMS commit stays on screen forever (DRM keeps scanning it
+out regardless of the process's health) while nothing else -- input
+processing, cursor rendering -- ever runs again. Notably, the SDDM
+greeter also reloaded its entire QML UI ~800ms after the internal
+panel came up, exactly when the external monitor was detected -- a
+tightly-timed compound scenario (hotplug reconnect + full UI reload)
+that may never have been exercised with the async commit queue before.
+
+Not yet root-caused with certainty whether the one-line
+`invalidateFrame()` call is actually the trigger, or whether calling
+it from this new position (`connect()`, before `output`/`crtc` are
+necessarily in the state they'd be in from `disconnect()`/`setCRTC()`)
+interacts badly with the commit thread's own locking under this
+specific timing. Hyprland's own internal debug log
+(`/run/user/963/hypr/.../hyprland.log`, the actual place any
+deadlock/assertion would show) lived on the greeter session's tmpfs
+and was lost when the machine was force-shut-down -- no way to recover
+it after the fact.
+
+**Reverted immediately** via `manage-aquamarine-pageflip.py restore`
+(verified: installed hash back to the pristine
+`82dd57588764273995c5faa913c9198f9d6e25d78da9ca830acd43f2591c2e24`) --
+Oliver is at work, relying on this machine, and another logout/lock
+hitting the same freeze was an unacceptable risk to leave live while
+investigating further. This only touched the file on disk; his
+already-running session was unaffected either way. The stale-pageflip
+root cause and fix (`notes/2026-09-25-aquamarine-stale-pageflip.md`)
+is still believed correct and needed -- it's the *deployment*, not the
+diagnosis, that needs more scrutiny before trying again: static review
+of what changes when `invalidateFrame()`/`commitThread->releaseQueue()`
+run from `connect()`'s new, earlier position, and testing on a
+non-daily-driver session before ever touching Oliver's live login
+screen again.
 
 ## 0147 CONFIRMED: kernel-side auto-recovery works; remaining black screen is the known Aquamarine bug
 
