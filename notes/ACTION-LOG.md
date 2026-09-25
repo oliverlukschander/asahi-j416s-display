@@ -132,15 +132,34 @@ it after the fact.
 `82dd57588764273995c5faa913c9198f9d6e25d78da9ca830acd43f2591c2e24`) --
 Oliver is at work, relying on this machine, and another logout/lock
 hitting the same freeze was an unacceptable risk to leave live while
-investigating further. This only touched the file on disk; his
-already-running session was unaffected either way. The stale-pageflip
-root cause and fix (`notes/2026-09-25-aquamarine-stale-pageflip.md`)
-is still believed correct and needed -- it's the *deployment*, not the
-diagnosis, that needs more scrutiny before trying again: static review
-of what changes when `invalidateFrame()`/`commitThread->releaseQueue()`
-run from `connect()`'s new, earlier position, and testing on a
-non-daily-driver session before ever touching Oliver's live login
-screen again.
+investigating further.
+
+**That revert itself then crashed his live session.** The claim above
+("this only touched the file on disk; his already-running session was
+unaffected either way") was wrong, and it was a real, avoidable bug:
+`restore()` used `shutil.copy2()` to overwrite
+`/usr/lib/libaquamarine.so.0.15.1` *in place* -- but that file was
+actively memory-mapped by Oliver's currently-running Hyprland session.
+Overwriting a shared library's bytes in place while a live process
+still has it mapped is a classic mistake; `install()` had already used
+a safe write-to-temp-then-`os.rename()` swap for exactly this reason,
+but that same care wasn't carried into `restore()`. This corrupted the
+live session out from under it, causing an actual Hyprland crash
+("syntax error in config or so" screen) and a second hard reset.
+
+Fixed: `restore()` now uses the identical atomic temp-file-then-rename
+pattern as `install()`, with a checksum verify at each step and
+`ldconfig` afterward. Confirmed via a fresh boot afterward that the
+library is correctly pristine on disk
+(`82dd575887...` matches exactly).
+
+The stale-pageflip root cause and fix
+(`notes/2026-09-25-aquamarine-stale-pageflip.md`) is still believed
+correct and needed -- it's the *deployment*, not the diagnosis, that
+needs more scrutiny before trying again: static review of what changes
+when `invalidateFrame()`/`commitThread->releaseQueue()` run from
+`connect()`'s new, earlier position, and testing on a non-daily-driver
+session before ever touching Oliver's live login screen again.
 
 ## 0147 CONFIRMED: kernel-side auto-recovery works; remaining black screen is the known Aquamarine bug
 

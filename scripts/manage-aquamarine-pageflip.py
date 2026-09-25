@@ -81,11 +81,25 @@ def check_candidate():
 
 def restore():
     manifest = json.loads((BACKUP / 'manifest.json').read_text())
-    if digest(BACKUP / 'libaquamarine.so.0.15.1') != manifest['sha256']:
+    expected = manifest['sha256']
+    if digest(BACKUP / 'libaquamarine.so.0.15.1') != expected:
         raise RuntimeError('Backup checksum mismatch')
-    shutil.copy2(BACKUP / 'libaquamarine.so.0.15.1', TARGET)
+    # This file is a shared library that may be actively memory-mapped by a
+    # running process (Hyprland). Overwriting it in place (shutil.copy2 onto
+    # an existing path) corrupts that process's mapped pages out from under
+    # it -- write to a temp file in the same directory and rename() instead,
+    # exactly like install() already does, so the swap is atomic and a
+    # running process keeps its old, still-valid mapping regardless.
+    tmp = TARGET.with_suffix('.tmp')
+    shutil.copy2(BACKUP / 'libaquamarine.so.0.15.1', tmp)
+    if digest(tmp) != expected:
+        raise RuntimeError('Copy verification failed before rename')
+    os.rename(tmp, TARGET)
+    run('ldconfig')
+    if digest(TARGET) != expected:
+        raise RuntimeError(f'Restored checksum mismatch: {TARGET}')
     os.sync()
-    print('Restored pre-fix libaquamarine.so.0.15.1. No logout/restart performed.', flush=True)
+    print('Restored pre-fix libaquamarine.so.0.15.1 (atomic swap). No logout/restart performed.', flush=True)
 
 
 def install():
