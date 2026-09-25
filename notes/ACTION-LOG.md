@@ -52,6 +52,50 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Two confirmed fixes shipped as PRs; Hyprland freeze investigation paused (live testing)
+
+After the Hyprland `renderMonitor()` fix turned out to be dead code
+(`render:new_render_scheduling` is `false` on this system -- confirmed
+via `hyprctl getoption`) and several more live attempts (a scripted
+`systemd-run` test session, isolated VT logins) still failed to
+reproduce the freeze safely, Oliver: *"i'd be fine with that, i'd love
+to have a full resolution of that issue than in the end"* -- agreed to
+ship the two already-confirmed fixes now and continue the freeze
+investigation via static analysis only, no more live resets.
+
+Along the way: found and fixed the actual reason Ctrl+Alt+F-key VT
+switching never worked for Oliver (Apple keyboards send native
+media-key scancodes for the top row, not F-keys) via a `keyd` rule
+remapping `brightnessdown/up` and the media-transport keys to
+`f1`/`f2`/`f7`-`f12` (`/etc/keyd/omarchy-vi-mode.conf`, backed up
+first as `.bak-preFkeys`) -- confirmed working, a genuine, permanent
+quality-of-life fix independent of this whole investigation.
+
+**Shipped**:
+- `aurora-silicon/linux#25` -- 0146 (ACIO reset-retry) + 0147
+  (typec resume-reverify, final PM_POST_SUSPEND design) as two clean
+  commits on a fresh branch off the already-open PR #14, tree verified
+  byte-identical to the tested state. Both already confirmed working
+  on hardware, multiple real suspend/resume cycles.
+- `hyprwm/aquamarine#422` -- the `connect()`/`invalidateFrame()`
+  stale-pageflip fix, submitted upstream (not Apple-specific) as a
+  clean single commit with the AQFIX debug instrumentation stripped
+  back out. Confirmed via a live instrumented test build that a real
+  stale `pendingFlip` on the external monitor's CRTC gets correctly
+  cleaned up by this code path.
+
+**Not shipped, deliberately**: the Hyprland `renderMonitor()`/
+`onSyncFired()`/`onPresented()` patch -- confirmed inert on this
+config, reverted, not the actual fix. The real freeze mechanism is
+still unresolved; four isolated-session test attempts (all via a
+proper login on a spare VT, all clean, zero "Session inactive"
+occurrences) suggest a plain VT switch alone isn't sufficient to
+trigger it -- every real incident involved a monitor hotplug
+concurrent with the session transition, which none of the isolated
+tests reproduced. Next steps: static analysis only, no more live
+resets, until there's a specific, well-reasoned hypothesis and a safe
+way to test it.
+
 ## Hyprland fix written, built, staged: same discipline, new safety measures
 
 Oliver: "what we want to do is develop a proper fix, test it and file
