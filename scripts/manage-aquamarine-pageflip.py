@@ -1,20 +1,31 @@
 #!/usr/bin/env python3
-"""Stage, or restore, the Aquamarine stale-pending-flip fix.
+"""Stage, or restore, both local Aquamarine fixes (one shared library).
 
-SDRMConnector::connect() (src/backend/drm/DRM.cpp) never cleared a
-CRTC's stale pending-flip bookkeeping, unlike disconnect() and
-setCRTC() (when the CRTC assignment changes). A prior commit in
-flight when a Thunderbolt/USB4-tunneled display's tunnel is torn
-down abruptly at suspend leaves crtc->pendingFlip stuck; when the
-tunnel and connector come back (0147's resume auto-recovery reconnects
-to the *same* CRTC), nothing clears it, and every subsequent real
-commit is silently rejected -- the exact "outputs permanently black"
-failure mode Aquamarine's own restoreAfterVT() already guards against
-for a different trigger (VT switch / session reactivation), just
-reached via a hotplug reconnect instead. Fix: call the existing,
-already-safe invalidateFrame() unconditionally at the top of
-connect() too. Full detail in
-notes/2026-09-25-aquamarine-stale-pageflip.md.
+Two unrelated fixes are built into the same libaquamarine.so.0.15.1:
+
+1. Stale pending-flip on reconnect (0001-connect-clear-stale-pageflip.patch):
+   SDRMConnector::connect() never cleared a CRTC's stale pending-flip
+   bookkeeping, unlike disconnect() and setCRTC() (when the CRTC assignment
+   changes). A prior commit in flight when a Thunderbolt/USB4-tunneled
+   display's tunnel is torn down abruptly at suspend leaves
+   crtc->pendingFlip stuck; when the tunnel and connector come back
+   (0147's resume auto-recovery reconnects to the *same* CRTC), nothing
+   clears it, and every subsequent real commit is silently rejected -- the
+   exact "outputs permanently black" failure mode Aquamarine's own
+   restoreAfterVT() already guards against for a different trigger (VT
+   switch / session reactivation), just reached via a hotplug reconnect
+   instead. Fix: call the existing, already-safe invalidateFrame()
+   unconditionally at the top of connect() too. Full detail in
+   notes/2026-09-25-aquamarine-stale-pageflip.md.
+
+2. Destructor teardown null-deref (0002-fix-destructor-teardown-order.patch):
+   CDRMBackend::~CDRMBackend() reset each connector's shared_ptr in the same
+   pass that disconnect() transitively re-walks the whole connectors vector,
+   so tearing down 2+ connectors dereferenced an already-nulled earlier
+   slot. Already confirmed crashing the real, system-installed Hyprland
+   twice in one morning before this was even found. Fix: disconnect
+   everything first, reset everything only after. Full detail in
+   notes/2026-09-25-aquamarine-destructor-teardown-crash.md.
 
 This is a plain shared library (/usr/lib/libaquamarine.so.0.15.1,
 symlinked from .so/.so.14), not a kernel module -- no depmod,
@@ -45,7 +56,10 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 CANDIDATE = ROOT / 'src/aquamarine/src/build/libaquamarine.so.0.15.1'
-PATCH = ROOT / 'src/aquamarine/0001-connect-clear-stale-pageflip.patch'
+PATCHES = [
+    ROOT / 'src/aquamarine/0001-connect-clear-stale-pageflip.patch',
+    ROOT / 'src/aquamarine/0002-fix-destructor-teardown-order.patch',
+]
 TARGET = Path('/usr/lib/libaquamarine.so.0.15.1')
 BACKUP = Path('/var/tmp/j416s-aquamarine-pageflip-before')
 PRIOR_BACKUP = Path('/var/tmp/aquamarine-trace-backup/libaquamarine.so.0.15.1.orig')
@@ -69,8 +83,9 @@ def preflight():
 def check_candidate():
     if not CANDIDATE.is_file():
         raise RuntimeError(f'Candidate missing, run src/aquamarine/build.sh first: {CANDIDATE}')
-    if not PATCH.is_file():
-        raise RuntimeError(f'Patch file missing: {PATCH}')
+    for patch in PATCHES:
+        if not patch.is_file():
+            raise RuntimeError(f'Patch file missing: {patch}')
     out = subprocess.run(['file', str(CANDIDATE)], check=True, capture_output=True, text=True).stdout
     if 'ELF' not in out or 'shared object' not in out:
         raise RuntimeError(f'Candidate is not a shared object: {out.strip()}')
