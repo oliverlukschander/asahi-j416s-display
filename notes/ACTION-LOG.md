@@ -52,6 +52,47 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Freeze root-caused via static analysis: a real Hyprland bug, not the Aquamarine fix
+
+Read Hyprland's actual source (v0.56.2, matching installed exactly).
+Found the real mechanism, no further live testing needed:
+
+`CMonitorFrameScheduler::canRender()` correctly checks *both*
+session-active flags (Hyprland's own `m_sessionActive` and
+Aquamarine's internal `aqBackend->session->active`) before allowing a
+render. But `IHyprRenderer::renderMonitor()` -- called directly and
+unconditionally by `onSyncFired()` in the explicit-sync "missed frame"
+path, bypassing `canRender()` entirely -- only checks `m_sessionActive`,
+never Aquamarine's own flag. When the two flags are momentarily out of
+sync (exactly the kind of thing a fresh greeter session's own startup,
+or a hotplug-heavy reconnect, produces), `renderMonitor()` renders
+anyway; the GPU render succeeds; only the real display commit, deep in
+Aquamarine, correctly fails with "Session inactive" -- but the GPU
+render's own completion re-arms another sync wait via
+`onFinishRender()`, and the cycle repeats indefinitely, saturating the
+main thread with doomed renders and starving all input processing.
+Exactly matches the observed symptom: live picture, zero
+responsiveness, until something makes both flags agree again.
+
+**This fully explains both freezes (home/left-port and work/right-port,
+identical shape) without any involvement from the kernel or the
+Aquamarine `connect()` fix.** Neither is implicated -- confirmed
+directly, since the busy loop already reproduced on a completely
+unpatched, pristine Aquamarine build during the earlier VT-switch
+incident. Full writeup:
+`notes/2026-09-25-hyprland-render-session-active-race.md`.
+
+**Status**: 0147 (kernel) stays confirmed done and safe. The
+Aquamarine `connect()` fix is believed safe too, but won't be
+redeployed live until this separate Hyprland bug is fixed or worked
+around -- redeploying it risks hitting the same freeze again for a
+reason that has nothing to do with it. A candidate Hyprland fix is
+straightforward to describe (give `renderMonitor()` the same
+two-flag check `canRender()` already has) but deliberately not
+attempted without Oliver's explicit sign-off first -- it touches
+Hyprland's actual render core, a much bigger blast radius than the
+one-line fix that already cost three hard resets to misdiagnose live.
+
 ## Third hard reset on this freeze; stopped live retries, reverted, moving to static analysis
 
 Retested the instrumented build via a real logout. Froze again,
