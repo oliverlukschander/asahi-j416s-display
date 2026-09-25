@@ -52,6 +52,32 @@ monitor both work; only the hub-tunneled (USB4) path is broken.
 - **The full DPIN0 `mode_value` guess space (0-15) is exhausted** (candidates
   0111-0113) — clean negatives across the whole range, do not re-sweep it.
 
+## Both fixes confirmed end-to-end by a real reboot
+
+Oliver rebooted normally (not a scripted test). One crash appeared in
+the previous boot's final log lines, PID 1230 at 10:45:37 -- but that
+was Oliver's original session, running continuously since 09:48, i.e.
+*before* either fix was installed (~10:40); a running process keeps
+its already-loaded image regardless of what's later written to disk,
+so it was still on the old, buggy code the whole time and hit the
+already-fixed destructor bug one last time on its own shutdown. Not a
+regression, not a failure of the fix -- systemd-coredump even failed
+to finish saving that one ("Failed to send coredump datagram: Broken
+pipe", mid-shutdown race), so it doesn't even show up in
+`coredumpctl list`, only in `journalctl -b -1`.
+
+The actually-relevant evidence is the fresh session started *after*
+reboot (PID 1233, 10:46): zero coredumps since boot, zero failed
+systemd units (system and user), and its running binary/library
+verified by exact match against what was installed -- `/proc/1233/exe`
+sha256 identical to the installed Hyprland hash, and the mapped
+`libaquamarine.so.0.15.1` identical by inode to the installed file.
+Both monitors healthy (`eDP-1` 3456x2160@120, `USB-3` 2560x1440@59.95,
+both enabled). **Both fixes hold under a real-world reboot, not just
+the isolated tests.** Custom kernel modules (thunderbolt_apple,
+appledrm, tps6598x, etc.) also all loaded cleanly, confirming the
+earlier 0146/0147 kernel-side work remains stable too.
+
 ## Aquamarine destructor teardown crash found and fixed, unrelated to the freeze investigation
 
 Found by accident validating the session-active-race fix below: the
